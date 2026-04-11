@@ -1,8 +1,7 @@
 # Manitas
 Aplicación que conecta clientes con profesionales de distintos oficios para resolver tareas del hogar, urgencias y trabajos programados.
 ----------------------------------------------------------------
-Enunciado 
-.
+
 La aplicación propuesta surge a partir de una necesidad cotidiana: resolver problemas domésticos de manera rápida, confiable y accesible. Desde arreglar una pérdida de agua, instalar un aire acondicionado, realizar tareas de limpieza, hasta trabajos simples como colgar un espejo o armar un mueble, muchas personas requieren asistencia de profesionales y no cuentan con contactos confiables o disponibilidad inmediata.
 El objetivo de la aplicación es conectar clientes con profesionales de distintos oficios, tales como plomería, gas, electricidad, cerrajería, técnicos de aire acondicionado, limpieza, carpintería, pintura, jardinería, entre otros. Cada profesional podrá crear su perfil, indicar sus especialidades, definir sus precios y recibir calificaciones de los clientes.
 La plataforma contempla dos modalidades de contratación:
