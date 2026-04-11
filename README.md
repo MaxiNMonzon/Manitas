@@ -18,3 +18,4 @@ Profesional: ofrece servicios, define precios, establece zonas donde trabaja y r
 El sistema también incorpora entidades como zonas y localidades, que permiten organizar la cobertura geográfica y mejorar la precisión en la asignación de profesionales.
 En resumen, la aplicación busca ofrecer una solución integral para conectar necesidades domésticas con profesionales calificados, brindando rapidez, transparencia, variedad de precios y confianza en cada contratación.
 
+Modelo de Dominio y DER: https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view?usp=sharing 
