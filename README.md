@@ -1,6 +1,7 @@
 # Manitas
 Aplicación que conecta clientes con profesionales de distintos oficios para resolver tareas del hogar, urgencias y trabajos programados.
-----------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
 
 La aplicación propuesta surge a partir de una necesidad cotidiana: resolver problemas domésticos de manera rápida, confiable y accesible. Desde arreglar una pérdida de agua, instalar un aire acondicionado, realizar tareas de limpieza, hasta trabajos simples como colgar un espejo o armar un mueble, muchas personas requieren asistencia de profesionales y no cuentan con contactos confiables o disponibilidad inmediata.
 El objetivo de la aplicación es conectar clientes con profesionales de distintos oficios, tales como plomería, gas, electricidad, cerrajería, técnicos de aire acondicionado, limpieza, carpintería, pintura, jardinería, entre otros. Cada profesional podrá crear su perfil, indicar sus especialidades, definir sus precios y recibir calificaciones de los clientes.
@@ -17,5 +18,60 @@ Cliente: solicita servicios, compara profesionales y califica trabajos.
 Profesional: ofrece servicios, define precios, establece zonas donde trabaja y recibe solicitudes.
 El sistema también incorpora entidades como zonas y localidades, que permiten organizar la cobertura geográfica y mejorar la precisión en la asignación de profesionales.
 En resumen, la aplicación busca ofrecer una solución integral para conectar necesidades domésticas con profesionales calificados, brindando rapidez, transparencia, variedad de precios y confianza en cada contratación.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+ENTIDADES
+.
+Usuario
+   -Cliente
+   -Profesional
+Localidad
+Especialidad
+Zona
+TipoServicio
+SolicitudServicio
+Metodo de Pago*
+Promocion*
+
+.
+.
+
+CRUD SIMPLE
+.
+Usuario cliente
+Usuario profesional
+Localidad
+Especialidad
+
+.
+.
+
+CRUD DEPENDIENTE
+.
+Zona
+Servicio
+
+.
+.
+
+CASOS DE USO
+.
+Solicitar servicio
+Solicitar presupuesto
+Confirmar servicio
+Coordinar visita
+Abonar servicio
+Calificar profesional
+
+.
+.
+
+EPIC
+.
+Informar promos bancarias del mes
+Notificar próximas visitas
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
 
 Modelo de Dominio y DER: https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view?usp=sharing 
