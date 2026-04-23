@@ -43,7 +43,7 @@ Alcance Minimo
 | Req | Detalle |
 | :--- | :--- |
 | **CRUD simple** | 1. CRUD Usuario cliente<br>2. CRUD Usuario profesional<br>3. CRUD Localidad<br>4. CRUD Especialidad|
-| **CRUD dependiente** | 1. CRUD Zona <br>2. CRUD Servicio|
+| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Servicio {depende de} CRUD Especialidad|
 | **Listado + detalle** | 1. <br>2. |
 | **CUU/Epic** | 1. Informar promociones bancarias del mes <br>2. Notificar próximas visitas  |
 
