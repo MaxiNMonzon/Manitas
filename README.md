@@ -47,7 +47,11 @@ Alcance Minimo
 | **Listado + detalle** | 1. <br>2. |
 | **CUU/Epic** | 1. Informar promociones bancarias del mes <br>2. Notificar próximas visitas  |
 
-
+Adicionales
+| Req | Detalle |
+| :--- | :--- |
+| **CRUD** | 1. <br>2. <br>3. <br>4.|
+| **CUU/Epic** | 1. <br>2. |
 
 ENTIDADES
 .
