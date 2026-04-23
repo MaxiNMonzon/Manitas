@@ -4,10 +4,10 @@
 INTEGRANTES
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-56821 - Arias, Francisco Jose
-52098 - Monzon, Maximiliano Nicolas
-54456 - Baremboum, Micaela
-42062 - Coria, Lautaro
+56821 - Arias, Francisco Jose  
+52098 - Monzon, Maximiliano Nicolas  
+54456 - Baremboum, Micaela  
+42062 - Coria, Lautaro  
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 REPOSITORIOS
