@@ -53,57 +53,6 @@ Adicionales
 | **CRUD** | 1. CRUD Usuario cliente <br>2. CRUD Usuario profesional<br>3. CRUD Localidad<br>4. CRUD Especialidad<br>5. CRUD Zona<br>6. CRUD Servicio|
 | **CUU/Epic** | 1. Solicitar servicio<br>2. Solicitar presupuesto<br>3. Confirmar servicio<br>4. Coordinar visita<br>5. Abonar servicio<br>6. Calificar profesional|
 
-ENTIDADES
-.
-Usuario
-   -Cliente
-   -Profesional
-Localidad
-Especialidad
-Zona
-TipoServicio
-SolicitudServicio
-Metodo de Pago*
-Promocion*
-
-.
-.
-
-CRUD SIMPLE
-.
-Usuario cliente
-Usuario profesional
-Localidad
-Especialidad
-
-.
-.
-
-CRUD DEPENDIENTE
-.
-Zona
-Servicio
-
-.
-.
-
-CASOS DE USO
-.
-Solicitar servicio
-Solicitar presupuesto
-Confirmar servicio
-Coordinar visita
-Abonar servicio
-Calificar profesional
-
-.
-.
-
-EPIC
-.
-Informar promos bancarias del mes
-Notificar próximas visitas
-
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 
