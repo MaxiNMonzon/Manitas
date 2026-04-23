@@ -30,8 +30,7 @@ Apunta a brindar rapidez, confianza y variedad de opciones.}
 MODELO
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-<img width="1301" height="752" alt="MD - DSW-MD drawio (1)" src="https://github.com/user-attachments/assets/8751084f-aa28-4aee-9e87-8e44d9cb0282" />
-
+<img width="1301" height="752" alt="MD - DSW-MD drawio (1)" src="https://github.com/user-attachments/assets/c6a9bd41-b077-4243-87ec-42b62b63b720" />
 
 https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view
 
