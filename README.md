@@ -40,6 +40,13 @@ ALCANCE FUNCIONAL
 Alcance Minimo
 
 
+| Req | Detalle |
+| :--- | :--- |
+| **CRUD simple** | 1. CRUD Tipo Habitacion<br>2. CRUD Servicio<br>3. CRUD Localidad |
+| **CRUD dependiente** | 1. CRUD Habitación (depende de) CRUD Tipo Habitacion<br>2. CRUD Cliente (depende de) CRUD Localidad |
+| **Listado + detalle** | 1. Listado de habitaciones filtrado por tipo de habitación...<br>2. Listado de reservas filtrado por rango de fecha... |
+| **CUU/Epic** | 1. Reservar una habitación para la estadía<br>2. Realizar el check-in de una reserva |
+
 
 
 ENTIDADES
