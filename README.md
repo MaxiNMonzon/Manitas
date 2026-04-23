@@ -50,8 +50,8 @@ Alcance Minimo
 Adicionales
 | Req | Detalle |
 | :--- | :--- |
-| **CRUD** | 1. <br>2. <br>3. <br>4.|
-| **CUU/Epic** | 1. <br>2. |
+| **CRUD** | 1. CRUD Usuario cliente <br>2. CRUD Usuario profesional<br>3. CRUD Localidad<br>4. CRUD Especialidad<br>5. CRUD Zona<br>6. CRUD Servicio|
+| **CUU/Epic** | 1. Solicitar servicio<br>2. Solicitar presupuesto<br>3. Confirmar servicio<br>4. Coordinar visita<br>5. Abonar servicio<br>6. Calificar profesional|
 
 ENTIDADES
 .
