@@ -38,7 +38,8 @@ https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view
 ALCANCE FUNCIONAL
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 Alcance Minimo
-
+------------------------------------------------------------------------------
+Regularidad:
 
 | Req | Detalle |
 | :--- | :--- |
@@ -47,7 +48,7 @@ Alcance Minimo
 | **Listado + detalle** | 1. Servicio por Tipo de Servicio <br>2. Profesional por Especialidad|
 | **CUU/Epic** | 1. Informar promociones bancarias del mes <br>2. Notificar próximas visitas <br>3. Solicitud de Servicio  <br>4. Calificar Servicio|
 
-Adicionales
+Adicionales para Aprobación
 | Req | Detalle |
 | :--- | :--- |
 | **CRUD** | 1. CRUD Usuario  <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago <br>5. CRUD Zona|
