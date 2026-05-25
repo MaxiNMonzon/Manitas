@@ -44,14 +44,14 @@ Regularidad:
 | Req | Detalle |
 | :--- | :--- |
 | **CRUD simple** | 1. CRUD Usuario <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago|
-| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Profesional {depende de} CRUD Especialidad|
+| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Usuario {depende de} CRUD Especialidad|
 | **Listado + detalle** | 1. Servicio por Tipo de Servicio <br>2. Profesional por Especialidad|
 | **CUU/Epic** | 1. Informar promociones bancarias del mes <br>2. Notificar próximas visitas <br>3. Solicitud de Servicio  <br>4. Calificar Servicio|
 
 Adicionales para Aprobación
 | Req | Detalle |
 | :--- | :--- |
-| **CRUD** | 1. CRUD Usuario  <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago <br>5. CRUD Zona <br>6. CRUD Profesional|
+| **CRUD** | 1. CRUD Usuario  <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago <br>5. CRUD Zona|
 | **CUU/Epic** | 1. Solicitar servicio<br>2. Calificar Servicio <br>3. Confirmar servicio<br>4. Coordinar visita<br>5. Abonar servicio<br>6. Calificar profesional<br>7. Informar promociones bancarias del mes<br>8. Notificar próximas visitas <br>9. Solicitar Presupuesto|
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
