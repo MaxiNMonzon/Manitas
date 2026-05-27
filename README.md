@@ -44,7 +44,7 @@ Regularidad:
 | Req | Detalle |
 | :--- | :--- |
 | **CRUD simple** | 1. CRUD Usuario <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago|
-| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Usuario {depende de} CRUD Especialidad|
+| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Profesional {depende de} CRUD Especialidad|
 | **Listado + detalle** | 1. Servicio por Tipo de Servicio <br>2. Profesional por Especialidad|
 | **CUU/Epic** | 1. Informar promociones bancarias del mes <br>2. Notificar próximas visitas <br>3. Solicitud de Servicio  <br>4. Calificar Servicio|
 
