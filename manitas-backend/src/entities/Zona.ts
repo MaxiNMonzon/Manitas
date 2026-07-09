@@ -1,4 +1,4 @@
-import { Localidad } from './Localidad.entity';
+import { Localidad } from './Localidad';
 
 export class Zona {
   idZona: number;
@@ -7,11 +7,7 @@ export class Zona {
   // Relation one to many
   localidad: Localidad;
 
-  constructor(
-    idZona: number,
-    nombreZona: string,
-    localidad: Localidad
-  ) {
+  constructor(idZona: number, nombreZona: string, localidad: Localidad) {
     this.idZona = idZona;
     this.nombreZona = nombreZona;
     this.localidad = localidad;
