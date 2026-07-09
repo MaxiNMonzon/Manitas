@@ -1,3 +1,5 @@
+import { Zona } from './Zona';
+
 export class Localidad {
   idLocalidad: number;
   codigoPostal: string;
@@ -11,7 +13,7 @@ export class Localidad {
     idLocalidad: number,
     codigoPostal: string,
     nombreLocalidad: string,
-    provincia: string
+    provincia: string,
   ) {
     this.idLocalidad = idLocalidad;
     this.codigoPostal = codigoPostal;
@@ -24,5 +26,3 @@ export class Localidad {
     this.zonas.push(zona);
   }
 }
-
-import { Zona } from './Zona.entity';
