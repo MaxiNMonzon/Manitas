@@ -1,19 +1,18 @@
 import { Zona } from './Zona';
+import { Provincia } from './Provincia';
 
 export class Localidad {
   idLocalidad: number;
   codigoPostal: string;
   nombreLocalidad: string;
-  provincia: string;
-
-  // Relation one to many
+  provincia: Provincia;
   zonas: Zona[];
 
   constructor(
     idLocalidad: number,
     codigoPostal: string,
     nombreLocalidad: string,
-    provincia: string,
+    provincia: Provincia,
   ) {
     this.idLocalidad = idLocalidad;
     this.codigoPostal = codigoPostal;
