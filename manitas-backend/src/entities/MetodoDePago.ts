@@ -26,7 +26,7 @@ export class MetodoDePago {
     this.promocion.push(promo);
   }
 
-  agregarZona(cli: Cliente): void {
+  agregarCliente(cli: Cliente): void {
     this.cliente.push(cli);
   }
 }
