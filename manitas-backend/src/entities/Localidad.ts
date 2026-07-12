@@ -6,7 +6,6 @@ export class Localidad {
   nombreLocalidad: string;
   provincia: string;
 
-  // Relation one to many
   zonas: Zona[];
 
   constructor(
