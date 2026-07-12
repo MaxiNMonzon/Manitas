@@ -5,7 +5,9 @@ export class Localidad {
   idLocalidad: number;
   codigoPostal: string;
   nombreLocalidad: string;
+
   provincia: Provincia;
+
   zonas: Zona[];
 
   constructor(
