@@ -9,64 +9,49 @@ import {
 } from '@nestjs/common';
 
 import { Localidad } from '../entities/Localidad';
+import { LocalidadService } from '../services/LocalidadService';
 
 @Controller('localidades')
 export class LocalidadController {
 
-  private localidades: Localidad[] = [];
+  constructor(
+    private readonly localidadService: LocalidadService,
+  ) {}
 
   @Get()
-  obtenerLocalidades(): Localidad[] {
-    return this.localidades;
+  obtenerTodas(): Promise<Localidad[]> {
+    return this.localidadService.obtenerTodas();
   }
 
   @Get(':id')
-  obtenerLocalidad(@Param('id') id: string): Localidad | undefined {
-    return this.localidades.find(
-      localidad => localidad.idLocalidad === Number(id)
-    );
+  obtenerPorId(
+    @Param('id') id: string,
+  ): Promise<Localidad> {
+    return this.localidadService.obtenerPorId(Number(id));
   }
 
   @Post()
-  agregarLocalidad(@Body() localidad: Localidad): Localidad {
-    this.localidades.push(localidad);
-    return localidad;
+  agregar(
+    @Body() localidad: Localidad,
+  ): Promise<Localidad> {
+    return this.localidadService.agregar(localidad);
   }
 
   @Put(':id')
-  modificarLocalidad(
+  modificar(
     @Param('id') id: string,
-    @Body() datos: Localidad,
-  ): Localidad | undefined {
-
-    const localidad = this.localidades.find(
-      localidad => localidad.idLocalidad === Number(id)
+    @Body() datos: Partial<Localidad>,
+  ): Promise<Localidad> {
+    return this.localidadService.modificar(
+      Number(id),
+      datos,
     );
-
-    if (!localidad) {
-      return undefined;
-    }
-
-    localidad.codigoPostal = datos.codigoPostal;
-    localidad.nombreLocalidad = datos.nombreLocalidad;
-    localidad.provincia = datos.provincia;
-
-    return localidad;
   }
 
   @Delete(':id')
-  eliminarLocalidad(
+  eliminar(
     @Param('id') id: string,
-  ): Localidad | undefined {
-
-    const indice = this.localidades.findIndex(
-      localidad => localidad.idLocalidad === Number(id)
-    );
-
-    if (indice === -1) {
-      return undefined;
-    }
-
-    return this.localidades.splice(indice, 1)[0];
+  ): Promise<void> {
+    return this.localidadService.eliminar(Number(id));
   }
 }
