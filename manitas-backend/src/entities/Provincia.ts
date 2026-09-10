@@ -10,7 +10,7 @@ export class Provincia {
     this.nombreProvincia = nombreProvincia;
     this.localidad = [];
   }
-  agregarZona(local: Localidad): void {
+  agregarLocalidad(local: Localidad): void {
     this.localidad.push(local);
   }
 }
