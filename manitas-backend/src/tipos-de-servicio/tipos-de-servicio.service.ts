@@ -1,26 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTiposDeServicioDto } from './dto/create-tipos-de-servicio.dto';
 import { UpdateTiposDeServicioDto } from './dto/update-tipos-de-servicio.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TiposDeServicio } from './entities/tipos-de-servicio.entity';
 
 @Injectable()
 export class TiposDeServicioService {
-  create(createTiposDeServicioDto: CreateTiposDeServicioDto) {
-    return 'This action adds a new tiposDeServicio';
+constructor(
+  @InjectRepository(TiposDeServicio)
+  private readonly tiposDeServicioRepository: Repository<TiposDeServicio>,
+) {}
+
+  async create(createTiposDeServicioDto: CreateTiposDeServicioDto) {
+    return await this.tiposDeServicioRepository.save(createTiposDeServicioDto);
   }
 
-  findAll() {
-    return `This action returns all tiposDeServicio`;
+  async findAll() {
+    return await this.tiposDeServicioRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} tiposDeServicio`;
+  async findOne(id: number) {
+    return await this.tiposDeServicioRepository.findOneBy({ idServicio: id });
   }
 
-  update(id: number, updateTiposDeServicioDto: UpdateTiposDeServicioDto) {
-    return `This action updates a #${id} tiposDeServicio`;
+  async update(id: number, updateTiposDeServicioDto: UpdateTiposDeServicioDto) {
+    return await this.tiposDeServicioRepository.update(id, updateTiposDeServicioDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} tiposDeServicio`;
+  async remove(id: number) {
+    return await this.tiposDeServicioRepository.softDelete({ idServicio: id });
   }
 }
