@@ -1,4 +1,5 @@
 import { Column, DeleteDateColumn, Entity, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
+import { Especialidad } from "../../entities/Especialidad";
 
 @Entity()
 export class TiposDeServicio {
@@ -11,8 +12,8 @@ export class TiposDeServicio {
     @Column()
     descripcionServicio!: string;
     
-    //@ManyToOne(() => Especialidad, (especialidad) => especialidad.servicios)
-    //especialidad!: Especialidad;
+    @ManyToOne(() => Especialidad, (especialidad) => especialidad.servicios)
+    especialidad!: Especialidad;
 
     @DeleteDateColumn()
     deletedAt!: Date;
