@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { TiposDeServicioModule } from './tipos-de-servicio/tipos-de-servicio.module';
 import { EspecialidadModule } from './especialidad/especialidad.module';
 import { PrecioBaseModule } from './precio-base/precio-base.module';
+import { UsuarioModule } from './usuario/usuario.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { PrecioBaseModule } from './precio-base/precio-base.module';
     TiposDeServicioModule,
     EspecialidadModule,
     PrecioBaseModule,
+    UsuarioModule,
   ],
   controllers: [AppController],
   providers: [AppService],
