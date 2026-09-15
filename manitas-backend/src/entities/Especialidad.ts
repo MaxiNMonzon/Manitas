@@ -1,5 +1,5 @@
 import { Profesional } from './Profesional';
-import { TipoDeServicio } from './TipoDeServicio';
+import { TiposDeServicio } from './TiposDeServicio';
 
 export class Especialidad {
   idEspecialidad: number;
@@ -7,7 +7,7 @@ export class Especialidad {
   descripcionEspecialidad: string;
 
   profesionales: Profesional[];
-  servicios: TipoDeServicio[];
+  servicios: TiposDeServicio[];
 
 
   constructor(idEspecialidad: number, nombreEspecialidad: string, descripcionEspecialidad: string) {
@@ -20,7 +20,7 @@ export class Especialidad {
   agregarProfesional(profesional: Profesional): void {
     this.profesionales.push(profesional);
   }
-  agregarServicio(servicio: TipoDeServicio): void {
+  agregarServicio(servicio: TiposDeServicio): void {
     this.servicios.push(servicio);
   }
 }

@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { TiposDeServicioModule } from './tipos-de-servicio/tipos-de-servicio.module';
+import { EspecialidadModule } from './especialidad/especialidad.module';
+import { PrecioBaseModule } from './precio-base/precio-base.module';
+import { UsuarioModule } from './usuario/usuario.module';
 
 import { ClienteController } from './controllers/ClienteController';
 import { ClienteService } from './services/ClienteService';
@@ -39,40 +43,26 @@ import { ZonaService } from './services/ZonaService';
 import { Zona } from './entities/Zona';
 @Module({
   imports: [
-TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: '',
-      database: 'manitas',
-      autoLoadEntities: true,
-      //entities: [Localidad], con autoLoadEntities: true
-      //ya no es necesario especificar manualmente las entidades.
-      synchronize: true,
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'mysql',
+        host: config.get('DB_HOST'),
+        port: config.get('DB_PORT'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: true,
+      }),
     }),
-
-    TypeOrmModule.forFeature([
-      Cliente, Especialidad, Localidad, MetodoDePago,
-      Profesional, Promocion, Provincia,
-      SolicitudDeServicio, TipoDeServicio, Usuario, Zona
-    ]),
-
+    TiposDeServicioModule,
+    EspecialidadModule,
+    PrecioBaseModule,
+    UsuarioModule,
   ],
-  controllers: [AppController, ClienteController,
-    EspecialidadController, LocalidadController,
-    MetodoDePagoController, ProfesionalController, 
-    PromocionController, ProvinciaController, 
-    SolicitudDeServicioController, TipoDeServicioController,
-    UsuarioController, ZonaController
-
-  ],
-  providers: [AppService, 
-    ClienteService, EspecialidadService, LocalidadService, 
-    MetodoDePagoService, ProfesionalService, PromocionService, 
-    ProvinciaService, SolicitudDeServicioService, TipoDeServicioService,
-    UsuarioService, ZonaService
-    
-  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
