@@ -19,6 +19,6 @@ export class PrecioBase {
   @ManyToOne(() => Especialidad, (especialidad) => especialidad.precios)
   especialidad!: Especialidad;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
   deleteAt!: Date;
 }

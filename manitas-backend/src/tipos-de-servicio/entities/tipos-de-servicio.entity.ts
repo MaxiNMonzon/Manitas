@@ -1,5 +1,5 @@
 import { Column, DeleteDateColumn, Entity, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
-import { Especialidad } from "../../entities/Especialidad";
+import { Especialidad } from "../../especialidad/entities/especialidad.entity";
 
 @Entity()
 export class TiposDeServicio {
@@ -15,7 +15,7 @@ export class TiposDeServicio {
     @ManyToOne(() => Especialidad, (especialidad) => especialidad.servicios)
     especialidad!: Especialidad;
 
-    @DeleteDateColumn()
+    @DeleteDateColumn()  //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
     deletedAt!: Date;
 
 }
