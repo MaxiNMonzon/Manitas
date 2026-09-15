@@ -21,3 +21,4 @@ export class Profesional extends Usuario {
     this.zonas.push(zona);
     }
 }
+
