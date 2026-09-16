@@ -7,6 +7,9 @@ import { TipoDeServicioModule } from './tipo-de-servicio/tipo-de-servicio.module
 import { EspecialidadModule } from './especialidad/especialidad.module';
 import { PrecioBaseModule } from './precio-base/precio-base.module';
 import { UsuarioModule } from './usuario/usuario.module';
+import { LocalidadModule } from './localidad/localidad.module';
+import { ProvinciaModule } from './provincia/provincia.module';
+import { ZonaModule } from './zona/zona.module';
 
 /*
 --Imports innecesarios que se usaron cuando se resolvió por capas.
@@ -64,6 +67,9 @@ import { Zona } from './entities/Zona';*/
     EspecialidadModule,
     PrecioBaseModule,
     UsuarioModule,
+    LocalidadModule,
+    ProvinciaModule,
+    ZonaModule
   ],
   controllers: [AppController],
   providers: [AppService],

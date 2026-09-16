@@ -3,6 +3,7 @@ import { UsuarioService } from './usuario.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 //Se implementa el controlador del usuario con las acciones que gestionará el mismo.
+//las acciones se realizan sobre el controlador del usuario.
 @Controller('usuario')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}

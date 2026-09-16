@@ -3,14 +3,14 @@ import { Localidad } from './Localidad';
 export class Provincia {
   idProvincia: number;
   nombreProvincia: string;
-  localidad: Localidad[];
+  localidades: Localidad[];
 
   constructor(idProvincia: number, nombreProvincia: string) {
     this.idProvincia = idProvincia;
     this.nombreProvincia = nombreProvincia;
-    this.localidad = [];
+    this.localidades = [];
   }
   agregarLocalidad(local: Localidad): void {
-    this.localidad.push(local);
+    this.localidades.push(local);
   }
 }
