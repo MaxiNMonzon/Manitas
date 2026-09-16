@@ -15,7 +15,7 @@ export class CreateUsuarioDto {
     correo!: string;
 
     @IsString()
-    @MinLength(8)                //???????????????
+    @MinLength(8)         //la contraseña tiene una longitud mínima de 8 caracteres.
     contraseña!: string;
     
     @IsPositive()

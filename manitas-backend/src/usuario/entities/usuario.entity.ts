@@ -3,10 +3,10 @@ import { Column, Entity, PrimaryGeneratedColumn, DeleteDateColumn } from "typeor
 @Entity()
 export class Usuario {
     @PrimaryGeneratedColumn()
-    idUsuario!: number;               //AVISAR!!!!!!!!!!
+    idUsuario!: number;  //El id debería ser único para cada usuario.
     
     @Column()
-    dni!: number;
+    dni!: number; //Es el mismo dni para dos números de cuenta distintos: cuenta cliente y cuenta profesional.
 
     @Column()
     nombre!: string;

@@ -31,4 +31,3 @@ export class SolicitudDeServicio {
     this.cliente = cliente;
   }
 }
-

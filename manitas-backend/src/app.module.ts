@@ -3,11 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TiposDeServicioModule } from './tipos-de-servicio/tipos-de-servicio.module';
+import { TipoDeServicioModule } from './tipo-de-servicio/tipo-de-servicio.module';
 import { EspecialidadModule } from './especialidad/especialidad.module';
 import { PrecioBaseModule } from './precio-base/precio-base.module';
 import { UsuarioModule } from './usuario/usuario.module';
 
+/*
+--Imports innecesarios que se usaron cuando se resolvió por capas.
 import { ClienteController } from './controllers/ClienteController';
 import { ClienteService } from './services/ClienteService';
 import { Cliente } from './entities/Cliente';
@@ -40,7 +42,7 @@ import { UsuarioService } from './services/UsuarioService';
 import { Usuario } from './entities/Usuario';
 import { ZonaController } from './controllers/ZonaController';
 import { ZonaService } from './services/ZonaService';
-import { Zona } from './entities/Zona';
+import { Zona } from './entities/Zona';*/
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -53,11 +55,12 @@ import { Zona } from './entities/Zona';
         username: config.get('DB_USERNAME'),
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
+        entities: [__dirname + '/**/*.entity{.ts,.js}'], //también hubiera sido válido autoLoadEntities: true,
+        //En la línea 58 las entidades se generan automáticamente.
+        synchronize: true, //En esta línea las entidades se sincronizan con los controladores y servicios.
       }),
     }),
-    TiposDeServicioModule,
+    TipoDeServicioModule,
     EspecialidadModule,
     PrecioBaseModule,
     UsuarioModule,

@@ -1,9 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
-
 import { Zona } from './Zona';
 import { Provincia } from './Provincia';
 
-@Entity()
 export class Localidad {
   idLocalidad: number;
   codigoPostal: string;
