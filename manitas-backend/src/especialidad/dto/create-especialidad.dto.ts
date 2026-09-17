@@ -1,4 +1,4 @@
-import { IsInt, IsPositive, IsString } from "class-validator";
+import { IsString } from "class-validator";
 
 export class CreateEspecialidadDto {
 
@@ -7,13 +7,5 @@ export class CreateEspecialidadDto {
 
     @IsString()
     descripcionEspecialidad!: string;
-    
-    @IsInt()
-    @IsPositive()
-    idServicio!: number;
-    
-    @IsInt()
-    @IsPositive()
-    idProfesional!: number;
 
 }
