@@ -7,6 +7,7 @@ import { TiposDeServicioModule } from './tipos-de-servicio/tipos-de-servicio.mod
 import { EspecialidadModule } from './especialidad/especialidad.module';
 import { PrecioBaseModule } from './precio-base/precio-base.module';
 import { UsuarioModule } from './usuario/usuario.module';
+import { LocalidadModule } from './localidad/localidad.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsuarioModule } from './usuario/usuario.module';
     EspecialidadModule,
     PrecioBaseModule,
     UsuarioModule,
+    LocalidadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
