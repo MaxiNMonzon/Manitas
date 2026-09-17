@@ -8,8 +8,4 @@ export class CreateEspecialidadDto {
     @IsString()
     descripcionEspecialidad!: string;
     
-    @IsInt()
-    @IsPositive()
-    idProfesional!: number;
-
 }
