@@ -5,9 +5,5 @@ export class CreateProvinciaDto {
     @IsString()
     nombreProvincia!: string;
     
-    @IsInt()
-    @IsPositive()
-    idLocalidad!: number;
-
 
 }

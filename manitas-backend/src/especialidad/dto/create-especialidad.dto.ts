@@ -10,10 +10,6 @@ export class CreateEspecialidadDto {
     
     @IsInt()
     @IsPositive()
-    idServicio!: number;
-    
-    @IsInt()
-    @IsPositive()
     idProfesional!: number;
 
 }
