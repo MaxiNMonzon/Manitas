@@ -1,10 +1,12 @@
 import { Zona } from './Zona';
+import { Provincia } from './Provincia';
 
 export class Localidad {
   idLocalidad: number;
   codigoPostal: string;
   nombreLocalidad: string;
-  provincia: string;
+
+  provincia: Provincia;
 
   zonas: Zona[];
 
@@ -12,7 +14,7 @@ export class Localidad {
     idLocalidad: number,
     codigoPostal: string,
     nombreLocalidad: string,
-    provincia: string,
+    provincia: Provincia,
   ) {
     this.idLocalidad = idLocalidad;
     this.codigoPostal = codigoPostal;
