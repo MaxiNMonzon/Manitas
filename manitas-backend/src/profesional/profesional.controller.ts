@@ -1,0 +1,46 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+} from '@nestjs/common';
+import { ProfesionalService } from './profesional.service';
+import { CreateProfesionalDto } from './dto/create-profesional.dto';
+import { UpdateProfesionalDto } from './dto/update-profesional.dto';
+
+@Controller('profesional')
+export class ProfesionalController {
+  constructor(private readonly profesionalService: ProfesionalService) {}
+
+  @Post()
+  create(@Body() createProfesionalDto: CreateProfesionalDto) {
+    return this.profesionalService.create(createProfesionalDto);
+  }
+
+  @Get()
+  findAll() {
+    return this.profesionalService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.profesionalService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateProfesionalDto: UpdateProfesionalDto,
+  ) {
+    return this.profesionalService.update(id, updateProfesionalDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.profesionalService.remove(id);
+  }
+}
