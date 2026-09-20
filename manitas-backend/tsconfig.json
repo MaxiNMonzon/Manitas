@@ -14,7 +14,6 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "ignoreDeprecations": "6.0",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -22,5 +21,7 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+"include": ["src/**/*", "**/*.ts"],
+"exclude": ["node_modules"]
 }
