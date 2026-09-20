@@ -1,28 +1,40 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 //import { UsuarioModule } from './usuario/usuario.module'; //EVALUAR SI VA ADMIN O SE ELIMINA
 import { ClienteModule } from './cliente/cliente.module';
 import { ProfesionalModule } from './profesional/profesional.module';
+import { TiposDeServicioModule } from './tipos-de-servicio/tipos-de-servicio.module';
+import { EspecialidadModule } from './especialidad/especialidad.module';
+import { PrecioBaseModule } from './precio-base/precio-base.module';
+import { UsuarioModule } from './usuario/usuario.module';
+import { LocalidadModule } from './localidad/localidad.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '3306', 10),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      autoLoadEntities: true,
-      synchronize: true, // Auto-crea las tablas en el MySQL local (YO YA LO TENGO INSTALADO)
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'mysql',
+        host: config.get('DB_HOST'),
+        port: config.get('DB_PORT'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: true,
+      }),
     }),
-    //UsuarioModule, //EVALUAR SI VA ADMIN O SE ELIMINA
+    EspecialidadModule,
+    PrecioBaseModule,
+    LocalidadModule,
     ClienteModule,
     ProfesionalModule,
+    UsuarioModule,
+    TiposDeServicioModule,
   ],
   controllers: [AppController],
   providers: [AppService],
