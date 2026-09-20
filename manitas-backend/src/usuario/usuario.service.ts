@@ -21,7 +21,7 @@ constructor(
   }
 
   async findOne(id: number) {
-    return await this.usuarioRepository.findOneBy({idUsuario: id});
+    return await this.usuarioRepository.findOneBy({id: id});
   }
 
   async  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
@@ -29,6 +29,6 @@ constructor(
   }
 
   async remove(id: number) {
-    return await this.usuarioRepository.softDelete({idUsuario: id});
+    return await this.usuarioRepository.softDelete({id: id});
   }
 }
