@@ -5,10 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Localidad } from './entities/localidad.entity';
 import { ProvinciaModule } from '../provincia/provincia.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([Localidad]), ProvinciaModule ],  
+  imports: [TypeOrmModule.forFeature([Localidad]), ProvinciaModule ],
   controllers: [LocalidadController],
   providers: [LocalidadService],
+  exports: [TypeOrmModule],
 })
 export class LocalidadModule {}
-
-// ver como es la relacion de m a m con zona
