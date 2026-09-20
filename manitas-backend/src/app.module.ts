@@ -8,6 +8,9 @@ import { EspecialidadModule } from './especialidad/especialidad.module';
 import { PrecioBaseModule } from './precio-base/precio-base.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { LocalidadModule } from './localidad/localidad.module';
+import { ZonaModule } from './zona/zona.module';
+import { PromocionModule } from './promocion/promocion.module';
+import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { LocalidadModule } from './localidad/localidad.module';
     PrecioBaseModule,
     UsuarioModule,
     LocalidadModule,
+    ZonaModule,
+    PromocionModule,
+    MetodoDePagoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
