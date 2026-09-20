@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
 import { Provincia } from "../../provincia/entities/provincia.entity";
+import { Zona } from '../../zona/entities/zona.entity';
 
 @Entity()
 export class Localidad {
@@ -15,6 +16,6 @@ export class Localidad {
     @ManyToOne(() => Provincia, (provincia) => provincia.localidades)
     provincia!: Provincia;
     
-    //@OneToMany()
-    //zonas: Zona;
+    @OneToMany(() => Zona, (zona) => zona.localidad)
+  zonas!: Zona[];
 }

@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ClienteModule } from './cliente/cliente.module';
+import { ProfesionalModule } from './profesional/profesional.module';
 import { TipoDeServicioModule } from './tipo-de-servicio/tipo-de-servicio.module';
 import { EspecialidadModule } from './especialidad/especialidad.module';
 import { PrecioBaseModule } from './precio-base/precio-base.module';
@@ -48,21 +50,27 @@ import { ZonaService } from './services/ZonaService';
 import { Zona } from './entities/Zona';*/
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ 
+      isGlobal: true,
+     envFilePath: '.env', // Asegura la lectura explícita 
+     }),
     TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'mysql',
-        host: config.get('DB_HOST'),
-        port: config.get('DB_PORT'),
-        username: config.get('DB_USERNAME'),
-        password: config.get('DB_PASSWORD'),
-        database: config.get('DB_NAME'),
+        host: config.get<string>('DB_HOST', 'localhost'),
+        port: config.get<number>('DB_PORT', 3306),
+        username: config.get<string>('DB_USERNAME', 'root'),
+        password: config.get<string>('DB_PASSWORD', 'root'),
+        database: config.get<string>('DB_NAME', 'manitas'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'], //también hubiera sido válido autoLoadEntities: true,
         //En la línea 58 las entidades se generan automáticamente.
         synchronize: true, //En esta línea las entidades se sincronizan con los controladores y servicios.
       }),
     }),
+    ClienteModule,
+    ProfesionalModule,
     TipoDeServicioModule,
     EspecialidadModule,
     PrecioBaseModule,

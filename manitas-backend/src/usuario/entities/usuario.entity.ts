@@ -1,31 +1,39 @@
 import { Column, Entity, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
 
-@Entity()
-export class Usuario {
+
+@Entity('usuario')
+export abstract class Usuario {
     @PrimaryGeneratedColumn()
-    idUsuario!: number;  //El id debería ser único para cada usuario.
+    id!: number;  //El id debería ser único para cada usuario.
     
-    @Column()
+    @Column({ type: 'int' })
     dni!: number; //Es el mismo dni para dos números de cuenta distintos: cuenta cliente y cuenta profesional.
 
-    @Column()
+    @Column({ type: 'varchar', length: 100 })
     nombre!: string;
 
-    @Column()
+    @Column({ type: 'varchar', length: 100 })
     apellido!: string;
     
-    @Column()
+    @Column({ type: 'varchar', length: 150, unique: true })
     correo!: string;
     
-    @Column()
+    @Column({ type: 'varchar', length: 255 })
     contraseña!: string;
     
-    @Column()
+    @Column({ type: 'bigint' })
     telefono!: number;
     
-    @Column()
+    @Column({ type: 'varchar', length: 50, default: 'cliente' })
     rol!: string;
+
+    @Column({ type: 'timestamp', nullable: true, default: null })
+    fechaBaja!: Date | null;
+
+    @Column({ type: 'timestamp', nullable: true, default: null })
+    fechaRehabilitacion!: Date | null;
 
     @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
     deleteAt!: Date;
 }
+
