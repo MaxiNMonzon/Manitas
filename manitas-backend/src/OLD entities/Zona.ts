@@ -1,26 +1,28 @@
 import { Localidad } from './Localidad';
-import { Profesional } from './Profesional';
 import { Cliente } from './Cliente';
+import { Profesional } from './Profesional';
+
 
 export class Zona {
   idZona: number;
   nombreZona: string;
-
   localidad: Localidad;
-  clientes: Cliente[];
-  profesionales: Profesional[];
-  
+  cliente: Cliente[];
+  profesional: Profesional[];
+
   constructor(idZona: number, nombreZona: string, localidad: Localidad) {
     this.idZona = idZona;
     this.nombreZona = nombreZona;
     this.localidad = localidad;
-    this.clientes = [];
-    this.profesionales = [];
+
+    this.cliente = [];
+    this.profesional = [];
+
   }
   agregarCliente(cliente: Cliente): void {
-    this.clientes.push(cliente);
+    this.cliente.push(cliente);
   } 
   agregarProfesional(profesional: Profesional): void {
-    this.profesionales.push(profesional);
+    this.profesional.push(profesional);
   } 
 }
