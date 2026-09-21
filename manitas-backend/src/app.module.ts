@@ -11,6 +11,7 @@ import { LocalidadModule } from './localidad/localidad.module';
 import { ZonaModule } from './zona/zona.module';
 import { PromocionModule } from './promocion/promocion.module';
 import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
+import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-servicio.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
     ZonaModule,
     PromocionModule,
     MetodoDePagoModule,
+    SolicitudDeServicioModule,
   ],
   controllers: [AppController],
   providers: [AppService],
