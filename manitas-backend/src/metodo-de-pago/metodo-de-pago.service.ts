@@ -1,26 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateMetodoDePagoDto } from './dto/create-metodo-de-pago.dto';
 import { UpdateMetodoDePagoDto } from './dto/update-metodo-de-pago.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
+import { MetodoDePago } from './entities/metodo-de-pago.entity';
+import { Promocion } from '../promocion/entities/promocion.entity';
 
 @Injectable()
 export class MetodoDePagoService {
-  create(createMetodoDePagoDto: CreateMetodoDePagoDto) {
-    return 'This action adds a new metodoDePago';
+constructor(
+  @InjectRepository(MetodoDePago)
+  private readonly metodoDePagoRepository: Repository<MetodoDePago>,
+
+  @InjectRepository(Promocion)
+  private readonly promocionRepository: Repository<Promocion>,
+) {}
+
+  async create(createMetodoDePagoDto: CreateMetodoDePagoDto) {
+    let promociones: Promocion[] = [];
+    if (createMetodoDePagoDto.idsPromociones && createMetodoDePagoDto.idsPromociones.length > 0) {
+      promociones = await this.promocionRepository.findBy({
+        idPromocion: In(createMetodoDePagoDto.idsPromociones),
+      });
+
+      if (promociones.length !== createMetodoDePagoDto.idsPromociones.length) {
+        throw new BadRequestException('Alguna de las promociones indicadas no existen');
+      }
+    }
+
+    return await this.metodoDePagoRepository.save({
+      ...createMetodoDePagoDto,
+      promociones,
+    });
   }
 
-  findAll() {
-    return `This action returns all metodoDePago`;
+  async findAll() {
+    return await this.metodoDePagoRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} metodoDePago`;
+  async findOne(id: number) {
+    return await this.metodoDePagoRepository.findOneBy({ idFormaPago: id });
   }
 
-  update(id: number, updateMetodoDePagoDto: UpdateMetodoDePagoDto) {
-    return `This action updates a #${id} metodoDePago`;
+  async update(id: number, updateMetodoDePagoDto: UpdateMetodoDePagoDto) {
+    return await this.metodoDePagoRepository.update(id, updateMetodoDePagoDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} metodoDePago`;
+  async remove(id: number) {
+    return await this.metodoDePagoRepository.softDelete({ idFormaPago: id });
   }
 }
