@@ -12,6 +12,8 @@ import { ZonaModule } from './zona/zona.module';
 import { PromocionModule } from './promocion/promocion.module';
 import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
 import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-servicio.module';
+import { ClienteModule } from './cliente/cliente.module';
+import { ProfesionalModule } from './profesional/profesional.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-
     PromocionModule,
     MetodoDePagoModule,
     SolicitudDeServicioModule,
+    ClienteModule,
+    ProfesionalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
