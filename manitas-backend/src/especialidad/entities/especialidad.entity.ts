@@ -16,8 +16,6 @@ export class Especialidad {
     @OneToMany (() => TipoDeServicio, (tipoDeServicio) => tipoDeServicio.especialidad)
     servicios!: TipoDeServicio[];
 
-    //profesionales: Profesional[];
-
     @OneToMany(() => PrecioBase, (precioBase) => precioBase.especialidad)
     precios!: PrecioBase[];
 

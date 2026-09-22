@@ -1,4 +1,4 @@
-import { IsInt, IsPositive, IsString } from "class-validator";
+import { IsString } from "class-validator";
 
 export class CreateEspecialidadDto {
 
@@ -9,3 +9,4 @@ export class CreateEspecialidadDto {
     descripcionEspecialidad!: string;
     
 }
+

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateTipoDeServicioDto } from './dto/create-tipo-de-servicio.dto';
 import { UpdateTipoDeServicioDto } from './dto/update-tipo-de-servicio.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -35,15 +35,23 @@ constructor(
     return await this.tipoDeServicioRepository.find();
   }
 
-  async findOne(id: number) {
-    return await this.tipoDeServicioRepository.findOneBy({ idServicio: id });
+
+   async findOne(id: number) {
+    const tipoDeServicio = await this.tipoDeServicioRepository.findOneBy({ idServicio: id });
+    if (!tipoDeServicio) {
+      throw new NotFoundException(`TiposDeServicio con ID ${id} no encontrado`);
+    }
+    return tipoDeServicio;
   }
 
-  async update(id: number, updateTipoDeServicioDto: UpdateTipoDeServicioDto) {
-    return await this.tipoDeServicioRepository.update(id, updateTipoDeServicioDto);
+   async update(id: number, updateTipoDeServicioDto: UpdateTipoDeServicioDto) {
+    const tipoDeServicio = await this.findOne(id);
+    this.tipoDeServicioRepository.merge(tipoDeServicio, updateTipoDeServicioDto);
+    return await this.tipoDeServicioRepository.save(tipoDeServicio);
   }
 
   async remove(id: number) {
     return await this.tipoDeServicioRepository.softDelete({ idServicio: id });
   }
+
 }

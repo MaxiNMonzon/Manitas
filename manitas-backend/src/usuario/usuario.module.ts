@@ -21,6 +21,7 @@ import { RolesGuard } from './guards/roles.guard';
     JwtAuthGuard,
     RolesGuard,
   ],  //El usuario ya gestiona sus servicios.
-  exports: [UsuarioService, JwtModule],
+  exports: [UsuarioService, JwtModule, TypeOrmModule],
+  
 })//Los controladores y proveedores de servicios se generan automáticamente.
 export class UsuarioModule {}

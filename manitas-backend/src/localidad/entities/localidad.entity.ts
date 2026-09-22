@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn, ManyToOne } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, ManyToOne, DeleteDateColumn } from "typeorm";
 import { Provincia } from "../../provincia/entities/provincia.entity";
 import { Zona } from '../../zona/entities/zona.entity';
 
@@ -17,5 +17,8 @@ export class Localidad {
     provincia!: Provincia;
     
     @OneToMany(() => Zona, (zona) => zona.localidad)
-  zonas!: Zona[];
+    zonas!: Zona[];
+
+    @DeleteDateColumn()  //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    deletedAt!: Date;
 }

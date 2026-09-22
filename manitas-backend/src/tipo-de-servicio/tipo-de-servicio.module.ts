@@ -9,6 +9,7 @@ import { EspecialidadModule } from '../especialidad/especialidad.module';
   imports: [TypeOrmModule.forFeature([TipoDeServicio]), EspecialidadModule],
   controllers: [TipoDeServicioController],
   providers: [TipoDeServicioService],
+  exports: [TypeOrmModule],
 }) //importa las modulos TiposDeServicio y Especialidad y crea automáticamente 
 //el controlador y proveedor de servicio de TiposDeServicio.
 export class TipoDeServicioModule {}

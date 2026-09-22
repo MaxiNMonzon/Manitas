@@ -177,7 +177,7 @@ describe('UsuarioController', () => {
 
   describe('rehabilitarUsuario', () => {
     it('debe invocar rehabilitarUsuario en el servicio enviando el DTO', async () => {
-      const dto: RehabilitarUsuarioDto = { id: 5 };
+      const dto: RehabilitarUsuarioDto = { idUsuario: 5 };
       const respuestaEsperada = { message: 'El usuario con ID 5 ha sido rehabilitado exitosamente' };
       mockUsuarioService.rehabilitarUsuario.mockResolvedValue(respuestaEsperada);
 

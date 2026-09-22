@@ -4,7 +4,7 @@ import { Column, Entity, PrimaryGeneratedColumn, DeleteDateColumn } from "typeor
 @Entity('usuario')
 export abstract class Usuario {
     @PrimaryGeneratedColumn()
-    id!: number;  //El id debería ser único para cada usuario.
+    idUsuario!: number;  //El id debería ser único para cada usuario.
     
     @Column({ type: 'int' })
     dni!: number; //Es el mismo dni para dos números de cuenta distintos: cuenta cliente y cuenta profesional.

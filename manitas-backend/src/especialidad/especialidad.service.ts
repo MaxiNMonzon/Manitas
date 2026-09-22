@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEspecialidadDto } from './dto/create-especialidad.dto';
 import { UpdateEspecialidadDto } from './dto/update-especialidad.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,11 +21,17 @@ constructor(
   }
 
   async findOne(id: number) {
-    return await this.especialidadRepository.findOneBy({idEspecialidad: id});
+    const especialidad = await this.especialidadRepository.findOneBy({idEspecialidad: id});
+    if (!especialidad) {
+      throw new NotFoundException(`Especialidad con ID ${id} no encontrada`);
+    }
+    return especialidad;
   }
 
   async update(id: number, updateEspecialidadDto: UpdateEspecialidadDto) {
-    return await this.especialidadRepository.update(id, updateEspecialidadDto);
+    const especialidad = await this.findOne(id);
+    this.especialidadRepository.merge(especialidad, updateEspecialidadDto);
+    return await this.especialidadRepository.save(especialidad);
   }
 
   async remove(id: number) {

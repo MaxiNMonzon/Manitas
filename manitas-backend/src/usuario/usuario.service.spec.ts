@@ -70,10 +70,10 @@ describe('UsuarioService', () => {
 
     it('debe registrar un usuario con fechaBaja y fechaRehabilitacion en null por defecto', async () => {
       repository.findOne.mockResolvedValue(null);
-      repository.create.mockReturnValue({ ...registerDto, id: 1 } as Usuario);
+      repository.create.mockReturnValue({ ...registerDto, idUsuario: 1 } as Usuario);
       repository.save.mockResolvedValue({
         ...registerDto,
-        id: 1,
+        idUsuario: 1,
         contraseña: 'hashed_password',
         fechaBaja: null,
         fechaRehabilitacion: null,
@@ -88,11 +88,11 @@ describe('UsuarioService', () => {
       expect(resultado).not.toHaveProperty('contraseña');
       expect(resultado.fechaBaja).toBeNull();
       expect(resultado.fechaRehabilitacion).toBeNull();
-      expect(resultado.id).toBe(1);
+      expect(resultado.idUsuario).toBe(1);
     });
 
     it('debe lanzar ConflictException si el correo ya existe', async () => {
-      repository.findOne.mockResolvedValue({ id: 1, correo: registerDto.correo } as Usuario);
+      repository.findOne.mockResolvedValue({ idUsuario: 1, correo: registerDto.correo } as Usuario);
 
       await expect(service.registrar(registerDto)).rejects.toThrow(ConflictException);
     });
@@ -107,7 +107,7 @@ describe('UsuarioService', () => {
     it('debe permitir login si fechaBaja es null', async () => {
       const hashedPassword = await bcrypt.hash('123456', 10);
       const usuarioActivo = {
-        id: 1,
+        idUsuario: 1,
         correo: 'juan@ejemplo.com',
         contraseña: hashedPassword,
         rol: 'cliente',
@@ -123,7 +123,7 @@ describe('UsuarioService', () => {
 
       expect(resultado).toEqual({ accessToken: 'mocked_jwt_token' });
       expect(jwtService.sign).toHaveBeenCalledWith({
-        sub: usuarioActivo.id,
+        sub: usuarioActivo.idUsuario,
         correo: usuarioActivo.correo,
         rol: usuarioActivo.rol,
         dni: usuarioActivo.dni,
@@ -133,7 +133,7 @@ describe('UsuarioService', () => {
     it('debe rechazar el login con UnauthorizedException si el usuario tiene fechaBaja asignada', async () => {
       const hashedPassword = await bcrypt.hash('123456', 10);
       const usuarioInhabilitado = {
-        id: 1,
+        idUsuario: 1,
         correo: 'juan@ejemplo.com',
         contraseña: hashedPassword,
         fechaBaja: new Date(),
@@ -154,7 +154,7 @@ describe('UsuarioService', () => {
     it('debe lanzar UnauthorizedException si la contraseña es incorrecta', async () => {
       const hashedPassword = await bcrypt.hash('clave_diferente', 10);
       repository.findOne.mockResolvedValue({
-        id: 1,
+        idUsuario: 1,
         correo: 'juan@ejemplo.com',
         contraseña: hashedPassword,
       } as Usuario);
@@ -169,7 +169,7 @@ describe('UsuarioService', () => {
     };
 
     it('debe generar el token y enviar el correo si el usuario está activo', async () => {
-      const usuarioActivo = { id: 1, correo: 'juan@ejemplo.com', fechaBaja: null } as Usuario;
+      const usuarioActivo = { idUsuario: 1, correo: 'juan@ejemplo.com', fechaBaja: null } as Usuario;
 
       repository.findOne.mockResolvedValue(usuarioActivo);
       jwtService.sign.mockReturnValue('token_reset_mock');
@@ -199,7 +199,7 @@ describe('UsuarioService', () => {
     };
 
     it('debe actualizar la contraseña del usuario correctamente', async () => {
-      const usuarioMock = { id: 1, contraseña: 'old_password', fechaBaja: null } as Usuario;
+      const usuarioMock = { idUsuario: 1, contraseña: 'old_password', fechaBaja: null } as Usuario;
 
       jwtService.verifyAsync.mockResolvedValue({ sub: 1, tipo: 'reset' });
       repository.findOne.mockResolvedValue(usuarioMock);
@@ -221,7 +221,7 @@ describe('UsuarioService', () => {
 
   describe('darBajaPropia', () => {
     it('debe asignar la fecha actual a fechaBaja cuando el usuario solicita su baja', async () => {
-      const usuario = { id: 1, fechaBaja: null } as Usuario;
+      const usuario = { idUsuario: 1, fechaBaja: null } as Usuario;
       repository.findOne.mockResolvedValue(usuario);
       repository.save.mockImplementation(async (u) => u as Usuario);
 
@@ -232,7 +232,7 @@ describe('UsuarioService', () => {
     });
 
     it('debe lanzar BadRequestException si el usuario ya estaba dado de baja', async () => {
-      const usuarioDadoDeBaja = { id: 1, fechaBaja: new Date() } as Usuario;
+      const usuarioDadoDeBaja = { idUsuario: 1, fechaBaja: new Date() } as Usuario;
       repository.findOne.mockResolvedValue(usuarioDadoDeBaja);
 
       await expect(service.darBajaPropia(1)).rejects.toThrow(BadRequestException);
@@ -241,7 +241,7 @@ describe('UsuarioService', () => {
 
   describe('darBajaPorAdmin', () => {
     it('debe inhabilitar a cualquier usuario asignando fechaBaja', async () => {
-      const usuario = { id: 2, fechaBaja: null } as Usuario;
+      const usuario = { idUsuario: 2, fechaBaja: null } as Usuario;
       repository.findOne.mockResolvedValue(usuario);
       repository.save.mockImplementation(async (u) => u as Usuario);
 
@@ -260,11 +260,11 @@ describe('UsuarioService', () => {
 
   describe('rehabilitarUsuario', () => {
     const rehabilitarDto: RehabilitarUsuarioDto = {
-      id: 1,
+      idUsuario: 1,
     };
 
     it('debe asignar fechaRehabilitacion y limpiar fechaBaja a null', async () => {
-      const usuarioDadoDeBaja = { id: 1, fechaBaja: new Date(), fechaRehabilitacion: null } as Usuario;
+      const usuarioDadoDeBaja = { idUsuario: 1, fechaBaja: new Date(), fechaRehabilitacion: null } as Usuario;
       repository.findOne.mockResolvedValue(usuarioDadoDeBaja);
       repository.save.mockImplementation(async (u) => u as Usuario);
 
@@ -276,7 +276,7 @@ describe('UsuarioService', () => {
     });
 
     it('debe lanzar BadRequestException si el usuario ya está activo', async () => {
-      const usuarioActivo = { id: 1, fechaBaja: null, fechaRehabilitacion: null } as Usuario;
+      const usuarioActivo = { idUsuario: 1, fechaBaja: null, fechaRehabilitacion: null } as Usuario;
       repository.findOne.mockResolvedValue(usuarioActivo);
 
       await expect(service.rehabilitarUsuario(rehabilitarDto)).rejects.toThrow(BadRequestException);

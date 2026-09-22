@@ -29,7 +29,7 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync(token);
 
       // Verificar si el usuario fue dado de baja posteriormente
-      const usuario = await this.usuarioRepository.findOne({ where: { id: payload.sub } });
+      const usuario = await this.usuarioRepository.findOne({ where: { idUsuario: payload.sub } });
       if (!usuario || usuario.fechaBaja !== null) {
         throw new UnauthorizedException('La cuenta de usuario se encuentra inhabilitada');
       }

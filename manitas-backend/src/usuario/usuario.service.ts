@@ -89,7 +89,7 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     }
 
     const payload = {
-      sub: usuario.id,
+      sub: usuario.idUsuario,
       correo: usuario.correo,
       rol: usuario.rol,
       dni: usuario.dni,
@@ -100,8 +100,8 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     };
   }
 
-  async darBajaPropia(id: number): Promise<{ message: string }> {
-    const usuario = await this.usuarioRepository.findOne({ where: { id } });
+  async darBajaPropia(idUsuario: number): Promise<{ message: string }> {
+    const usuario = await this.usuarioRepository.findOne({ where: { idUsuario } });
     if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
     }
@@ -116,8 +116,8 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     return { message: 'Cuenta dada de baja exitosamente' };
   }
 
-  async darBajaPorAdmin(id: number): Promise<{ message: string }> {
-    const usuario = await this.usuarioRepository.findOne({ where: { id } });
+  async darBajaPorAdmin(idUsuario: number): Promise<{ message: string }> {
+    const usuario = await this.usuarioRepository.findOne({ where: { idUsuario } });
     if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
     }
@@ -125,12 +125,12 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     usuario.fechaBaja = new Date();
     await this.usuarioRepository.save(usuario);
 
-    return { message: `El usuario con ID ${id} ha sido inhabilitado` };
+    return { message: `El usuario con ID ${idUsuario} ha sido inhabilitado` };
   }
 
   // Método para que el Administrador reactive una cuenta inhabilitada
   async rehabilitarUsuario(dto: RehabilitarUsuarioDto): Promise<{ message: string }> {
-    const usuario = await this.usuarioRepository.findOne({ where: { id: dto.id } });
+    const usuario = await this.usuarioRepository.findOne({ where: { idUsuario: dto.idUsuario } });
     if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
     }
@@ -143,7 +143,7 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     usuario.fechaRehabilitacion = new Date();
     await this.usuarioRepository.save(usuario);
 
-    return { message: `El usuario con ID ${dto.id} ha sido rehabilitado exitosamente` };
+    return { message: `El usuario con ID ${dto.idUsuario} ha sido rehabilitado exitosamente` };
   }
 
   async solicitarNuevaClave(dto: SolicitarNuevaClaveDto): Promise<{ message: string }> {
@@ -153,7 +153,7 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     }
 
     const resetToken = this.jwtService.sign(
-      { sub: usuario.id, tipo: 'reset' },
+      { sub: usuario.idUsuario, tipo: 'reset' },
       { expiresIn: '15m' },
     );
 
@@ -182,7 +182,7 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
         throw new BadRequestException('Token inválido');
       }
 
-      const usuario = await this.usuarioRepository.findOne({ where: { id: payload.sub } });
+      const usuario = await this.usuarioRepository.findOne({ where: { idUsuario: payload.sub } });
       if (!usuario || usuario.fechaBaja !== null) {
         throw new NotFoundException('Usuario no encontrado o inhabilitado');
       }
@@ -206,14 +206,20 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
   }
 
   async findOne(id: number) {
-    return await this.usuarioRepository.findOneBy({id: id});
+    const usuario = await this.usuarioRepository.findOneBy({idUsuario: id});
+    if (!usuario) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+    return usuario;
   }
 
-  async  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return await this.usuarioRepository.update(id, updateUsuarioDto);
+  async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
+    const usuario = await this.findOne(id);
+    this.usuarioRepository.merge(usuario, updateUsuarioDto);
+    return await this.usuarioRepository.save(usuario);
   }
 
   async remove(id: number) {
-    return await this.usuarioRepository.softDelete({id: id});
+    return await this.usuarioRepository.softDelete({idUsuario: id});
   }
 }
