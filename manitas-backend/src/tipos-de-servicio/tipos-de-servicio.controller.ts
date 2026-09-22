@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { TiposDeServicioService } from './tipos-de-servicio.service';
 import { CreateTiposDeServicioDto } from './dto/create-tipos-de-servicio.dto';
 import { UpdateTiposDeServicioDto } from './dto/update-tipos-de-servicio.dto';
@@ -18,17 +18,17 @@ export class TiposDeServicioController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tiposDeServicioService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.tiposDeServicioService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTiposDeServicioDto: UpdateTiposDeServicioDto) {
-    return this.tiposDeServicioService.update(+id, updateTiposDeServicioDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateTiposDeServicioDto: UpdateTiposDeServicioDto) {
+    return this.tiposDeServicioService.update(id, updateTiposDeServicioDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tiposDeServicioService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.tiposDeServicioService.remove(id);
   }
 }

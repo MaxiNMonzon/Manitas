@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { ProvinciaService } from './provincia.service';
 import { CreateProvinciaDto } from './dto/create-provincia.dto';
 import { UpdateProvinciaDto } from './dto/update-provincia.dto';
@@ -18,17 +18,17 @@ export class ProvinciaController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.provinciaService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.provinciaService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProvinciaDto: UpdateProvinciaDto) {
-    return this.provinciaService.update(+id, updateProvinciaDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateProvinciaDto: UpdateProvinciaDto) {
+    return this.provinciaService.update(id, updateProvinciaDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.provinciaService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.provinciaService.remove(id);
   }
 }

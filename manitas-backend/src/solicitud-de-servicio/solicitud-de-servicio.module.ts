@@ -4,9 +4,14 @@ import { SolicitudDeServicioController } from './solicitud-de-servicio.controlle
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { MetodoDePagoModule } from '../metodo-de-pago/metodo-de-pago.module';
+import { Cliente } from '../cliente/entities/cliente.entity';
+import { Profesional } from '../profesional/entities/profesional.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SolicitudDeServicio]), MetodoDePagoModule],
+  imports: [
+    TypeOrmModule.forFeature([SolicitudDeServicio, Cliente, Profesional]),
+    MetodoDePagoModule,
+  ],
   controllers: [SolicitudDeServicioController],
   providers: [SolicitudDeServicioService],
 })

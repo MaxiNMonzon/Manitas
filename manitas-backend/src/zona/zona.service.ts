@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateZonaDto } from './dto/create-zona.dto';
 import { UpdateZonaDto } from './dto/update-zona.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -35,11 +35,17 @@ export class ZonaService {
   }
 
   async findOne(id: number) {
-    return await this.zonaRepository.findOneBy({idZona:id}) ;
+    const zona = await this.zonaRepository.findOneBy({idZona:id});
+    if (!zona) {
+      throw new NotFoundException(`Zona con ID ${id} no encontrada`);
+    }
+    return zona;
   }
 
   async update(id: number, updateZonaDto: UpdateZonaDto) {
-    return await this.zonaRepository.update(id, updateZonaDto) ;
+    const zona = await this.findOne(id);
+    this.zonaRepository.merge(zona, updateZonaDto);
+    return await this.zonaRepository.save(zona);
   }
 
   async remove(id: number) {

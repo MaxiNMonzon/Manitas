@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { LocalidadService } from './localidad.service';
 import { CreateLocalidadDto } from './dto/create-localidad.dto';
 import { UpdateLocalidadDto } from './dto/update-localidad.dto';
@@ -18,17 +18,17 @@ export class LocalidadController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.localidadService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.localidadService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLocalidadDto: UpdateLocalidadDto) {
-    return this.localidadService.update(+id, updateLocalidadDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateLocalidadDto: UpdateLocalidadDto) {
+    return this.localidadService.update(id, updateLocalidadDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.localidadService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.localidadService.remove(id);
   }
 }

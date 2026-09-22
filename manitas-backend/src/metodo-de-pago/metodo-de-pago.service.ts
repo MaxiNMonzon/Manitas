@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMetodoDePagoDto } from './dto/create-metodo-de-pago.dto';
 import { UpdateMetodoDePagoDto } from './dto/update-metodo-de-pago.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -39,11 +39,17 @@ constructor(
   }
 
   async findOne(id: number) {
-    return await this.metodoDePagoRepository.findOneBy({ idFormaPago: id });
+    const metodoDePago = await this.metodoDePagoRepository.findOneBy({ idFormaPago: id });
+    if (!metodoDePago) {
+      throw new NotFoundException(`MetodoDePago con ID ${id} no encontrado`);
+    }
+    return metodoDePago;
   }
 
   async update(id: number, updateMetodoDePagoDto: UpdateMetodoDePagoDto) {
-    return await this.metodoDePagoRepository.update(id, updateMetodoDePagoDto);
+    const metodoDePago = await this.findOne(id);
+    this.metodoDePagoRepository.merge(metodoDePago, updateMetodoDePagoDto);
+    return await this.metodoDePagoRepository.save(metodoDePago);
   }
 
   async remove(id: number) {
