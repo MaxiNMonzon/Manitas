@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
@@ -21,11 +21,17 @@ constructor(
   }
 
   async findOne(id: number) {
-    return await this.usuarioRepository.findOneBy({idUsuario: id});
+    const usuario = await this.usuarioRepository.findOneBy({idUsuario: id});
+    if (!usuario) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+    return usuario;
   }
 
-  async  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return await this.usuarioRepository.update(id, updateUsuarioDto);
+  async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
+    const usuario = await this.findOne(id);
+    this.usuarioRepository.merge(usuario, updateUsuarioDto);
+    return await this.usuarioRepository.save(usuario);
   }
 
   async remove(id: number) {

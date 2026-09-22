@@ -7,7 +7,7 @@ export class CreatePrecioBaseDto {
         precio!: number;
     
         @IsDateString()
-        fechadesde!: string;
+        fechaDesde!: string;
         
         @IsInt()
         @IsPositive()

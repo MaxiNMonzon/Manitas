@@ -1,7 +1,7 @@
 import { Column, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { MetodoDePago } from "../../metodo-de-pago/entities/metodo-de-pago.entity";
-//import { Cliente } from "../../cliente/entities/cliente.entity";
-//import { Profesional } from "../../profesional/entities/profesional.entity";
+import { Cliente } from "../../cliente/entities/cliente.entity";
+import { Profesional } from "../../profesional/entities/profesional.entity";
 
 @Entity()
 export class SolicitudDeServicio {
@@ -47,11 +47,11 @@ export class SolicitudDeServicio {
     @ManyToOne(() => MetodoDePago, (metodoDePago) => metodoDePago.solicitudes)
     metodoPago!: MetodoDePago;
 
-    //@ManyToOne(() => Cliente, (cliente) => cliente.solicitudes)
-    //cliente!: Cliente;
+    @ManyToOne(() => Cliente, (cliente) => cliente.solicitudes)
+    cliente!: Cliente;
 
-    //@ManyToOne(() => Profesional, (profesional) => profesional.solicitudes)
-    //profesional!: Profesional;
+    @ManyToOne(() => Profesional, (profesional) => profesional.solicitudes)
+    profesional!: Profesional;
 
     @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
     deleteAt!: Date;

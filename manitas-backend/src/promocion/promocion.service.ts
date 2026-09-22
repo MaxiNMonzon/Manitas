@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePromocionDto } from './dto/create-promocion.dto';
 import { UpdatePromocionDto } from './dto/update-promocion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -39,11 +39,17 @@ constructor(
   }
 
   async findOne(id: number) {
-    return await this.promocionRepository.findOneBy({ idPromocion: id });
+    const promocion = await this.promocionRepository.findOneBy({ idPromocion: id });
+    if (!promocion) {
+      throw new NotFoundException(`Promocion con ID ${id} no encontrada`);
+    }
+    return promocion;
   }
 
   async update(id: number, updatePromocionDto: UpdatePromocionDto) {
-    return await this.promocionRepository.update(id, updatePromocionDto);
+    const promocion = await this.findOne(id);
+    this.promocionRepository.merge(promocion, updatePromocionDto);
+    return await this.promocionRepository.save(promocion);
   }
 
   async remove(id: number) {

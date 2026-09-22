@@ -52,11 +52,11 @@ export class CreateSolicitudDeServicioDto {
     @IsPositive()
     idMetodoPago!: number;
 
-    //@IsInt()
-    //@IsPositive()
-    //idCliente!: number;
+    @IsInt()
+    @IsPositive()
+    idCliente!: number;
 
-    //@IsInt()
-    //@IsPositive()
-    //idProfesional!: number;
+    @IsInt()
+    @IsPositive()
+    idProfesional!: number;
 }
