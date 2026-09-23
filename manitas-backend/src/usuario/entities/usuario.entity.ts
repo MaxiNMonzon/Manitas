@@ -1,7 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
+import { Column, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
 
-@Entity()
-export class Usuario {
+export abstract class Usuario {
     @PrimaryGeneratedColumn()
     idUsuario!: number;               //AVISAR!!!!!!!!!!
     
@@ -13,7 +12,10 @@ export class Usuario {
 
     @Column()
     apellido!: string;
-    
+
+    @Column({ type: 'date' })
+    fechaNacimiento!: Date;
+
     @Column()
     correo!: string;
     
@@ -22,9 +24,6 @@ export class Usuario {
     
     @Column()
     telefono!: number;
-    
-    @Column()
-    rol!: string;
 
     @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
     deleteAt!: Date;

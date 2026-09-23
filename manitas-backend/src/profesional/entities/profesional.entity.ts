@@ -1,18 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToMany, OneToMany, OneToOne, JoinTable, PrimaryColumn } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany, JoinTable } from 'typeorm';
 import { Usuario } from '../../usuario/entities/usuario.entity';
 import { Zona } from '../../zona/entities/zona.entity';
 import { PrecioBase } from '../../precio-base/entities/precio-base.entity';
 import { SolicitudDeServicio } from '../../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
 
 @Entity('profesionales')
-export class Profesional {
-  @PrimaryColumn()
-  idUsuario!: number;
-
-  @OneToOne(() => Usuario)
-  @JoinColumn({ name: 'idUsuario' })
-  usuario!: Usuario;
-
+export class Profesional extends Usuario {
   @Column({ nullable: true })
   nroMatricula?: string;
 

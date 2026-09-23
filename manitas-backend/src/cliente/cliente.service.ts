@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cliente } from './entities/cliente.entity';
-import { Usuario } from '../usuario/entities/usuario.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
@@ -13,45 +12,32 @@ export class ClienteService {
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
 
-    @InjectRepository(Usuario)
-    private readonly usuarioRepository: Repository<Usuario>,
-
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    const { direccion, idZonaResidencia, ...datosUsuario } = createClienteDto;
-
     const zonaResidencia = await this.zonaRepository.findOneBy({
-      idZona: idZonaResidencia,
+      idZona: createClienteDto.idZonaResidencia,
     });
 
     if (!zonaResidencia) {
       throw new BadRequestException('La zona de residencia indicada no existe');
     }
 
-    const usuario = await this.usuarioRepository.save(
-      this.usuarioRepository.create(datosUsuario),
-    );
-
     const cliente = this.clienteRepository.create({
-      idUsuario: usuario.idUsuario,
-      direccion,
+      ...createClienteDto,
       zonaResidencia,
     });
     return await this.clienteRepository.save(cliente);
   }
 
   async findAll(): Promise<Cliente[]> {
-    return await this.clienteRepository.find({ relations: ['usuario'] });
+    return await this.clienteRepository.find();
   }
 
   async findOne(id: number): Promise<Cliente> {
-    const cliente = await this.clienteRepository.findOne({
-      where: { idUsuario: id },
-      relations: ['usuario'],
-    });
+    const cliente = await this.clienteRepository.findOneBy({ idUsuario: id });
     if (!cliente) {
       throw new NotFoundException(`Cliente con ID ${id} no encontrado`);
     }
@@ -63,12 +49,8 @@ export class ClienteService {
     updateClienteDto: UpdateClienteDto,
   ): Promise<Cliente> {
     const cliente = await this.findOne(id);
-    const { direccion, idZonaResidencia, ...datosUsuario } = updateClienteDto;
 
-    if (Object.keys(datosUsuario).length > 0) {
-      this.usuarioRepository.merge(cliente.usuario, datosUsuario);
-      await this.usuarioRepository.save(cliente.usuario);
-    }
+    const { idZonaResidencia, ...resto } = updateClienteDto;
 
     if (idZonaResidencia !== undefined) {
       const zonaResidencia = await this.zonaRepository.findOneBy({ idZona: idZonaResidencia });
@@ -78,10 +60,7 @@ export class ClienteService {
       cliente.zonaResidencia = zonaResidencia;
     }
 
-    if (direccion !== undefined) {
-      cliente.direccion = direccion;
-    }
-
+    this.clienteRepository.merge(cliente, resto);
     return await this.clienteRepository.save(cliente);
   }
 
