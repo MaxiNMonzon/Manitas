@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Profesional } from './entities/profesional.entity';
-import { Usuario } from '../usuario/entities/usuario.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
@@ -13,9 +12,6 @@ export class ProfesionalService {
     @InjectRepository(Profesional)
     private readonly profesionalRepository: Repository<Profesional>,
 
-    @InjectRepository(Usuario)
-    private readonly usuarioRepository: Repository<Usuario>,
-
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
   ) {}
@@ -23,37 +19,27 @@ export class ProfesionalService {
   async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
-    const { nroMatricula, idsZonasCobertura, ...datosUsuario } = createProfesionalDto;
-
     const zonasDeCobertura = await this.zonaRepository.findBy({
-      idZona: In(idsZonasCobertura),
+      idZona: In(createProfesionalDto.idsZonasCobertura),
     });
 
-    if (zonasDeCobertura.length !== idsZonasCobertura.length) {
+    if (zonasDeCobertura.length !== createProfesionalDto.idsZonasCobertura.length) {
       throw new BadRequestException('Alguna de las zonas de cobertura indicadas no existe');
     }
 
-    const usuario = await this.usuarioRepository.save(
-      this.usuarioRepository.create(datosUsuario),
-    );
-
     const nuevoProfesional = this.profesionalRepository.create({
-      idUsuario: usuario.idUsuario,
-      nroMatricula,
+      ...createProfesionalDto,
       zonasDeCobertura,
     });
     return await this.profesionalRepository.save(nuevoProfesional);
   }
 
   async findAll(): Promise<Profesional[]> {
-    return await this.profesionalRepository.find({ relations: ['usuario'] });
+    return await this.profesionalRepository.find();
   }
 
   async findOne(id: number): Promise<Profesional> {
-    const profesional = await this.profesionalRepository.findOne({
-      where: { idUsuario: id },
-      relations: ['usuario'],
-    });
+    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: id });
     if (!profesional) {
       throw new NotFoundException(`Profesional con ID ${id} no encontrado`);
     }
@@ -65,12 +51,8 @@ export class ProfesionalService {
     updateProfesionalDto: UpdateProfesionalDto,
   ): Promise<Profesional> {
     const profesional = await this.findOne(id);
-    const { nroMatricula, idsZonasCobertura, ...datosUsuario } = updateProfesionalDto;
 
-    if (Object.keys(datosUsuario).length > 0) {
-      this.usuarioRepository.merge(profesional.usuario, datosUsuario);
-      await this.usuarioRepository.save(profesional.usuario);
-    }
+    const { idsZonasCobertura, ...resto } = updateProfesionalDto;
 
     if (idsZonasCobertura !== undefined) {
       const zonasDeCobertura = await this.zonaRepository.findBy({
@@ -83,10 +65,7 @@ export class ProfesionalService {
       profesional.zonasDeCobertura = zonasDeCobertura;
     }
 
-    if (nroMatricula !== undefined) {
-      profesional.nroMatricula = nroMatricula;
-    }
-
+    this.profesionalRepository.merge(profesional, resto);
     return await this.profesionalRepository.save(profesional);
   }
 
