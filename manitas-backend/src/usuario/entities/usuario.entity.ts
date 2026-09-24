@@ -23,7 +23,7 @@ export abstract class Usuario {
     contraseña!: string;
     
     @Column()
-    telefono!: number;
+    telefono!: string;
 
     @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
     deleteAt!: Date;

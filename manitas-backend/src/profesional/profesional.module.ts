@@ -6,9 +6,10 @@ import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
 import { PrecioBase } from '../precio-base/entities/precio-base.entity';
+import { Cliente } from '../cliente/entities/cliente.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Profesional, Zona, Especialidad, PrecioBase])],
+  imports: [TypeOrmModule.forFeature([Profesional, Zona, Especialidad, PrecioBase, Cliente])],
   controllers: [ProfesionalController],
   providers: [ProfesionalService],
 })
