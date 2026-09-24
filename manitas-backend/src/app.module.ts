@@ -13,8 +13,7 @@ import { ZonaModule } from './zona/zona.module';
 import { PromocionModule } from './promocion/promocion.module';
 import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
 import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-servicio.module';
-import { UsuarioModule } from './usuario/usuario.module';
-import { ProvinciaModule } from './provincia/provincia.module';
+
 
 
 @Module({
@@ -50,8 +49,6 @@ import { ProvinciaModule } from './provincia/provincia.module';
     SolicitudDeServicioModule,
     ClienteModule,
     ProfesionalModule,
-    UsuarioModule,
-    ProvinciaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

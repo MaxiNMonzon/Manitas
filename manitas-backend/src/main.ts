@@ -12,6 +12,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  // Habilita el cierre limpio de conexiones y recursos
+  app.enableShutdownHooks();
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

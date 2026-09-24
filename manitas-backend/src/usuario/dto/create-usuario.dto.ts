@@ -1,4 +1,4 @@
-import { IsDateString, IsEmail, IsInt, IsPositive, IsString, MinLength } from "class-validator";
+import { IsDateString, IsEmail, IsInt, IsString, MinLength } from "class-validator";
 
 export class CreateUsuarioDto {
     
@@ -21,9 +21,8 @@ export class CreateUsuarioDto {
     @MinLength(8)         //la contraseña tiene una longitud mínima de 8 caracteres.
     contraseña!: string;
     
-    @IsPositive()
-    @IsInt()
-    telefono!: number;
+    @IsString()
+    telefono!: string;
 
     @IsString()
     rol!: string;

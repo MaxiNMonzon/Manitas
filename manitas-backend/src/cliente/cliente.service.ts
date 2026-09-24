@@ -1,8 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cliente } from './entities/cliente.entity';
 import { Zona } from '../zona/entities/zona.entity';
+import { Profesional } from '../profesional/entities/profesional.entity';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 
@@ -14,9 +15,20 @@ export class ClienteService {
 
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
+
+    @InjectRepository(Profesional)
+    private readonly profesionalRepository: Repository<Profesional>,
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
+    const correoEnUso =
+      (await this.clienteRepository.findOneBy({ correo: createClienteDto.correo })) ||
+      (await this.profesionalRepository.findOneBy({ correo: createClienteDto.correo }));
+
+    if (correoEnUso) {
+      throw new ConflictException('Ya existe un usuario registrado con ese correo');
+    }
+
     const zonaResidencia = await this.zonaRepository.findOneBy({
       idZona: createClienteDto.idZonaResidencia,
     });

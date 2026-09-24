@@ -23,9 +23,9 @@ export abstract class Usuario {
     
     @Column({ type: 'varchar', length: 255 })
     contraseña!: string;
-    
-    @Column({ type: 'bigint' })
-    telefono!: number;
+      
+    @Column()
+    telefono!: string;
     
     @Column({ type: 'varchar', length: 50, default: 'cliente' })
     rol!: string;
