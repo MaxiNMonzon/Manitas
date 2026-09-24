@@ -1,8 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
+import { Cliente } from '../cliente/entities/cliente.entity';
 import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
 
@@ -14,11 +15,22 @@ export class ProfesionalService {
 
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
+
+    @InjectRepository(Cliente)
+    private readonly clienteRepository: Repository<Cliente>,
   ) {}
 
   async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
+    const correoEnUso =
+      (await this.profesionalRepository.findOneBy({ correo: createProfesionalDto.correo })) ||
+      (await this.clienteRepository.findOneBy({ correo: createProfesionalDto.correo }));
+
+    if (correoEnUso) {
+      throw new ConflictException('Ya existe un usuario registrado con ese correo');
+    }
+
     const zonasDeCobertura = await this.zonaRepository.findBy({
       idZona: In(createProfesionalDto.idsZonasCobertura),
     });

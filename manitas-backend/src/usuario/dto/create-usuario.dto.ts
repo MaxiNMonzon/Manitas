@@ -1,4 +1,4 @@
-import { IsDateString, IsEmail, IsInt, IsPositive, IsString, MinLength } from "class-validator";
+import { IsDateString, IsEmail, IsInt, IsString, MinLength } from "class-validator";
 
 export class CreateUsuarioDto {
 
@@ -21,8 +21,7 @@ export class CreateUsuarioDto {
     @MinLength(8)                //???????????????
     contraseña!: string;
     
-    @IsPositive()
-    @IsInt()
-    telefono!: number;
+    @IsString()
+    telefono!: string;
 
 }
