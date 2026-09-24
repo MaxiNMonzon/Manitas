@@ -1,4 +1,4 @@
-import { IsEmail, IsInt, IsPositive, IsString, MinLength } from "class-validator";
+import { IsDateString, IsEmail, IsInt, IsPositive, IsString, MinLength } from "class-validator";
 
 export class CreateUsuarioDto {
     
@@ -10,6 +10,9 @@ export class CreateUsuarioDto {
     
     @IsString()
     apellido!: string;
+
+    @IsDateString()
+    fechaNacimiento!: string;
     
     @IsEmail()
     correo!: string;

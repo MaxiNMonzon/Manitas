@@ -14,6 +14,9 @@ export abstract class Usuario {
 
     @Column({ type: 'varchar', length: 100 })
     apellido!: string;
+
+    @Column({ type: 'date' })
+    fechaNacimiento!: Date;
     
     @Column({ type: 'varchar', length: 150, unique: true })
     correo!: string;
