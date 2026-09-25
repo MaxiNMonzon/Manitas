@@ -59,7 +59,7 @@ describe('UsuarioController', () => {
         apellido: 'Pérez',
         correo: 'juan@ejemplo.com',
         contraseña: '123456',
-        telefono: 3411234567,
+        telefono: '3411234567',
         rol: 'cliente',
       };
 

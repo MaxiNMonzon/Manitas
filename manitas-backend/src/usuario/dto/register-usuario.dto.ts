@@ -22,9 +22,8 @@ export class RegisterUsuarioDto {
   @MinLength(8)
   contraseña!: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  telefono!: number;
+  @IsString()
+  telefono!: string;
 
   @IsString()
   @IsNotEmpty()
