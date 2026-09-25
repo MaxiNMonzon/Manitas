@@ -21,12 +21,14 @@ export class ClienteService {
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    const correoEnUso =
-      (await this.clienteRepository.findOneBy({ correo: createClienteDto.correo })) ||
-      (await this.profesionalRepository.findOneBy({ correo: createClienteDto.correo }));
+    const clienteConEseCorreo = await this.clienteRepository.findOneBy({ correo: createClienteDto.correo });
+    if (clienteConEseCorreo) {
+      throw new ConflictException('Ya existe un cliente registrado con ese correo');
+    }
 
-    if (correoEnUso) {
-      throw new ConflictException('Ya existe un usuario registrado con ese correo');
+    const profesionalConEseCorreo = await this.profesionalRepository.findOneBy({ correo: createClienteDto.correo });
+    if (profesionalConEseCorreo && profesionalConEseCorreo.dni !== createClienteDto.dni) {
+      throw new ConflictException('Ese correo ya está en uso por otra persona');
     }
 
     const zonaResidencia = await this.zonaRepository.findOneBy({

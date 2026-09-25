@@ -23,12 +23,14 @@ export class ProfesionalService {
   async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
-    const correoEnUso =
-      (await this.profesionalRepository.findOneBy({ correo: createProfesionalDto.correo })) ||
-      (await this.clienteRepository.findOneBy({ correo: createProfesionalDto.correo }));
+    const profesionalConEseCorreo = await this.profesionalRepository.findOneBy({ correo: createProfesionalDto.correo });
+    if (profesionalConEseCorreo) {
+      throw new ConflictException('Ya existe un profesional registrado con ese correo');
+    }
 
-    if (correoEnUso) {
-      throw new ConflictException('Ya existe un usuario registrado con ese correo');
+    const clienteConEseCorreo = await this.clienteRepository.findOneBy({ correo: createProfesionalDto.correo });
+    if (clienteConEseCorreo && clienteConEseCorreo.dni !== createProfesionalDto.dni) {
+      throw new ConflictException('Ese correo ya está en uso por otra persona');
     }
 
     const zonasDeCobertura = await this.zonaRepository.findBy({
