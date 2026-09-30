@@ -13,6 +13,7 @@ import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
 import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-servicio.module';
 import { ClienteModule } from './cliente/cliente.module';
 import { ProfesionalModule } from './profesional/profesional.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ProfesionalModule } from './profesional/profesional.module';
     SolicitudDeServicioModule,
     ClienteModule,
     ProfesionalModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

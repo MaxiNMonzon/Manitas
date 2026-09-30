@@ -13,6 +13,6 @@ export class Provincia {
     @OneToMany (() => Localidad, (localidad) => localidad.provincia)
     localidades!: Localidad[];
 
-    @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deleteAt!: Date;
 }
