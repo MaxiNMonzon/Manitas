@@ -15,7 +15,7 @@ export class TipoDeServicio {
     @ManyToOne(() => Especialidad, (especialidad) => especialidad.servicios)
     especialidad!: Especialidad;
 
-    @DeleteDateColumn()  //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deletedAt!: Date;
 
 }

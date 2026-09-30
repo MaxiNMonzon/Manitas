@@ -7,7 +7,7 @@ export abstract class Usuario {
     idUsuario!: number;  //El id debería ser único para cada usuario.
     
     @Column({ type: 'int' })
-    dni!: number; //Es el mismo dni para dos números de cuenta distintos: cuenta cliente y cuenta profesional.
+    dni!: number;
 
     @Column({ type: 'varchar', length: 100 })
     nombre!: string;
@@ -18,10 +18,10 @@ export abstract class Usuario {
     @Column({ type: 'date' })
     fechaNacimiento!: Date;
     
-    @Column({ type: 'varchar', length: 150, unique: true })
+    @Column({ type: 'varchar', length: 150, unique: true, nullable: false })
     correo!: string;
     
-    @Column({ type: 'varchar', length: 255 })
+    @Column({ type: 'varchar', length: 255, nullable: false })
     contraseña!: string;
       
     @Column()
@@ -36,7 +36,7 @@ export abstract class Usuario {
     @Column({ type: 'timestamp', nullable: true, default: null })
     fechaRehabilitacion!: Date | null;
 
-    @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deleteAt!: Date;
 }
 
