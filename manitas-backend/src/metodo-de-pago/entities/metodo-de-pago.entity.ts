@@ -20,6 +20,6 @@ export class MetodoDePago {
     @OneToMany(() => SolicitudDeServicio, (solicitud) => solicitud.metodoPago)
     solicitudes!: SolicitudDeServicio[];
 
-    @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deleteAt!: Date;
 }

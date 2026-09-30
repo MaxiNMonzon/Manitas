@@ -3,4 +3,3 @@ import { CreateTiposDeServicioDto } from './create-tipos-de-servicio.dto';
 
 export class UpdateTiposDeServicioDto extends PartialType(CreateTiposDeServicioDto) {}
 
-//PREGUNTARR SI ES NECESARIO COLOCAR ATRIBUTOS!!!!!!!!!!!!!

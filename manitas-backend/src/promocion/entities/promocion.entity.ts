@@ -24,6 +24,6 @@ export class Promocion {
     @ManyToMany(() => MetodoDePago, (metodoDePago) => metodoDePago.promociones)
     metodosPago!: MetodoDePago[];
 
-    @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deleteAt!: Date;
 }
