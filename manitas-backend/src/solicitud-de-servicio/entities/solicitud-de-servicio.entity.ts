@@ -53,6 +53,6 @@ export class SolicitudDeServicio {
     @ManyToOne(() => Profesional, (profesional) => profesional.solicitudes)
     profesional!: Profesional;
 
-    @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deleteAt!: Date;
 }

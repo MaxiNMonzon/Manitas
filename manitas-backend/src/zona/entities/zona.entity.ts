@@ -22,7 +22,7 @@ export class Zona {
     @ManyToMany(() => Profesional, (profesional) => profesional.zonasDeCobertura)
     profesionales!: Profesional[];
 
-    @DeleteDateColumn()  //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deletedAt!: Date;
 
 }

@@ -23,14 +23,14 @@ export class ProfesionalService {
   async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
-    const profesionalConEseCorreo = await this.profesionalRepository.findOneBy({ correo: createProfesionalDto.correo });
+    const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
     if (profesionalConEseCorreo) {
       throw new ConflictException('Ya existe un profesional registrado con ese correo');
     }
 
-    const clienteConEseCorreo = await this.clienteRepository.findOneBy({ correo: createProfesionalDto.correo });
-    if (clienteConEseCorreo && clienteConEseCorreo.dni !== createProfesionalDto.dni) {
-      throw new ConflictException('Ese correo ya está en uso por otra persona');
+    const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
+    if (clienteConEseCorreo) {
+      throw new ConflictException('Ese correo ya está registrado como cliente, usá otro correo');
     }
 
     const zonasDeCobertura = await this.zonaRepository.findBy({
@@ -84,8 +84,8 @@ export class ProfesionalService {
   }
 
   async remove(id: number): Promise<{ message: string }> {
-    const profesional = await this.findOne(id);
-    await this.profesionalRepository.remove(profesional);
+    await this.findOne(id);
+    await this.profesionalRepository.softDelete({ idUsuario: id });
     return { message: `Profesional con ID ${id} eliminado` };
   }
 }

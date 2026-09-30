@@ -16,15 +16,15 @@ export abstract class Usuario {
     @Column({ type: 'date' })
     fechaNacimiento!: Date;
 
-    @Column()
+    @Column({unique:true, nullable: false})
     correo!: string;
     
-    @Column()
+    @Column({nullable: false})
     contraseña!: string;
     
     @Column()
     telefono!: string;
 
-    @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deleteAt!: Date;
 }

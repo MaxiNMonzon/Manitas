@@ -21,14 +21,14 @@ export class ClienteService {
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    const clienteConEseCorreo = await this.clienteRepository.findOneBy({ correo: createClienteDto.correo });
+    const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo: createClienteDto.correo }, withDeleted: true });
     if (clienteConEseCorreo) {
       throw new ConflictException('Ya existe un cliente registrado con ese correo');
     }
 
-    const profesionalConEseCorreo = await this.profesionalRepository.findOneBy({ correo: createClienteDto.correo });
-    if (profesionalConEseCorreo && profesionalConEseCorreo.dni !== createClienteDto.dni) {
-      throw new ConflictException('Ese correo ya está en uso por otra persona');
+    const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo: createClienteDto.correo }, withDeleted: true });
+    if (profesionalConEseCorreo) {
+      throw new ConflictException('Ese correo ya está registrado como profesional, usá otro correo');
     }
 
     const zonaResidencia = await this.zonaRepository.findOneBy({
@@ -79,8 +79,8 @@ export class ClienteService {
   }
 
   async remove(id: number): Promise<{ message: string }> {
-    const cliente = await this.findOne(id);
-    await this.clienteRepository.remove(cliente);
+    await this.findOne(id);
+    await this.clienteRepository.softDelete({ idUsuario: id });
     return { message: `Cliente con ID ${id} eliminado con éxito` };
   }
 }
