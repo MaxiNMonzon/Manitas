@@ -6,9 +6,6 @@ export class CreateProfesionalDto extends CreateUsuarioDto {
   @IsString()
   nroMatricula?: string;
 
-  @IsInt()
-  idProvinciaOperacion!: number;
-
   // Esto es un array de números de zonas
   @IsArray()
   @ArrayMinSize(1)

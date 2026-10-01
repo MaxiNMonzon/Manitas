@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateTiposDeServicioDto } from './dto/create-tipos-de-servicio.dto';
 import { UpdateTiposDeServicioDto } from './dto/update-tipos-de-servicio.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -36,11 +36,17 @@ constructor(
   }
 
   async findOne(id: number) {
-    return await this.tiposDeServicioRepository.findOneBy({ idServicio: id });
+    const tiposDeServicio = await this.tiposDeServicioRepository.findOneBy({ idServicio: id });
+    if (!tiposDeServicio) {
+      throw new NotFoundException(`TiposDeServicio con ID ${id} no encontrado`);
+    }
+    return tiposDeServicio;
   }
 
   async update(id: number, updateTiposDeServicioDto: UpdateTiposDeServicioDto) {
-    return await this.tiposDeServicioRepository.update(id, updateTiposDeServicioDto);
+    const tiposDeServicio = await this.findOne(id);
+    this.tiposDeServicioRepository.merge(tiposDeServicio, updateTiposDeServicioDto);
+    return await this.tiposDeServicioRepository.save(tiposDeServicio);
   }
 
   async remove(id: number) {

@@ -16,11 +16,9 @@ export class Especialidad {
     @OneToMany (() => TiposDeServicio, (tiposDeServicio) => tiposDeServicio.especialidad)
     servicios!: TiposDeServicio[];
 
-    //profesionales: Profesional[];
-
     @OneToMany(() => PrecioBase, (precioBase) => precioBase.especialidad)
     precios!: PrecioBase[];
 
-    @DeleteDateColumn() //es necesario ?? TypeORM guarda la fecha en que se borró cada registro, en vez de eliminarlo físicamente de la tabla
+    @DeleteDateColumn()
     deleteAt!: Date;
 }
