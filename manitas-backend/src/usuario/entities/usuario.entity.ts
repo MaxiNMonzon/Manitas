@@ -2,9 +2,9 @@ import { Column, DeleteDateColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 export abstract class Usuario {
   @PrimaryGeneratedColumn()
-  id!: number;
+  idUsuario!: number;
 
-  @Column({ unique: true })
+  @Column()
   dni!: string;
 
   @Column()
@@ -25,6 +25,6 @@ export abstract class Usuario {
   @Column({ nullable: true })
   telefono!: string;
 
-  @DeleteDateColumn({ nullable: true })
-  deletedAt?: Date;
+  @DeleteDateColumn()
+  deleteAt!: Date;
 }

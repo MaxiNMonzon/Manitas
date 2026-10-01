@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { PrecioBaseService } from './precio-base.service';
 import { CreatePrecioBaseDto } from './dto/create-precio-base.dto';
 import { UpdatePrecioBaseDto } from './dto/update-precio-base.dto';
@@ -18,17 +18,17 @@ export class PrecioBaseController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.precioBaseService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.precioBaseService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePrecioBaseDto: UpdatePrecioBaseDto) {
-    return this.precioBaseService.update(+id, updatePrecioBaseDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updatePrecioBaseDto: UpdatePrecioBaseDto) {
+    return this.precioBaseService.update(id, updatePrecioBaseDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.precioBaseService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.precioBaseService.remove(id);
   }
 }

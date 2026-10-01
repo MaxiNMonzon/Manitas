@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ZonaService } from './zona.service';
 import { CreateZonaDto } from './dto/create-zona.dto';
 import { UpdateZonaDto } from './dto/update-zona.dto';
@@ -18,17 +27,20 @@ export class ZonaController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.zonaService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.zonaService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateZonaDto: UpdateZonaDto) {
-    return this.zonaService.update(+id, updateZonaDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateZonaDto: UpdateZonaDto,
+  ) {
+    return this.zonaService.update(id, updateZonaDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.zonaService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.zonaService.remove(id);
   }
 }

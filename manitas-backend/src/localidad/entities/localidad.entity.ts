@@ -1,4 +1,11 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Provincia } from '../../provincia/entities/provincia.entity';
 import { Zona } from '../../zona/entities/zona.entity';
 
@@ -18,4 +25,7 @@ export class Localidad {
 
   @OneToMany(() => Zona, (zona) => zona.localidad)
   zonas!: Zona[];
+
+  @DeleteDateColumn()
+  deleteAt!: Date;
 }

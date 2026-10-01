@@ -3,10 +3,10 @@ import { TiposDeServicioService } from './tipos-de-servicio.service';
 import { TiposDeServicioController } from './tipos-de-servicio.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TiposDeServicio } from './entities/tipos-de-servicio.entity';
-import { EspecialidadModule } from '../especialidad/especialidad.module';
+import { Especialidad } from '../especialidad/entities/especialidad.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TiposDeServicio]), EspecialidadModule],
+  imports: [TypeOrmModule.forFeature([TiposDeServicio, Especialidad])],
   controllers: [TiposDeServicioController],
   providers: [TiposDeServicioService],
 })
