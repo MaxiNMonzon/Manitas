@@ -9,7 +9,9 @@ import { PrecioBase } from '../precio-base/entities/precio-base.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Profesional, Zona, Especialidad, PrecioBase, Cliente])],
+  imports: [
+    TypeOrmModule.forFeature([Profesional, Zona, Especialidad, PrecioBase, Cliente]),
+  ],
   controllers: [ProfesionalController],
   providers: [ProfesionalService],
   exports: [ProfesionalService],

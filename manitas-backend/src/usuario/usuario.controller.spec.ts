@@ -54,7 +54,7 @@ describe('UsuarioController', () => {
   describe('registrar', () => {
     it('debe llamar a usuarioService.registrar con el DTO correcto', async () => {
       const dto: RegisterUsuarioDto = {
-        dni: 12345678,
+        dni: '12345678',
         nombre: 'Juan',
         apellido: 'Pérez',
         correo: 'juan@ejemplo.com',

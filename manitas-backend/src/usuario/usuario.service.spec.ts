@@ -59,7 +59,7 @@ describe('UsuarioService', () => {
 
   describe('registrar', () => {
     const registerDto: RegisterUsuarioDto = {
-      dni: 12345678,
+      dni: '12345678',
       nombre: 'Juan',
       apellido: 'Pérez',
       correo: 'juan@ejemplo.com',
@@ -111,7 +111,7 @@ describe('UsuarioService', () => {
         correo: 'juan@ejemplo.com',
         contraseña: hashedPassword,
         rol: 'cliente',
-        dni: 12345678,
+        dni: '12345678',
         fechaBaja: null,
         fechaRehabilitacion: null,
       };

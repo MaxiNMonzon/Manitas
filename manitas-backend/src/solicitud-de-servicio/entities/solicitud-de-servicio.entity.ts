@@ -56,3 +56,10 @@ export class SolicitudDeServicio {
     @DeleteDateColumn()
     deleteAt!: Date;
 }
+
+
+
+
+
+  
+  

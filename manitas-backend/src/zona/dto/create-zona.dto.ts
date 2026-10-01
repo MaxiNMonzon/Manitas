@@ -7,6 +7,4 @@ export class CreateZonaDto {
   @IsInt()
   @IsPositive()
   idLocalidad!: number;
-
-    //usuario
 }

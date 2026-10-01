@@ -6,8 +6,8 @@ export abstract class Usuario {
     @PrimaryGeneratedColumn()
     idUsuario!: number;  //El id debería ser único para cada usuario.
     
-    @Column({ type: 'int' })
-    dni!: number;
+    @Column({ type: 'varchar' })
+    dni!: string;
 
     @Column({ type: 'varchar', length: 100 })
     nombre!: string;
@@ -23,8 +23,8 @@ export abstract class Usuario {
     
     @Column({ type: 'varchar', length: 255, nullable: false })
     contraseña!: string;
-      
-    @Column()
+ 
+    @Column({ nullable: true })
     telefono!: string;
     
     @Column({ type: 'varchar', length: 50, default: 'cliente' })
@@ -38,5 +38,11 @@ export abstract class Usuario {
 
     @DeleteDateColumn()
     deleteAt!: Date;
+
 }
+
+
+
+
+
 

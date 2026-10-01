@@ -1,28 +1,26 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, OneToMany, ManyToMany, DeleteDateColumn } from "typeorm";
-import { Localidad } from "../../localidad/entities/localidad.entity";
-import { Cliente } from "../../cliente/entities/cliente.entity";
-import { Profesional } from "../../profesional/entities/profesional.entity";
+import {Column, DeleteDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn} from 'typeorm';
+import { Localidad } from '../../localidad/entities/localidad.entity';
+import { Cliente } from '../../cliente/entities/cliente.entity';
+import { Profesional } from '../../profesional/entities/profesional.entity';
 
 
-@Entity()
+  @Entity()
 export class Zona {
+  @PrimaryGeneratedColumn()
+  idZona!: number;
 
-    @PrimaryGeneratedColumn()
-    idZona!: number;
+  @Column()
+  nombreZona!: string;
 
-    @Column()
-    nombreZona!: string;
+  @ManyToOne(() => Localidad, (localidad) => localidad.zonas)
+  localidad!: Localidad;
 
-    @ManyToOne(() => Localidad, (localidad) => localidad.zonas)
-    localidad!: Localidad;
+  @OneToMany(() => Cliente, (cliente) => cliente.zonaResidencia)
+  clientes!: Cliente[];
 
-    @OneToMany(() => Cliente, (cliente) => cliente.zonaResidencia)
-    clientes!: Cliente[];
+  @ManyToMany(() => Profesional, (profesional) => profesional.zonasDeCobertura)
+  profesionales!: Profesional[];
 
-    @ManyToMany(() => Profesional, (profesional) => profesional.zonasDeCobertura)
-    profesionales!: Profesional[];
-
-    @DeleteDateColumn()
-    deletedAt!: Date;
-
+  @DeleteDateColumn()
+  deleteAt!: Date;
 }

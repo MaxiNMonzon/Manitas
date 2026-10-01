@@ -201,6 +201,7 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     return await this.usuarioRepository.save(createUsuarioDto);
   }
 
+
   async findAll() {
     return await this.usuarioRepository.find();
   }
@@ -218,6 +219,7 @@ async registrar(dto: RegisterUsuarioDto): Promise<Omit<Usuario, 'contraseña'>> 
     this.usuarioRepository.merge(usuario, updateUsuarioDto);
     return await this.usuarioRepository.save(usuario);
   }
+
 
   async remove(id: number) {
     return await this.usuarioRepository.softDelete({idUsuario: id});

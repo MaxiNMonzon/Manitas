@@ -10,6 +10,6 @@ import { Profesional } from '../profesional/entities/profesional.entity';
   imports: [TypeOrmModule.forFeature([Cliente, Zona, Profesional])],
   controllers: [ClienteController],
   providers: [ClienteService],
-  exports:[ClienteService],
+  exports: [ClienteService],
 })
 export class ClienteModule {}

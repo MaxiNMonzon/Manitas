@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Profesional } from './entities/profesional.entity';
@@ -12,25 +12,32 @@ export class ProfesionalService {
   constructor(
     @InjectRepository(Profesional)
     private readonly profesionalRepository: Repository<Profesional>,
+  @InjectRepository(Zona)
+  private readonly zonaRepository: Repository<Zona>,
 
-    @InjectRepository(Zona)
-    private readonly zonaRepository: Repository<Zona>,
-
-    @InjectRepository(Cliente)
-    private readonly clienteRepository: Repository<Cliente>,
+  @InjectRepository(Cliente)
+  private readonly clienteRepository: Repository<Cliente>,
   ) {}
 
   async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
-    const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
+    const profesionalConEseCorreo = await this.profesionalRepository.findOne({
+      where: { correo: createProfesionalDto.correo },
+      withDeleted: true,
+    });
     if (profesionalConEseCorreo) {
       throw new ConflictException('Ya existe un profesional registrado con ese correo');
     }
 
-    const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
+    const clienteConEseCorreo = await this.clienteRepository.findOne({
+      where: { correo: createProfesionalDto.correo },
+      withDeleted: true,
+    });
     if (clienteConEseCorreo) {
-      throw new ConflictException('Ese correo ya está registrado como cliente, usá otro correo');
+      throw new ConflictException(
+        'Ese correo ya está registrado como cliente, usá otro correo',
+      );
     }
 
     const zonasDeCobertura = await this.zonaRepository.findBy({
@@ -65,7 +72,6 @@ export class ProfesionalService {
     updateProfesionalDto: UpdateProfesionalDto,
   ): Promise<Profesional> {
     const profesional = await this.findOne(id);
-
     const { idsZonasCobertura, ...resto } = updateProfesionalDto;
 
     if (idsZonasCobertura !== undefined) {
@@ -74,7 +80,9 @@ export class ProfesionalService {
       });
 
       if (zonasDeCobertura.length !== idsZonasCobertura.length) {
-        throw new BadRequestException('Alguna de las zonas de cobertura indicadas no existe');
+        throw new BadRequestException(
+          'Alguna de las zonas de cobertura indicadas no existe',
+        );
       }
       profesional.zonasDeCobertura = zonasDeCobertura;
     }

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cliente } from './entities/cliente.entity';
@@ -10,9 +10,8 @@ import { UpdateClienteDto } from './dto/update-cliente.dto';
 @Injectable()
 export class ClienteService {
   constructor(
-    @InjectRepository(Cliente)
+       @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
-
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
 
@@ -21,20 +20,27 @@ export class ClienteService {
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo: createClienteDto.correo }, withDeleted: true });
+    const clienteConEseCorreo = await this.clienteRepository.findOne({
+      where: { correo: createClienteDto.correo },
+      withDeleted: true,
+    });
     if (clienteConEseCorreo) {
       throw new ConflictException('Ya existe un cliente registrado con ese correo');
     }
 
-    const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo: createClienteDto.correo }, withDeleted: true });
+    const profesionalConEseCorreo = await this.profesionalRepository.findOne({
+      where: { correo: createClienteDto.correo },
+      withDeleted: true,
+    });
     if (profesionalConEseCorreo) {
-      throw new ConflictException('Ese correo ya está registrado como profesional, usá otro correo');
+      throw new ConflictException(
+        'Ese correo ya está registrado como profesional, usá otro correo',
+      );
     }
 
     const zonaResidencia = await this.zonaRepository.findOneBy({
       idZona: createClienteDto.idZonaResidencia,
     });
-
     if (!zonaResidencia) {
       throw new BadRequestException('La zona de residencia indicada no existe');
     }
@@ -63,11 +69,12 @@ export class ClienteService {
     updateClienteDto: UpdateClienteDto,
   ): Promise<Cliente> {
     const cliente = await this.findOne(id);
-
     const { idZonaResidencia, ...resto } = updateClienteDto;
 
     if (idZonaResidencia !== undefined) {
-      const zonaResidencia = await this.zonaRepository.findOneBy({ idZona: idZonaResidencia });
+      const zonaResidencia = await this.zonaRepository.findOneBy({
+        idZona: idZonaResidencia,
+      });
       if (!zonaResidencia) {
         throw new BadRequestException('La zona de residencia indicada no existe');
       }

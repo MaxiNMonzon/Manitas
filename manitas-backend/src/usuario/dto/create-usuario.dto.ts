@@ -1,30 +1,41 @@
-import { IsDateString, IsEmail, IsInt, IsString, MinLength } from "class-validator";
+
+import { IsEmail, IsString, MinLength, IsDateString, IsNumberString, Length, IsNotEmpty, MaxLength } from 'class-validator';
 
 export class CreateUsuarioDto {
-    
-    @IsInt()
-    dni!:number
+  @IsNumberString({}, { message: 'El DNI debe contener solo números' })
+  @Length(7, 9, { message: 'El DNI debe tener entre 7 y 9 dígitos' })
+  dni!: string;
 
-    @IsString()
-    nombre!: string;
-    
-    @IsString()
-    apellido!: string;
+  @IsString()
+  @MinLength(1)
+  nombre!: string;
 
-    @IsDateString()
-    fechaNacimiento!: string;
-    
-    @IsEmail()
-    correo!: string;
+  @IsString()
+  @MinLength(1)
+  apellido!: string;
 
-    @IsString()
-    @MinLength(8)         //la contraseña tiene una longitud mínima de 8 caracteres.
-    contraseña!: string;
-    
-    @IsString()
-    telefono!: string;
+  @IsDateString(
+    {},
+    {
+      message: 'La fecha de nacimiento debe ser una fecha válida (YYYY-MM-DD)',
+    },
+  )
+  fechaNacimiento!: string;
+
+  @IsEmail({}, { message: 'El correo electrónico no tiene un formato válido' })
+  correo!: string;
+
+  @IsString()
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  contraseña!: string;
+
+  @IsNotEmpty({ message: 'El teléfono es obligatorio' })
+  @IsString({ message: 'El teléfono debe ser un texto' })
+  @MinLength(8, { message: 'El teléfono debe tener al menos 8 caracteres' })
+  @MaxLength(15, { message: 'El teléfono no puede superar los 15 caracteres' })
+  telefono!: string;
 
     @IsString()
     rol!: string;
-
 }
+
