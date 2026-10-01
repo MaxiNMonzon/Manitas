@@ -58,11 +58,20 @@ export class ClienteService {
   }
 
   async findAll(): Promise<Cliente[]> {
-    return await this.clienteRepository.find();
+    return await this.clienteRepository.find({
+      relations: {
+        zonaResidencia: { localidad: { provincia: true } },
+      },
+    });
   }
 
   async findOne(id: number): Promise<Cliente> {
-    const cliente = await this.clienteRepository.findOneBy({ idUsuario: id });
+    const cliente = await this.clienteRepository.findOne({
+      where: { idUsuario: id },
+      relations: {
+        zonaResidencia: { localidad: { provincia: true } },
+      },
+    });
     if (!cliente) {
       throw new NotFoundException(`Cliente con ID ${id} no encontrado`);
     }
