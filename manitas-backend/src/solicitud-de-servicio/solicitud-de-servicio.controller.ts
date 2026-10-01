@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query 
 import { SolicitudDeServicioService } from './solicitud-de-servicio.service';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
+import { CalificarServicioDto } from './dto/calificar-servicio.dto';
+import { CalificarProfesionalDto } from '../profesional/dto/calificar-profesional.dto';
 
 @Controller('solicitud-de-servicio')
 export class SolicitudDeServicioController {
@@ -35,5 +37,26 @@ export class SolicitudDeServicioController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.solicitudDeServicioService.remove(id);
+  }
+
+  @Patch(':id/calificar-servicio')
+  calificarServicio(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() calificarServicioDto: CalificarServicioDto,
+  ) {
+    return this.solicitudDeServicioService.calificarServicio(id, calificarServicioDto);
+  }
+
+  @Patch(':id/calificar-profesional')
+  calificarProfesional(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() calificarProfesionalDto: CalificarProfesionalDto,
+  ) {
+    return this.solicitudDeServicioService.calificarProfesional(id, calificarProfesionalDto);
+  }
+
+  @Get('profesional/:idProfesional/promedio')
+  obtenerPromedioProfesional(@Param('idProfesional', ParseIntPipe) idProfesional: number) {
+    return this.solicitudDeServicioService.obtenerPromedioProfesional(idProfesional);
   }
 }

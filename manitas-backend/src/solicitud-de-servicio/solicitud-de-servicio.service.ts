@@ -7,6 +7,8 @@ import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
+import { CalificarServicioDto } from './dto/calificar-servicio.dto';
+import { CalificarProfesionalDto } from '../profesional/dto/calificar-profesional.dto';
 
 @Injectable()
 export class SolicitudDeServicioService {
@@ -98,5 +100,55 @@ export class SolicitudDeServicioService {
 
   async remove(id: number) {
     return await this.solicitudDeServicioRepository.softDelete({ idSolicitud: id });
+  }
+
+  async calificarServicio(
+    idSolicitud: number,
+    calificarServicioDto: CalificarServicioDto,
+  ): Promise<SolicitudDeServicio> {
+    const solicitud = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud },
+      relations: ['cliente', 'profesional'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException(`Solicitud de servicio con ID ${idSolicitud} no encontrada`);
+    }
+
+    // Validación de negocio: solo se puede calificar un servicio completado/finalizado
+    if (solicitud.estadoServicio !== 'FINALIZADO') {
+      throw new BadRequestException('Solo se pueden calificar servicios en estado FINALIZADO');
+    }
+
+    solicitud.calificacionServicio = calificarServicioDto.calificacion;
+    solicitud.reseñaServicio = calificarServicioDto.reseña || '';
+
+    return await this.solicitudDeServicioRepository.save(solicitud);
+  }
+
+  async calificarProfesional(
+    idSolicitud: number,
+    calificarProfesionalDto: CalificarProfesionalDto,
+  ): Promise<SolicitudDeServicio> {
+    // Reutiliza la misma persistencia de la solicitud o mapea los datos requeridos
+    return await this.calificarServicio(idSolicitud, calificarProfesionalDto);
+  }
+
+  /**
+   * Obtiene el promedio de calificaciones de un profesional
+   */
+  async obtenerPromedioProfesional(idProfesional: number): Promise<{ promedio: number; totalReseñas: number }> {
+    const resultado = await this.solicitudDeServicioRepository
+      .createQueryBuilder('solicitud')
+      .select('AVG(solicitud.calificacionServicio)', 'promedio')
+      .addSelect('COUNT(solicitud.calificacionServicio)', 'totalReseñas')
+      .where('solicitud.profesional.idUsuario = :idProfesional', { idProfesional })
+      .andWhere('solicitud.calificacionServicio IS NOT NULL')
+      .getRawOne();
+
+    return {
+      promedio: parseFloat(resultado.promedio) || 0,
+      totalReseñas: parseInt(resultado.totalReseñas, 10) || 0,
+    };
   }
 }
