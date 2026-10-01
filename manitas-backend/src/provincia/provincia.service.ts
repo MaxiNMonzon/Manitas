@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProvinciaDto } from './dto/create-provincia.dto';
 import { UpdateProvinciaDto } from './dto/update-provincia.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,11 +21,17 @@ constructor(
   }
 
   async findOne(id: number) {
-    return await this.provinciaRepository.findOneBy({idProvincia: id});
+    const provincia = await this.provinciaRepository.findOneBy({idProvincia: id});
+    if (!provincia) {
+      throw new NotFoundException(`Provincia con ID ${id} no encontrada`);
+    }
+    return provincia;
   }
 
   async update(id: number, updateProvinciaDto: UpdateProvinciaDto) {
-    return await this.provinciaRepository.update(id, updateProvinciaDto);
+    const provincia = await this.findOne(id);
+    this.provinciaRepository.merge(provincia, updateProvinciaDto);
+    return await this.provinciaRepository.save(provincia);
   }
 
   async remove(id: number) {

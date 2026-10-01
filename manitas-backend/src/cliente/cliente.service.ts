@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cliente } from './entities/cliente.entity';
+import { Zona } from '../zona/entities/zona.entity';
+import { Profesional } from '../profesional/entities/profesional.entity';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 
@@ -10,10 +17,43 @@ export class ClienteService {
   constructor(
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
+    @InjectRepository(Zona)
+    private readonly zonaRepository: Repository<Zona>,
+
+    @InjectRepository(Profesional)
+    private readonly profesionalRepository: Repository<Profesional>,
   ) {}
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
-    const cliente = this.clienteRepository.create(createClienteDto);
+    const clienteConEseCorreo = await this.clienteRepository.findOne({
+      where: { correo: createClienteDto.correo },
+      withDeleted: true,
+    });
+    if (clienteConEseCorreo) {
+      throw new ConflictException('Ya existe un cliente registrado con ese correo');
+    }
+
+    const profesionalConEseCorreo = await this.profesionalRepository.findOne({
+      where: { correo: createClienteDto.correo },
+      withDeleted: true,
+    });
+    if (profesionalConEseCorreo) {
+      throw new ConflictException(
+        'Ese correo ya está registrado como profesional, usá otro correo',
+      );
+    }
+
+    const zonaResidencia = await this.zonaRepository.findOneBy({
+      idZona: createClienteDto.idZonaResidencia,
+    });
+    if (!zonaResidencia) {
+      throw new BadRequestException('La zona de residencia indicada no existe');
+    }
+
+    const cliente = this.clienteRepository.create({
+      ...createClienteDto,
+      zonaResidencia,
+    });
     return await this.clienteRepository.save(cliente);
   }
 
@@ -22,7 +62,7 @@ export class ClienteService {
   }
 
   async findOne(id: number): Promise<Cliente> {
-    const cliente = await this.clienteRepository.findOneBy({ id });
+    const cliente = await this.clienteRepository.findOneBy({ idUsuario: id });
     if (!cliente) {
       throw new NotFoundException(`Cliente con ID ${id} no encontrado`);
     }
@@ -34,13 +74,25 @@ export class ClienteService {
     updateClienteDto: UpdateClienteDto,
   ): Promise<Cliente> {
     const cliente = await this.findOne(id);
-    this.clienteRepository.merge(cliente, updateClienteDto);
+    const { idZonaResidencia, ...resto } = updateClienteDto;
+
+    if (idZonaResidencia !== undefined) {
+      const zonaResidencia = await this.zonaRepository.findOneBy({
+        idZona: idZonaResidencia,
+      });
+      if (!zonaResidencia) {
+        throw new BadRequestException('La zona de residencia indicada no existe');
+      }
+      cliente.zonaResidencia = zonaResidencia;
+    }
+
+    this.clienteRepository.merge(cliente, resto);
     return await this.clienteRepository.save(cliente);
   }
 
   async remove(id: number): Promise<{ message: string }> {
-    const cliente = await this.findOne(id);
-    await this.clienteRepository.remove(cliente);
+    await this.findOne(id);
+    await this.clienteRepository.softDelete({ idUsuario: id });
     return { message: `Cliente con ID ${id} eliminado con éxito` };
   }
 }
