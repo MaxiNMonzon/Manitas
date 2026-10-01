@@ -57,12 +57,33 @@ export class SolicitudDeServicioService {
     });
   }
 
-  async findAll() {
-    return await this.solicitudDeServicioRepository.find();
+  async findAll(idCliente?: number, idProfesional?: number): Promise<SolicitudDeServicio[]> {
+  const query = this.solicitudDeServicioRepository
+    .createQueryBuilder('solicitud')
+    .leftJoinAndSelect('solicitud.cliente', 'cliente')
+    .leftJoinAndSelect('solicitud.profesional', 'profesional')
+    .leftJoinAndSelect('solicitud.metodoDePago', 'metodoDePago');
+
+  if (idCliente) {
+    query.andWhere('cliente.idUsuario = :idCliente', { idCliente });
   }
 
+  if (idProfesional) {
+    query.andWhere('profesional.idUsuario = :idProfesional', { idProfesional });
+  }
+
+  return await query.getMany();
+}
+
   async findOne(id: number) {
-    const solicitudDeServicio = await this.solicitudDeServicioRepository.findOneBy({ idSolicitud: id });
+    const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud: id },
+      relations: {
+        cliente: true,
+        profesional: true,
+        metodoPago: true,
+      },
+    });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
     }

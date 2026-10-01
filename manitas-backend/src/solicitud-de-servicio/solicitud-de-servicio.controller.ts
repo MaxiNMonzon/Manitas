@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
 import { SolicitudDeServicioService } from './solicitud-de-servicio.service';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
@@ -13,9 +13,14 @@ export class SolicitudDeServicioController {
   }
 
   @Get()
-  findAll() {
-    return this.solicitudDeServicioService.findAll();
-  }
+  findAll(
+  @Query('cliente') cliente?: string,
+  @Query('profesional') profesional?: string,
+) {
+  const idCliente = cliente ? +cliente : undefined;
+  const idProfesional = profesional ? +profesional : undefined;
+  return this.solicitudDeServicioService.findAll(idCliente, idProfesional);
+}
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
