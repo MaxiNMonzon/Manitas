@@ -1,24 +1,21 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { CreateZonaDto } from './dto/create-zona.dto';
 import { UpdateZonaDto } from './dto/update-zona.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Zona } from './entities/zona.entity';
 import { Localidad } from '../localidad/entities/localidad.entity';
-
-
 
 @Injectable()
 export class ZonaService {
   constructor(
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
-  
     @InjectRepository(Localidad)
     private readonly localidadRepository: Repository<Localidad>,
   ) {}
 
-    async create(createZonaDto: CreateZonaDto): Promise<Zona> {
+  async create(createZonaDto: CreateZonaDto): Promise<Zona> {
     const localidad = await this.localidadRepository.findOneBy({
       idLocalidad: createZonaDto.idLocalidad,
     });
@@ -34,12 +31,23 @@ export class ZonaService {
     );
   }
 
-   async findAll(): Promise<Zona[]> {
-    return await this.zonaRepository.find();
+  async findAll(idLocalidad?: number): Promise<Zona[]> {
+  const options: FindManyOptions<Zona> = {
+    relations: { localidad: true },
+  };
+
+  if (idLocalidad) {
+    options.where = { localidad: { idLocalidad } };
   }
 
+  return await this.zonaRepository.find(options);
+}
+
   async findOne(id: number): Promise<Zona> {
-    const zona = await this.zonaRepository.findOneBy({ idZona: id });
+    const zona = await this.zonaRepository.findOne({
+      where: { idZona: id },
+      relations: { localidad: { provincia: true } },
+    });
     if (!zona) {
       throw new NotFoundException(`Zona con ID ${id} no encontrada`);
     }

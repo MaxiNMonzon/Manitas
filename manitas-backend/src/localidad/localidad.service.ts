@@ -3,7 +3,7 @@ import { CreateLocalidadDto } from './dto/create-localidad.dto';
 import { UpdateLocalidadDto } from './dto/update-localidad.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Localidad } from './entities/localidad.entity';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { Provincia } from '../provincia/entities/provincia.entity';
 
 @Injectable()
@@ -32,9 +32,17 @@ constructor(
   });
   }
 
-  async findAll() {
-    return await this.localidadRepository.find();
+async findAll(idProvincia?: number): Promise<Localidad[]> {
+  const options: FindManyOptions<Localidad> = {
+    relations: { provincia: true },
+  };
+
+  if (idProvincia) {
+    options.where = { provincia: { idProvincia } };
   }
+
+  return await this.localidadRepository.find(options);
+}
 
   async findOne(id: number) {
     const localidad = await this.localidadRepository.findOneBy({idLocalidad:id});

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, //nuevo, para filtrado
 } from '@nestjs/common';
 import { ProfesionalService } from './profesional.service';
 import { CreateProfesionalDto } from './dto/create-profesional.dto';
@@ -21,10 +13,15 @@ export class ProfesionalController {
     return this.profesionalService.create(createProfesionalDto);
   }
 
-  @Get()
-  findAll() {
-    return this.profesionalService.findAll();
-  }
+  @Get()    //lo nuevo del filtrado
+  findAll(
+  @Query('especialidad') especialidad?: string,
+  @Query('zona') zona?: string,
+) {
+  const idEspecialidad = especialidad ? +especialidad : undefined;
+  const idZona = zona ? +zona : undefined;
+  return this.profesionalService.findAll(idEspecialidad, idZona);
+}
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {

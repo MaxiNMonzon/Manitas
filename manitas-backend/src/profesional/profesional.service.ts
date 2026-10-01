@@ -55,12 +55,32 @@ export class ProfesionalService {
     return await this.profesionalRepository.save(nuevoProfesional);
   }
 
-  async findAll(): Promise<Profesional[]> {
-    return await this.profesionalRepository.find();
+async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> {  //esto es lo nuevo, el filtrado dinámico
+  const query = this.profesionalRepository
+    .createQueryBuilder('profesional')
+    .leftJoinAndSelect('profesional.zonasDeCobertura', 'zona')
+    .leftJoinAndSelect('profesional.precios', 'precio')
+    .leftJoinAndSelect('precio.especialidad', 'especialidad');
+
+  if (idEspecialidad) {
+    query.andWhere('especialidad.idEspecialidad = :idEspecialidad', { idEspecialidad });
   }
 
+  if (idZona) {
+    query.andWhere('zona.idZona = :idZona', { idZona });
+  }
+
+  return await query.getMany();
+}
+
   async findOne(id: number): Promise<Profesional> {
-    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: id });
+    const profesional = await this.profesionalRepository.findOne({
+      where: { idUsuario: id },
+      relations: {
+        zonasDeCobertura: true,
+        precios: { especialidad: true },
+      },
+    });
     if (!profesional) {
       throw new NotFoundException(`Profesional con ID ${id} no encontrado`);
     }
