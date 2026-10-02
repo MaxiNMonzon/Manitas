@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
@@ -12,6 +12,9 @@ import { CalificarProfesionalDto } from '../profesional/dto/calificar-profesiona
 import { SolicitarPresupuestoDto } from './dto/solicitar-presupuesto.dto';
 import { EmitirPresupuestoDto } from './dto/emitir-presupuesto.dto';
 import { AbonarServicioDto } from './dto/abonar-servicio.dto';
+import { CoordinarVisitaDto } from './dto/coordinar-visita.dto';
+import { SolicitarServicioDto } from './dto/solicitar-servicio.dto';
+import { ConfirmarServicioDto } from './dto/confirmar-servicio.dto';
 
 @Injectable()
 export class SolicitudDeServicioService {
@@ -224,6 +227,168 @@ export class SolicitudDeServicioService {
     solicitud.metodoDePago = metodoDePago;
     solicitud.costoFinal = abonarDto.montoAbonado;
     solicitud.estadoServicio = 'ABONADO';
+
+    return await this.solicitudDeServicioRepository.save(solicitud);
+  }
+
+  async coordinarVisita(
+    idSolicitud: number,
+    coordinarVisitaDto: CoordinarVisitaDto,
+  ): Promise<SolicitudDeServicio> {
+    const solicitud = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud },
+      relations: ['cliente', 'profesional'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException(`Solicitud de servicio con ID ${idSolicitud} no encontrada`);
+    }
+
+    if (!solicitud.visitaPrevia) {
+      throw new BadRequestException('Esta solicitud de servicio no requiere visita previa');
+    }
+
+    if (solicitud.estadoServicio === 'CANCELADO' || solicitud.estadoServicio === 'FINALIZADO') {
+      throw new BadRequestException(
+        `No se puede coordinar una visita para una solicitud en estado ${solicitud.estadoServicio}`,
+      );
+    }
+
+    const fechaVisita = new Date(coordinarVisitaDto.fechaVisita);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    if (fechaVisita < hoy) {
+      throw new BadRequestException('La fecha de la visita no puede ser anterior a la fecha actual');
+    }
+
+    solicitud.fechaVisita = fechaVisita;
+    solicitud.horaInicio = coordinarVisitaDto.horaInicio;
+    solicitud.estadoServicio = 'VISITA_COORDINADA';
+
+    return await this.solicitudDeServicioRepository.save(solicitud);
+  }
+
+  /**
+   * Obtiene las visitas programadas dentro de un rango de días (por defecto, las próximas 24-48 horas)
+   * para generar notificaciones a clientes o profesionales.
+   */
+  async obtenerProximasVisitas(diasAviso: number = 1): Promise<SolicitudDeServicio[]> {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const fechaLimite = new Date(hoy);
+    fechaLimite.setDate(fechaLimite.getDate() + diasAviso);
+    fechaLimite.setHours(23, 59, 59, 999);
+
+    const proximasVisitas = await this.solicitudDeServicioRepository.find({
+      where: {
+        visitaPrevia: true,
+        estadoServicio: 'VISITA_COORDINADA',
+        fechaVisita: Between(hoy, fechaLimite),
+      },
+      relations: {
+        cliente: true,
+        profesional: true,
+      },
+      order: {
+        fechaVisita: 'ASC',
+        horaInicio: 'ASC',
+      },
+    });
+
+    return proximasVisitas;
+  }
+
+  /**
+   * Procesa y simula/envía el despacho de notificaciones para las visitas próximas.
+   */
+  async notificarProximasVisitas(diasAviso: number = 1): Promise<{ notificadas: number; detalles: any[] }> {
+    const visitas = await this.obtenerProximasVisitas(diasAviso);
+
+    const detalles = visitas.map((solicitud) => ({
+      idSolicitud: solicitud.idSolicitud,
+      fechaVisita: solicitud.fechaVisita,
+      horaInicio: solicitud.horaInicio,
+      cliente: {
+        id: solicitud.cliente?.idUsuario,
+        nombre: `${solicitud.cliente?.nombre} ${solicitud.cliente?.apellido}`,
+        correo: solicitud.cliente?.correo,
+      },
+      profesional: {
+        id: solicitud.profesional?.idUsuario,
+        nombre: `${solicitud.profesional?.nombre} ${solicitud.profesional?.apellido}`,
+        correo: solicitud.profesional?.correo,
+      },
+      mensaje: `Recordatorio: Tienes una visita técnica programada para el día ${solicitud.fechaVisita} a las ${solicitud.horaInicio}.`,
+    }));
+
+    return {
+      notificadas: detalles.length,
+      detalles,
+    };
+  }
+  async solicitarServicio(solicitarDto: SolicitarServicioDto): Promise<SolicitudDeServicio> {
+    const cliente = await this.clienteRepository.findOneBy({ idUsuario: solicitarDto.idCliente });
+    if (!cliente) {
+      throw new BadRequestException('El cliente indicado no existe');
+    }
+
+    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: solicitarDto.idProfesional });
+    if (!profesional) {
+      throw new BadRequestException('El profesional indicado no existe');
+    }
+
+    const metodoDePago = await this.metodoDePagoRepository.findOneBy({ idFormaPago: solicitarDto.idMetodoDePago });
+    if (!metodoDePago) {
+      throw new BadRequestException('El método de pago indicado no existe');
+    }
+
+    if (metodoDePago.estado !== 'ACTIVO') {
+      throw new BadRequestException('El método de pago seleccionado no está activo');
+    }
+
+    const nuevaSolicitud = this.solicitudDeServicioRepository.create({
+      estadoServicio: 'PENDIENTE_CONFIRMACION',
+      visitaPrevia: solicitarDto.visitaPrevia ?? false,
+      fechaSolicitud: new Date(solicitarDto.fechaSolicitud),
+      horaInicio: solicitarDto.horaInicio,
+      horaFinEstimada: solicitarDto.horaFinEstimada,
+      duracionEstimada: solicitarDto.duracionEstimada,
+      costoEstimado: solicitarDto.costoEstimado,
+      cliente,
+      profesional,
+      metodoDePago,
+    });
+
+    return await this.solicitudDeServicioRepository.save(nuevaSolicitud);
+  }
+  async confirmarServicio(
+    idSolicitud: number,
+    confirmarDto?: ConfirmarServicioDto,
+  ): Promise<SolicitudDeServicio> {
+    const solicitud = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud },
+      relations: ['cliente', 'profesional', 'metodoDePago'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException(`Solicitud de servicio con ID ${idSolicitud} no encontrada`);
+    }
+
+    // Solo se pueden confirmar solicitudes pendientes o presupuestadas
+    const estadosValidos = ['PENDIENTE_CONFIRMACION', 'PRESUPUESTADO', 'VISITA_COORDINADA'];
+    if (!estadosValidos.includes(solicitud.estadoServicio)) {
+      throw new BadRequestException(
+        `No se puede confirmar una solicitud en estado ${solicitud.estadoServicio}`,
+      );
+    }
+
+    if (confirmarDto?.fechaVisita) {
+      solicitud.fechaVisita = new Date(confirmarDto.fechaVisita);
+    }
+
+    solicitud.estadoServicio = 'CONFIRMADO';
 
     return await this.solicitudDeServicioRepository.save(solicitud);
   }

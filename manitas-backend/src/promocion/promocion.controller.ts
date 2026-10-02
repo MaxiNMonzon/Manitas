@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
 import { PromocionService } from './promocion.service';
 import { CreatePromocionDto } from './dto/create-promocion.dto';
 import { UpdatePromocionDto } from './dto/update-promocion.dto';
+import { ConsultarPromocionesDto } from './dto/consultar-promociones.dto';
 
 @Controller('promocion')
 export class PromocionController {
@@ -30,5 +31,9 @@ export class PromocionController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.promocionService.remove(id);
+  }
+  @Get('del-mes')
+  obtenerPromocionesDelMes(@Query() consultarDto: ConsultarPromocionesDto) {
+    return this.promocionService.obtenerPromocionesDelMes(consultarDto);
   }
 }

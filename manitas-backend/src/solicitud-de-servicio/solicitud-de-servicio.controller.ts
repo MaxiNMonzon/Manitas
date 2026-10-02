@@ -7,6 +7,9 @@ import { CalificarProfesionalDto } from '../profesional/dto/calificar-profesiona
 import { SolicitarPresupuestoDto } from './dto/solicitar-presupuesto.dto';
 import { EmitirPresupuestoDto } from './dto/emitir-presupuesto.dto';
 import { AbonarServicioDto } from './dto/abonar-servicio.dto';
+import { CoordinarVisitaDto } from './dto/coordinar-visita.dto';
+import { SolicitarServicioDto } from './dto/solicitar-servicio.dto';
+import { ConfirmarServicioDto } from './dto/confirmar-servicio.dto';
 
 @Controller('solicitud-de-servicio')
 export class SolicitudDeServicioController {
@@ -79,5 +82,31 @@ export class SolicitudDeServicioController {
     @Body() abonarServicioDto: AbonarServicioDto,
   ) {
     return this.solicitudDeServicioService.abonarServicio(id, abonarServicioDto);
+  }
+  @Patch(':id/coordinar-visita')
+  coordinarVisita(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() coordinarVisitaDto: CoordinarVisitaDto,
+  ) {
+    return this.solicitudDeServicioService.coordinarVisita(id, coordinarVisitaDto);
+  }
+  @Get('visitas/proximas')
+  obtenerProximasVisitas(@Query('dias', new ParseIntPipe({ optional: true })) dias?: number) {
+    return this.solicitudDeServicioService.obtenerProximasVisitas(dias ?? 1);
+  }
+  @Post('visitas/notificar-proximas')
+  notificarProximasVisitas(@Query('dias', new ParseIntPipe({ optional: true })) dias?: number) {
+    return this.solicitudDeServicioService.notificarProximasVisitas(dias ?? 1);
+  }
+  @Post('solicitar')
+  solicitarServicio(@Body() solicitarServicioDto: SolicitarServicioDto) {
+    return this.solicitudDeServicioService.solicitarServicio(solicitarServicioDto);
+  }
+  @Patch(':id/confirmar')
+  confirmarServicio(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() confirmarServicioDto: ConfirmarServicioDto,
+  ) {
+    return this.solicitudDeServicioService.confirmarServicio(id, confirmarServicioDto);
   }
 }
