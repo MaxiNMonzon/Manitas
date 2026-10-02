@@ -9,6 +9,9 @@ import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
 import { CalificarServicioDto } from './dto/calificar-servicio.dto';
 import { CalificarProfesionalDto } from '../profesional/dto/calificar-profesional.dto';
+import { SolicitarPresupuestoDto } from './dto/solicitar-presupuesto.dto';
+import { EmitirPresupuestoDto } from './dto/emitir-presupuesto.dto';
+import { AbonarServicioDto } from './dto/abonar-servicio.dto';
 
 @Injectable()
 export class SolicitudDeServicioService {
@@ -150,5 +153,78 @@ export class SolicitudDeServicioService {
       promedio: parseFloat(resultado.promedio) || 0,
       totalReseñas: parseInt(resultado.totalReseñas, 10) || 0,
     };
+  }
+  async solicitarPresupuesto(solicitarDto: SolicitarPresupuestoDto): Promise<SolicitudDeServicio> {
+    const cliente = await this.clienteRepository.findOneBy({ idUsuario: solicitarDto.idCliente });
+    if (!cliente) {
+      throw new BadRequestException('El cliente indicado no existe');
+    }
+
+    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: solicitarDto.idProfesional });
+    if (!profesional) {
+      throw new BadRequestException('El profesional indicado no existe');
+    }
+
+    const metodoDePago = await this.metodoDePagoRepository.findOneBy({ idFormaPago: solicitarDto.idMetodoDePago });
+    if (!metodoDePago) {
+      throw new BadRequestException('El método de pago indicado no existe');
+    }
+
+    const nuevaSolicitud = this.solicitudDeServicioRepository.create({
+      estadoServicio: 'PENDIENTE_PRESUPUESTO',
+      visitaPrevia: solicitarDto.visitaPrevia,
+      fechaSolicitud: solicitarDto.fechaSolicitud,
+      fechaVisita: solicitarDto.fechaVisita ? new Date(solicitarDto.fechaVisita) : undefined,
+      horaInicio: solicitarDto.horaInicio,
+      horaFinEstimada: solicitarDto.horaFinEstimada || '00:00',
+      duracionEstimada: solicitarDto.duracionEstimada || 0,
+      costoEstimado: solicitarDto.costoEstimado || 0,
+      cliente,
+      profesional,
+      metodoDePago,
+    });
+
+    return await this.solicitudDeServicioRepository.save(nuevaSolicitud);
+  }
+
+  async emitirPresupuesto(idSolicitud: number, emitirDto: EmitirPresupuestoDto): Promise<SolicitudDeServicio> {
+    const solicitud = await this.findOne(idSolicitud);
+
+    if (solicitud.estadoServicio !== 'PENDIENTE_PRESUPUESTO') {
+      throw new BadRequestException('Solo se pueden presupuestar solicitudes en estado PENDIENTE_PRESUPUESTO');
+    }
+
+    solicitud.costoEstimado = emitirDto.costoEstimado;
+    solicitud.duracionEstimada = emitirDto.duracionEstimada;
+    solicitud.horaFinEstimada = emitirDto.horaFinEstimada;
+    solicitud.estadoServicio = 'PRESUPUESTADO';
+
+    return await this.solicitudDeServicioRepository.save(solicitud);
+  }
+  async abonarServicio(idSolicitud: number, abonarDto: AbonarServicioDto): Promise<SolicitudDeServicio> {
+    const solicitud = await this.findOne(idSolicitud);
+
+    if (solicitud.estadoServicio === 'ABONADO' || solicitud.estadoServicio === 'PAGADO') {
+      throw new BadRequestException('Esta solicitud de servicio ya se encuentra abonada');
+    }
+
+    if (solicitud.estadoServicio === 'CANCELADO') {
+      throw new BadRequestException('No se puede abonar una solicitud cancelada');
+    }
+
+    const metodoDePago = await this.metodoDePagoRepository.findOneBy({ idFormaPago: abonarDto.idMetodoDePago });
+    if (!metodoDePago) {
+      throw new BadRequestException('El método de pago indicado no existe');
+    }
+
+    if (metodoDePago.estado !== 'ACTIVO') {
+      throw new BadRequestException('El método de pago seleccionado no está disponible');
+    }
+
+    solicitud.metodoDePago = metodoDePago;
+    solicitud.costoFinal = abonarDto.montoAbonado;
+    solicitud.estadoServicio = 'ABONADO';
+
+    return await this.solicitudDeServicioRepository.save(solicitud);
   }
 }

@@ -4,6 +4,9 @@ import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { CalificarServicioDto } from './dto/calificar-servicio.dto';
 import { CalificarProfesionalDto } from '../profesional/dto/calificar-profesional.dto';
+import { SolicitarPresupuestoDto } from './dto/solicitar-presupuesto.dto';
+import { EmitirPresupuestoDto } from './dto/emitir-presupuesto.dto';
+import { AbonarServicioDto } from './dto/abonar-servicio.dto';
 
 @Controller('solicitud-de-servicio')
 export class SolicitudDeServicioController {
@@ -58,5 +61,23 @@ export class SolicitudDeServicioController {
   @Get('profesional/:idProfesional/promedio')
   obtenerPromedioProfesional(@Param('idProfesional', ParseIntPipe) idProfesional: number) {
     return this.solicitudDeServicioService.obtenerPromedioProfesional(idProfesional);
+  }
+  @Post('solicitar-presupuesto')
+  solicitarPresupuesto(@Body() solicitarPresupuestoDto: SolicitarPresupuestoDto) {
+    return this.solicitudDeServicioService.solicitarPresupuesto(solicitarPresupuestoDto);
+  }
+  @Patch(':id/emitir-presupuesto')
+  emitirPresupuesto(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() emitirPresupuestoDto: EmitirPresupuestoDto,
+  ) {
+    return this.solicitudDeServicioService.emitirPresupuesto(id, emitirPresupuestoDto);
+  }
+  @Patch(':id/abonar')
+  abonarServicio(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() abonarServicioDto: AbonarServicioDto,
+  ) {
+    return this.solicitudDeServicioService.abonarServicio(id, abonarServicioDto);
   }
 }
