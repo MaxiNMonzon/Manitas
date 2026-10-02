@@ -13,7 +13,7 @@ import { CalificarProfesionalDto } from '../profesional/dto/calificar-profesiona
 @Injectable()
 export class SolicitudDeServicioService {
   constructor(
-    @InjectRepository(SolicitudDeServicio)
+     @InjectRepository(SolicitudDeServicio)
     private readonly solicitudDeServicioRepository: Repository<SolicitudDeServicio>,
 
     @InjectRepository(MetodoDePago)
@@ -27,11 +27,11 @@ export class SolicitudDeServicioService {
   ) {}
 
   async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto) {
-    const metodoPago = await this.metodoDePagoRepository.findOneBy({
-      idFormaPago: createSolicitudDeServicioDto.idMetodoPago,
+    const metodoDePago = await this.metodoDePagoRepository.findOneBy({
+      idFormaPago: createSolicitudDeServicioDto.idMetodoDePago,
     });
 
-    if (!metodoPago) {
+    if (!metodoDePago) {
       throw new BadRequestException('El metodo de pago indicado no existe');
     }
 
@@ -53,7 +53,7 @@ export class SolicitudDeServicioService {
 
     return await this.solicitudDeServicioRepository.save({
       ...createSolicitudDeServicioDto,
-      metodoPago,
+      metodoDePago,
       cliente,
       profesional,
     });
@@ -83,7 +83,7 @@ export class SolicitudDeServicioService {
       relations: {
         cliente: true,
         profesional: true,
-        metodoPago: true,
+        metodoDePago: true,
       },
     });
     if (!solicitudDeServicio) {
