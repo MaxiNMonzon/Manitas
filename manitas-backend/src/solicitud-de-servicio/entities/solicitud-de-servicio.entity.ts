@@ -26,7 +26,7 @@ export class SolicitudDeServicio {
     @Column({ type: 'time' })
     horaFinEstimada!: string;
 
-    @Column()
+    @Column({ type: 'int', nullable: true })
     duracionEstimada!: number;
 
     @Column({ type: 'time', nullable: true })
@@ -45,7 +45,7 @@ export class SolicitudDeServicio {
     reseñaServicio!: string;
 
     @ManyToOne(() => MetodoDePago, (metodoDePago) => metodoDePago.solicitudes)
-    metodoPago!: MetodoDePago;
+    metodoDePago!: MetodoDePago;
 
     @ManyToOne(() => Cliente, (cliente) => cliente.solicitudes)
     cliente!: Cliente;

@@ -22,6 +22,7 @@ export class CreateSolicitudDeServicioDto {
     horaFinEstimada!: string;
 
     @IsInt()
+    @IsOptional()
     @IsPositive()
     duracionEstimada!: number;
 
@@ -50,7 +51,7 @@ export class CreateSolicitudDeServicioDto {
 
     @IsInt()
     @IsPositive()
-    idMetodoPago!: number;
+    idMetodoDePago!: number;
 
     @IsInt()
     @IsPositive()
