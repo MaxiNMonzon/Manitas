@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -9,17 +8,15 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ProfesionalService } from './profesional.service';
-import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { Rol } from '../common/enums/rol.enum';
+import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
+import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @Controller('profesional')
 export class ProfesionalController {
   constructor(private readonly profesionalService: ProfesionalService) {}
-
-  @Post()
-  create(@Body() createProfesionalDto: CreateProfesionalDto) {
-    return this.profesionalService.create(createProfesionalDto);
-  }
 
   @Get()
   findAll() {
@@ -32,15 +29,18 @@ export class ProfesionalController {
   }
 
   @Patch(':id')
+  @Auth(Rol.PROFESIONAL)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProfesionalDto: UpdateProfesionalDto,
+    @UsuarioActivo() usuario: UsuarioActivoInterface,
   ) {
-    return this.profesionalService.update(id, updateProfesionalDto);
+    return this.profesionalService.update(id, updateProfesionalDto, usuario.sub);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.profesionalService.remove(id);
+  @Auth(Rol.PROFESIONAL)
+  remove(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.profesionalService.remove(id, usuario.sub);
   }
 }

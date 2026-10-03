@@ -54,9 +54,5 @@ export class CreateSolicitudDeServicioDto {
 
     @IsInt()
     @IsPositive()
-    idCliente!: number;
-
-    @IsInt()
-    @IsPositive()
     idProfesional!: number;
 }
