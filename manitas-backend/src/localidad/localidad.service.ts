@@ -32,12 +32,18 @@ constructor(
   });
   }
 
-  async findAll() {
-    return await this.localidadRepository.find();
+  async findAll(idProvincia?: number) {
+    return await this.localidadRepository.find({
+      where: idProvincia ? { provincia: { idProvincia } } : {},
+      relations: { provincia: true },
+    });
   }
 
   async findOne(id: number) {
-    const localidad = await this.localidadRepository.findOneBy({idLocalidad:id});
+    const localidad = await this.localidadRepository.findOne({
+      where: { idLocalidad: id },
+      relations: { provincia: true },
+    });
     if (!localidad) {
       throw new NotFoundException(`Localidad con ID ${id} no encontrada`);
     }

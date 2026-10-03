@@ -50,8 +50,28 @@ export class ProfesionalService {
     return await this.profesionalRepository.save(nuevoProfesional);
   }
 
-  async findAll(): Promise<Profesional[]> {
-    return await this.profesionalRepository.find();
+  async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> {
+    const query = this.profesionalRepository
+      .createQueryBuilder('profesional')
+      .leftJoinAndSelect('profesional.zonasDeCobertura', 'zona')
+      .leftJoinAndSelect('profesional.precios', 'precio')
+      .leftJoinAndSelect('precio.especialidad', 'especialidad');
+
+    // Los filtros usan joins aparte para no recortar las zonas y precios que se devuelven
+    if (idEspecialidad) {
+      query
+        .innerJoin('profesional.precios', 'precioFiltro')
+        .innerJoin('precioFiltro.especialidad', 'especialidadFiltro')
+        .andWhere('especialidadFiltro.idEspecialidad = :idEspecialidad', { idEspecialidad });
+    }
+
+    if (idZona) {
+      query
+        .innerJoin('profesional.zonasDeCobertura', 'zonaFiltro')
+        .andWhere('zonaFiltro.idZona = :idZona', { idZona });
+    }
+
+    return await query.getMany();
   }
 
   async findOneByEmail(correo: string) {
@@ -59,7 +79,13 @@ export class ProfesionalService {
   }
 
   async findOne(id: number): Promise<Profesional> {
-    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: id });
+    const profesional = await this.profesionalRepository.findOne({
+      where: { idUsuario: id },
+      relations: {
+        zonasDeCobertura: true,
+        precios: { especialidad: true },
+      },
+    });
     if (!profesional) {
       throw new NotFoundException(`Profesional con ID ${id} no encontrado`);
     }

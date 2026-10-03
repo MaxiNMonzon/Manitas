@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
 import { ZonaService } from './zona.service';
 import { CreateZonaDto } from './dto/create-zona.dto';
 import { UpdateZonaDto } from './dto/update-zona.dto';
@@ -16,8 +16,8 @@ export class ZonaController {
   }
 
   @Get()
-  findAll() {
-    return this.zonaService.findAll();
+  findAll(@Query('localidad', new ParseIntPipe({ optional: true })) idLocalidad?: number) {
+    return this.zonaService.findAll(idLocalidad);
   }
 
   @Get(':id')
