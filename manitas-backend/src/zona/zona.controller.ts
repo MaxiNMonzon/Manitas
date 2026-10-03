@@ -15,11 +15,10 @@ export class ZonaController {
     return this.zonaService.create(createZonaDto);
   }
 
-  @Get()
-  findAll(@Query('localidad') localidad?: string) {
-  const idLocalidad = localidad ? +localidad : undefined;
-  return this.zonaService.findAll(idLocalidad);
-}
+ @Get()
+  findAll(@Query('localidad', new ParseIntPipe({ optional: true })) idLocalidad?: number) {
+    return this.zonaService.findAll(idLocalidad);
+  }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {

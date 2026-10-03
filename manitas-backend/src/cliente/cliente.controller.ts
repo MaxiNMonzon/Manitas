@@ -11,34 +11,13 @@ import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo
 export class ClienteController {
   constructor(private readonly clienteService: ClienteService) {}
 
-/*  @Post()
-  create(@Body() createClienteDto: CreateClienteDto) {
-    return this.clienteService.create(createClienteDto);
-  }*/
- 
-  @Get()
-  findAll() {
-    return this.clienteService.findAll();
-  }
-/*
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.clienteService.findOne(id);
-  }*/
-  @Get(':id')
+    @Get(':id')
   @Auth(Rol.CLIENTE)
   findOne(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.clienteService.findOnePropio(id, usuario.sub);
   }
 
- /* @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateClienteDto: UpdateClienteDto,
-  ) {
-    return this.clienteService.update(id, updateClienteDto);
-  }*/
- @Patch(':id')
+  @Patch(':id')
   @Auth(Rol.CLIENTE)
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -48,13 +27,10 @@ export class ClienteController {
     return this.clienteService.update(id, updateClienteDto, usuario.sub);
   }
 
-  /*@Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.clienteService.remove(id);
-  }*/
-   @Delete(':id')
+  @Delete(':id')
   @Auth(Rol.CLIENTE)
   remove(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.clienteService.remove(id, usuario.sub);
   }
+
 }

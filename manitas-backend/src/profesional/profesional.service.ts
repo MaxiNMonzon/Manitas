@@ -20,42 +20,7 @@ export class ProfesionalService {
   private readonly clienteRepository: Repository<Cliente>,
   ) {}
 
-  /*async create(
-    createProfesionalDto: CreateProfesionalDto,
-  ): Promise<Profesional> {
-    const profesionalConEseCorreo = await this.profesionalRepository.findOne({
-      where: { correo: createProfesionalDto.correo },
-      withDeleted: true,
-    });
-    if (profesionalConEseCorreo) {
-      throw new ConflictException('Ya existe un profesional registrado con ese correo');
-    }
-
-    const clienteConEseCorreo = await this.clienteRepository.findOne({
-      where: { correo: createProfesionalDto.correo },
-      withDeleted: true,
-    });
-    if (clienteConEseCorreo) {
-      throw new ConflictException(
-        'Ese correo ya está registrado como cliente, usá otro correo',
-      );
-    }
-
-    const zonasDeCobertura = await this.zonaRepository.findBy({
-      idZona: In(createProfesionalDto.idsZonasCobertura),
-    });
-
-    if (zonasDeCobertura.length !== createProfesionalDto.idsZonasCobertura.length) {
-      throw new BadRequestException('Alguna de las zonas de cobertura indicadas no existe');
-    }
-
-    const nuevoProfesional = this.profesionalRepository.create({
-      ...createProfesionalDto,
-      zonasDeCobertura,
-    });
-    return await this.profesionalRepository.save(nuevoProfesional);
-  }*/
- async create(
+    async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
     const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
@@ -84,27 +49,29 @@ export class ProfesionalService {
     return await this.profesionalRepository.save(nuevoProfesional);
   }
 
-  /*async findAll(): Promise<Profesional[]> {
-    return await this.profesionalRepository.find();
-  }*/
+  async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> {
+    const query = this.profesionalRepository
+      .createQueryBuilder('profesional')
+      .leftJoinAndSelect('profesional.zonasDeCobertura', 'zona')
+      .leftJoinAndSelect('profesional.precios', 'precio')
+      .leftJoinAndSelect('precio.especialidad', 'especialidad');
 
-async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> {  //esto es lo nuevo, el filtrado dinámico
-  const query = this.profesionalRepository
-    .createQueryBuilder('profesional')
-    .leftJoinAndSelect('profesional.zonasDeCobertura', 'zona')
-    .leftJoinAndSelect('profesional.precios', 'precio')
-    .leftJoinAndSelect('precio.especialidad', 'especialidad');
+    // Los filtros usan joins aparte para no recortar las zonas y precios que se devuelven
+    if (idEspecialidad) {
+      query
+        .innerJoin('profesional.precios', 'precioFiltro')
+        .innerJoin('precioFiltro.especialidad', 'especialidadFiltro')
+        .andWhere('especialidadFiltro.idEspecialidad = :idEspecialidad', { idEspecialidad });
+    }
 
-  if (idEspecialidad) {
-    query.andWhere('especialidad.idEspecialidad = :idEspecialidad', { idEspecialidad });
+    if (idZona) {
+      query
+        .innerJoin('profesional.zonasDeCobertura', 'zonaFiltro')
+        .andWhere('zonaFiltro.idZona = :idZona', { idZona });
+    }
+
+    return await query.getMany();
   }
-
-  if (idZona) {
-    query.andWhere('zona.idZona = :idZona', { idZona });
-  }
-
-  return await query.getMany();
-}
 
   async findOneByEmail(correo: string) {
     return await this.profesionalRepository.findOneBy({ correo });
@@ -123,37 +90,6 @@ async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> 
     }
     return profesional;
   }
-  /* async findOne(id: number): Promise<Profesional> {
-    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: id });
-    if (!profesional) {
-      throw new NotFoundException(`Profesional con ID ${id} no encontrado`);
-    }
-    return profesional;
-  }*/
-
-/*  async update(
-    id: number,
-    updateProfesionalDto: UpdateProfesionalDto,
-  ): Promise<Profesional> {
-    const profesional = await this.findOne(id);
-    const { idsZonasCobertura, ...resto } = updateProfesionalDto;
-
-    if (idsZonasCobertura !== undefined) {
-      const zonasDeCobertura = await this.zonaRepository.findBy({
-        idZona: In(idsZonasCobertura),
-      });
-
-      if (zonasDeCobertura.length !== idsZonasCobertura.length) {
-        throw new BadRequestException(
-          'Alguna de las zonas de cobertura indicadas no existe',
-        );
-      }
-      profesional.zonasDeCobertura = zonasDeCobertura;
-    }
-
-    this.profesionalRepository.merge(profesional, resto);
-    return await this.profesionalRepository.save(profesional);
-  }*/
 
   async update(
     id: number,
@@ -184,22 +120,17 @@ async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> 
     return await this.profesionalRepository.save(profesional);
   }
 
-
-  /*async remove(id: number): Promise<{ message: string }> {
-    await this.findOne(id);
-    await this.profesionalRepository.softDelete({ idUsuario: id });
-    return { message: `Profesional con ID ${id} eliminado` };
-  }*/
-
-   async remove(id: number, idLogueado: number): Promise<{ message: string }> {
+  async remove(id: number, idLogueado: number): Promise<{ message: string }> {
     this.validarQueEsSuCuenta(id, idLogueado);
     await this.findOne(id);
     await this.profesionalRepository.softDelete({ idUsuario: id });
     return { message: `Profesional con ID ${id} eliminado` };
   }
-    private validarQueEsSuCuenta(id: number, idLogueado: number) {
+
+  private validarQueEsSuCuenta(id: number, idLogueado: number) {
     if (id !== idLogueado) {
       throw new ForbiddenException('Solo podés modificar tu propia cuenta');
     }
   }
-}
+
+  }

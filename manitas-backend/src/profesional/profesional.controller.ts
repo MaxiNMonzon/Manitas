@@ -15,37 +15,19 @@ export class ProfesionalController {
   //no es necesario crear el profesional. Lo crea el usuario cuando se registra. El usuario se puede registrar como profesional o como cliente.
   //el usuario se tiene que registrar con una cuenta de correo para profesional y con otra cuenta de correo para cliente.
   //por eso no iría @Post
-  /*@Post()
-  create(@Body() createProfesionalDto: CreateProfesionalDto) {
-    return this.profesionalService.create(createProfesionalDto);
-  }*/
-
-  @Get()    //lo nuevo del filtrado
+ 
+   @Get()
   findAll(
-  @Query('especialidad') especialidad?: string,
-  @Query('zona') zona?: string,
-) {
-  const idEspecialidad = especialidad ? +especialidad : undefined;
-  const idZona = zona ? +zona : undefined;
-  return this.profesionalService.findAll(idEspecialidad, idZona);
-}
-/* @Get()
-  findAll() {
-    return this.profesionalService.findAll();
-  }*/
+    @Query('especialidad', new ParseIntPipe({ optional: true })) idEspecialidad?: number,
+    @Query('zona', new ParseIntPipe({ optional: true })) idZona?: number,
+  ) {
+    return this.profesionalService.findAll(idEspecialidad, idZona);
+  }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.profesionalService.findOne(id);
   }
-  
-  /*@Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateProfesionalDto: UpdateProfesionalDto,
-  ) {
-    return this.profesionalService.update(id, updateProfesionalDto);
-  }*/
 
   @Patch(':id')
   @Auth(Rol.PROFESIONAL)
@@ -57,14 +39,10 @@ export class ProfesionalController {
     return this.profesionalService.update(id, updateProfesionalDto, usuario.sub);
   }
 
-  /*@Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.profesionalService.remove(id);
-  }*/
-
   @Delete(':id')
   @Auth(Rol.PROFESIONAL)
   remove(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.profesionalService.remove(id, usuario.sub);
   }
+
 }

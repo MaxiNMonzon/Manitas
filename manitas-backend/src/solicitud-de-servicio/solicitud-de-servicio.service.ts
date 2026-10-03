@@ -67,26 +67,7 @@ export class SolicitudDeServicioService {
     });
   }
 
-
-  /*async findAll(idCliente?: number, idProfesional?: number): Promise<SolicitudDeServicio[]> {
-  const query = this.solicitudDeServicioRepository
-    .createQueryBuilder('solicitud')
-    .leftJoinAndSelect('solicitud.cliente', 'cliente')
-    .leftJoinAndSelect('solicitud.profesional', 'profesional')
-    .leftJoinAndSelect('solicitud.metodoDePago', 'metodoDePago');
-
-  if (idCliente) {
-    query.andWhere('cliente.idUsuario = :idCliente', { idCliente });
-  }
-
-  if (idProfesional) {
-    query.andWhere('profesional.idUsuario = :idProfesional', { idProfesional });
-  }
-
-  return await query.getMany();
-}*/
-
-async findAll(usuario: UsuarioActivoInterface) {
+  async findAll(usuario: UsuarioActivoInterface) {
     if (usuario.rol === Rol.CLIENTE) {
       return await this.solicitudDeServicioRepository.find({
         where: { cliente: { idUsuario: usuario.sub } },
@@ -97,29 +78,16 @@ async findAll(usuario: UsuarioActivoInterface) {
     });
   }
 
-  /*async findOne(id: number) {
+  async findOne(id: number, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id },
-      relations: {
-        cliente: true,
-        profesional: true,
-        metodoDePago: true,
-      },
+      relations: { cliente: true, profesional: true, metodoDePago: true },
     });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
     }
-    return solicitudDeServicio;
-  }*/
-    async findOne(id: number, usuario: UsuarioActivoInterface) {
-    const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
-      where: { idSolicitud: id },
-      relations: { cliente: true, profesional: true },
-    });
-    if (!solicitudDeServicio) {
-      throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
-    }
-     const esElCliente = usuario.rol === Rol.CLIENTE && solicitudDeServicio.cliente?.idUsuario === usuario.sub;
+
+    const esElCliente = usuario.rol === Rol.CLIENTE && solicitudDeServicio.cliente?.idUsuario === usuario.sub;
     const esElProfesional = usuario.rol === Rol.PROFESIONAL && solicitudDeServicio.profesional?.idUsuario === usuario.sub;
     if (!esElCliente && !esElProfesional) {
       throw new ForbiddenException('No participás de esta solicitud');
@@ -128,24 +96,17 @@ async findAll(usuario: UsuarioActivoInterface) {
     return solicitudDeServicio;
   }
 
- /* async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto) {
-    const solicitudDeServicio = await this.findOne(id);
-    this.solicitudDeServicioRepository.merge(solicitudDeServicio, updateSolicitudDeServicioDto);
-    return await this.solicitudDeServicioRepository.save(solicitudDeServicio);
-  }*/
-   async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, usuario: UsuarioActivoInterface) {
+  async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.findOne(id, usuario);
     this.solicitudDeServicioRepository.merge(solicitudDeServicio, updateSolicitudDeServicioDto);
     return await this.solicitudDeServicioRepository.save(solicitudDeServicio);
   }
 
-  /*async remove(id: number) {
-    return await this.solicitudDeServicioRepository.softDelete({ idSolicitud: id });
-  }*/
-   async remove(id: number, usuario: UsuarioActivoInterface) {
+  async remove(id: number, usuario: UsuarioActivoInterface) {
     await this.findOne(id, usuario);
     return await this.solicitudDeServicioRepository.softDelete({ idSolicitud: id });
   }
+  
 
   async calificarServicio(
     idSolicitud: number,
