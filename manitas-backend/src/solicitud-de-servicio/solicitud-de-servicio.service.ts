@@ -73,7 +73,7 @@ export class SolicitudDeServicioService {
   async findOne(id: number, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id },
-      relations: { cliente: true, profesional: true },
+      relations: { cliente: true, profesional: true, metodoPago: true },
     });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);

@@ -30,12 +30,18 @@ export class ZonaService {
       });
   }
 
-  async findAll() {
-    return await this.zonaRepository.find() ;
+  async findAll(idLocalidad?: number) {
+    return await this.zonaRepository.find({
+      where: idLocalidad ? { localidad: { idLocalidad } } : {},
+      relations: { localidad: true },
+    });
   }
 
   async findOne(id: number) {
-    const zona = await this.zonaRepository.findOneBy({idZona:id});
+    const zona = await this.zonaRepository.findOne({
+      where: { idZona: id },
+      relations: { localidad: { provincia: true } },
+    });
     if (!zona) {
       throw new NotFoundException(`Zona con ID ${id} no encontrada`);
     }

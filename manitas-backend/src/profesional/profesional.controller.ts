@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { ProfesionalService } from './profesional.service';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
@@ -19,8 +20,11 @@ export class ProfesionalController {
   constructor(private readonly profesionalService: ProfesionalService) {}
 
   @Get()
-  findAll() {
-    return this.profesionalService.findAll();
+  findAll(
+    @Query('especialidad', new ParseIntPipe({ optional: true })) idEspecialidad?: number,
+    @Query('zona', new ParseIntPipe({ optional: true })) idZona?: number,
+  ) {
+    return this.profesionalService.findAll(idEspecialidad, idZona);
   }
 
   @Get(':id')
