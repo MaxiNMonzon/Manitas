@@ -2,12 +2,15 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from 
 import { EspecialidadService } from './especialidad.service';
 import { CreateEspecialidadDto } from './dto/create-especialidad.dto';
 import { UpdateEspecialidadDto } from './dto/update-especialidad.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { Rol } from '../common/enums/rol.enum';
 
 @Controller('especialidad')
 export class EspecialidadController {
   constructor(private readonly especialidadService: EspecialidadService) {}
 
   @Post()
+  @Auth(Rol.ADMIN)
   create(@Body() createEspecialidadDto: CreateEspecialidadDto) {
     return this.especialidadService.create(createEspecialidadDto);
   }
@@ -23,11 +26,13 @@ export class EspecialidadController {
   }
 
   @Patch(':id')
+  @Auth(Rol.ADMIN)
   update(@Param('id', ParseIntPipe) id: number, @Body() updateEspecialidadDto: UpdateEspecialidadDto) {
     return this.especialidadService.update(id, updateEspecialidadDto);
   }
 
   @Delete(':id')
+  @Auth(Rol.ADMIN)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.especialidadService.remove(id);
   }

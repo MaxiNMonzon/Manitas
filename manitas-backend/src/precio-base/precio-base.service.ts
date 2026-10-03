@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CreatePrecioBaseDto } from './dto/create-precio-base.dto';
 import { UpdatePrecioBaseDto } from './dto/update-precio-base.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,7 +20,7 @@ constructor(
   private readonly profesionalRepository: Repository<Profesional>,
 ){}
 
-async create(createPrecioBaseDto: CreatePrecioBaseDto) {
+async create(createPrecioBaseDto: CreatePrecioBaseDto, idProfesional: number) {
   const especialidad = await this.especialidadRepository.findOneBy({
     idEspecialidad: createPrecioBaseDto.idEspecialidad,
   });
@@ -30,7 +30,7 @@ async create(createPrecioBaseDto: CreatePrecioBaseDto) {
   }
 
   const profesional = await this.profesionalRepository.findOneBy({
-    idUsuario: createPrecioBaseDto.idProfesional,
+    idUsuario: idProfesional,
   });
 
   if (!profesional) {
@@ -49,20 +49,32 @@ async findAll() {
   }
 
 async findOne(id: number) {
-    const precioBase = await this.preciobaseRepository.findOneBy({idPrecio: id});
+    const precioBase = await this.preciobaseRepository.findOne({
+      where: { idPrecio: id },
+      relations: { profesional: true },
+    });
     if (!precioBase) {
       throw new NotFoundException(`PrecioBase con ID ${id} no encontrado`);
     }
     return precioBase;
   }
 
-async update(id: number, updatePrecioBaseDto: UpdatePrecioBaseDto) {
+async update(id: number, updatePrecioBaseDto: UpdatePrecioBaseDto, idProfesional: number) {
     const precioBase = await this.findOne(id);
+    this.validarDueño(precioBase, idProfesional);
     this.preciobaseRepository.merge(precioBase, updatePrecioBaseDto);
     return await this.preciobaseRepository.save(precioBase);
   }
 
-async remove(id: number) {
+async remove(id: number, idProfesional: number) {
+    const precioBase = await this.findOne(id);
+    this.validarDueño(precioBase, idProfesional);
     return await this.preciobaseRepository.softDelete({idPrecio: id});
+  }
+
+private validarDueño(precioBase: PrecioBase, idProfesional: number) {
+    if (precioBase.profesional?.idUsuario !== idProfesional) {
+      throw new ForbiddenException('Ese precio pertenece a otro profesional');
+    }
   }
 }

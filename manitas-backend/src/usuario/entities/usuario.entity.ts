@@ -1,4 +1,5 @@
 import { Column, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
+import { Exclude } from "class-transformer";
 
 export abstract class Usuario {
     @PrimaryGeneratedColumn()
@@ -19,6 +20,7 @@ export abstract class Usuario {
     @Column({unique:true, nullable: false})
     correo!: string;
     
+    @Exclude()
     @Column({nullable: false})
     contraseña!: string;
     

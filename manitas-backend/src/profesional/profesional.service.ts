@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
@@ -43,6 +44,7 @@ export class ProfesionalService {
 
     const nuevoProfesional = this.profesionalRepository.create({
       ...createProfesionalDto,
+      contraseña: await bcrypt.hash(createProfesionalDto.contraseña, 10),
       zonasDeCobertura,
     });
     return await this.profesionalRepository.save(nuevoProfesional);
@@ -50,6 +52,10 @@ export class ProfesionalService {
 
   async findAll(): Promise<Profesional[]> {
     return await this.profesionalRepository.find();
+  }
+
+  async findOneByEmail(correo: string) {
+    return await this.profesionalRepository.findOneBy({ correo });
   }
 
   async findOne(id: number): Promise<Profesional> {
@@ -63,7 +69,9 @@ export class ProfesionalService {
   async update(
     id: number,
     updateProfesionalDto: UpdateProfesionalDto,
+    idLogueado: number,
   ): Promise<Profesional> {
+    this.validarQueEsSuCuenta(id, idLogueado);
     const profesional = await this.findOne(id);
 
     const { idsZonasCobertura, ...resto } = updateProfesionalDto;
@@ -79,13 +87,24 @@ export class ProfesionalService {
       profesional.zonasDeCobertura = zonasDeCobertura;
     }
 
+    if (resto.contraseña !== undefined) {
+      resto.contraseña = await bcrypt.hash(resto.contraseña, 10);
+    }
+
     this.profesionalRepository.merge(profesional, resto);
     return await this.profesionalRepository.save(profesional);
   }
 
-  async remove(id: number): Promise<{ message: string }> {
+  async remove(id: number, idLogueado: number): Promise<{ message: string }> {
+    this.validarQueEsSuCuenta(id, idLogueado);
     await this.findOne(id);
     await this.profesionalRepository.softDelete({ idUsuario: id });
     return { message: `Profesional con ID ${id} eliminado` };
+  }
+
+  private validarQueEsSuCuenta(id: number, idLogueado: number) {
+    if (id !== idLogueado) {
+      throw new ForbiddenException('Solo podés modificar tu propia cuenta');
+    }
   }
 }
