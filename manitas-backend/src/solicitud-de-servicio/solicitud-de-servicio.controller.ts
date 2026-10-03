@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { SolicitudDeServicioService } from './solicitud-de-servicio.service';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
@@ -10,17 +10,27 @@ import { AbonarServicioDto } from './dto/abonar-servicio.dto';
 import { CoordinarVisitaDto } from './dto/coordinar-visita.dto';
 import { SolicitarServicioDto } from './dto/solicitar-servicio.dto';
 import { ConfirmarServicioDto } from './dto/confirmar-servicio.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { AuthGuard } from '../auth/guard/auth.guard';
+import { Rol } from '../common/enums/rol.enum';
+import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
+import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @Controller('solicitud-de-servicio')
 export class SolicitudDeServicioController {
   constructor(private readonly solicitudDeServicioService: SolicitudDeServicioService) {}
 
-  @Post()
+  /*@Post()
   create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto) {
     return this.solicitudDeServicioService.create(createSolicitudDeServicioDto);
+  }*/
+    @Post()
+  @Auth(Rol.CLIENTE)
+  create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.create(createSolicitudDeServicioDto, usuario.sub);
   }
 
-  @Get()
+  /*@Get()
   findAll(
   @Query('cliente') cliente?: string,
   @Query('profesional') profesional?: string,
@@ -28,21 +38,41 @@ export class SolicitudDeServicioController {
   const idCliente = cliente ? +cliente : undefined;
   const idProfesional = profesional ? +profesional : undefined;
   return this.solicitudDeServicioService.findAll(idCliente, idProfesional);
-}
+}*/
+  @Get()
+  @UseGuards(AuthGuard)
+  findAll(@UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.findAll(usuario);
+  }
 
-  @Get(':id')
+  /*@Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.solicitudDeServicioService.findOne(id);
+  }*/
+    @Get(':id')
+  @UseGuards(AuthGuard)
+  findOne(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.findOne(id, usuario);
   }
 
-  @Patch(':id')
+  /*@Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto) {
     return this.solicitudDeServicioService.update(id, updateSolicitudDeServicioDto);
+  }*/
+    @Patch(':id')
+  @UseGuards(AuthGuard)
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.update(id, updateSolicitudDeServicioDto, usuario);
   }
 
-  @Delete(':id')
+  /*@Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.solicitudDeServicioService.remove(id);
+  }*/
+    @Delete(':id')
+  @Auth(Rol.CLIENTE)
+  remove(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.remove(id, usuario);
   }
 
   @Patch(':id/calificar-servicio')
@@ -65,23 +95,32 @@ export class SolicitudDeServicioController {
   obtenerPromedioProfesional(@Param('idProfesional', ParseIntPipe) idProfesional: number) {
     return this.solicitudDeServicioService.obtenerPromedioProfesional(idProfesional);
   }
-  @Post('solicitar-presupuesto')
-  solicitarPresupuesto(@Body() solicitarPresupuestoDto: SolicitarPresupuestoDto) {
-    return this.solicitudDeServicioService.solicitarPresupuesto(solicitarPresupuestoDto);
+ @Post()
+  solicitarPresupuesto(
+    @Body() solicitarDto: SolicitarPresupuestoDto,
+    @UsuarioActivo() usuario: UsuarioActivoInterface,
+  ) {
+    return this.solicitudDeServicioService.solicitarPresupuesto(solicitarDto, usuario);
   }
-  @Patch(':id/emitir-presupuesto')
+
+  @Patch(':id/presupuestar')
+  @Auth(Rol.PROFESIONAL)
   emitirPresupuesto(
     @Param('id', ParseIntPipe) id: number,
-    @Body() emitirPresupuestoDto: EmitirPresupuestoDto,
+    @Body() emitirDto: EmitirPresupuestoDto,
+    @UsuarioActivo() usuario: UsuarioActivoInterface,
   ) {
-    return this.solicitudDeServicioService.emitirPresupuesto(id, emitirPresupuestoDto);
+    return this.solicitudDeServicioService.emitirPresupuesto(id, emitirDto, usuario);
   }
+
   @Patch(':id/abonar')
+  @Auth(Rol.CLIENTE)
   abonarServicio(
     @Param('id', ParseIntPipe) id: number,
-    @Body() abonarServicioDto: AbonarServicioDto,
+    @Body() abonarDto: AbonarServicioDto,
+    @UsuarioActivo() usuario: UsuarioActivoInterface,
   ) {
-    return this.solicitudDeServicioService.abonarServicio(id, abonarServicioDto);
+    return this.solicitudDeServicioService.abonarServicio(id, abonarDto, usuario);
   }
   @Patch(':id/coordinar-visita')
   coordinarVisita(

@@ -1,6 +1,7 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
@@ -19,7 +20,7 @@ export class ProfesionalService {
   private readonly clienteRepository: Repository<Cliente>,
   ) {}
 
-  async create(
+  /*async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
     const profesionalConEseCorreo = await this.profesionalRepository.findOne({
@@ -53,7 +54,39 @@ export class ProfesionalService {
       zonasDeCobertura,
     });
     return await this.profesionalRepository.save(nuevoProfesional);
+  }*/
+ async create(
+    createProfesionalDto: CreateProfesionalDto,
+  ): Promise<Profesional> {
+    const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
+    if (profesionalConEseCorreo) {
+      throw new ConflictException('Ya existe un profesional registrado con ese correo');
+    }
+
+    const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
+    if (clienteConEseCorreo) {
+      throw new ConflictException('Ese correo ya está registrado como cliente, usá otro correo');
+    }
+
+    const zonasDeCobertura = await this.zonaRepository.findBy({
+      idZona: In(createProfesionalDto.idsZonasCobertura),
+    });
+
+    if (zonasDeCobertura.length !== createProfesionalDto.idsZonasCobertura.length) {
+      throw new BadRequestException('Alguna de las zonas de cobertura indicadas no existe');
+    }
+
+    const nuevoProfesional = this.profesionalRepository.create({
+      ...createProfesionalDto,
+      contraseña: await bcrypt.hash(createProfesionalDto.contraseña, 10),
+      zonasDeCobertura,
+    });
+    return await this.profesionalRepository.save(nuevoProfesional);
   }
+
+  /*async findAll(): Promise<Profesional[]> {
+    return await this.profesionalRepository.find();
+  }*/
 
 async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> {  //esto es lo nuevo, el filtrado dinámico
   const query = this.profesionalRepository
@@ -73,6 +106,10 @@ async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> 
   return await query.getMany();
 }
 
+  async findOneByEmail(correo: string) {
+    return await this.profesionalRepository.findOneBy({ correo });
+  }
+
   async findOne(id: number): Promise<Profesional> {
     const profesional = await this.profesionalRepository.findOne({
       where: { idUsuario: id },
@@ -86,8 +123,15 @@ async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> 
     }
     return profesional;
   }
+  /* async findOne(id: number): Promise<Profesional> {
+    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: id });
+    if (!profesional) {
+      throw new NotFoundException(`Profesional con ID ${id} no encontrado`);
+    }
+    return profesional;
+  }*/
 
-  async update(
+/*  async update(
     id: number,
     updateProfesionalDto: UpdateProfesionalDto,
   ): Promise<Profesional> {
@@ -109,11 +153,53 @@ async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> 
 
     this.profesionalRepository.merge(profesional, resto);
     return await this.profesionalRepository.save(profesional);
+  }*/
+
+  async update(
+    id: number,
+    updateProfesionalDto: UpdateProfesionalDto,
+    idLogueado: number,
+  ): Promise<Profesional> {
+    this.validarQueEsSuCuenta(id, idLogueado);
+    const profesional = await this.findOne(id);
+
+    const { idsZonasCobertura, ...resto } = updateProfesionalDto;
+
+    if (idsZonasCobertura !== undefined) {
+      const zonasDeCobertura = await this.zonaRepository.findBy({
+        idZona: In(idsZonasCobertura),
+      });
+
+      if (zonasDeCobertura.length !== idsZonasCobertura.length) {
+        throw new BadRequestException('Alguna de las zonas de cobertura indicadas no existe');
+      }
+      profesional.zonasDeCobertura = zonasDeCobertura;
+    }
+
+    if (resto.contraseña !== undefined) {
+      resto.contraseña = await bcrypt.hash(resto.contraseña, 10);
+    }
+
+    this.profesionalRepository.merge(profesional, resto);
+    return await this.profesionalRepository.save(profesional);
   }
 
-  async remove(id: number): Promise<{ message: string }> {
+
+  /*async remove(id: number): Promise<{ message: string }> {
     await this.findOne(id);
     await this.profesionalRepository.softDelete({ idUsuario: id });
     return { message: `Profesional con ID ${id} eliminado` };
+  }*/
+
+   async remove(id: number, idLogueado: number): Promise<{ message: string }> {
+    this.validarQueEsSuCuenta(id, idLogueado);
+    await this.findOne(id);
+    await this.profesionalRepository.softDelete({ idUsuario: id });
+    return { message: `Profesional con ID ${id} eliminado` };
+  }
+    private validarQueEsSuCuenta(id: number, idLogueado: number) {
+    if (id !== idLogueado) {
+      throw new ForbiddenException('Solo podés modificar tu propia cuenta');
+    }
   }
 }

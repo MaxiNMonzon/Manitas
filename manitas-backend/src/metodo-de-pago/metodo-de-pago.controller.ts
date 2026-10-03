@@ -2,12 +2,20 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from 
 import { MetodoDePagoService } from './metodo-de-pago.service';
 import { CreateMetodoDePagoDto } from './dto/create-metodo-de-pago.dto';
 import { UpdateMetodoDePagoDto } from './dto/update-metodo-de-pago.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { Rol } from '../common/enums/rol.enum';
 
 @Controller('metodo-de-pago')
 export class MetodoDePagoController {
   constructor(private readonly metodoDePagoService: MetodoDePagoService) {}
 
+/*  @Post()
+  create(@Body() createMetodoDePagoDto: CreateMetodoDePagoDto) {
+    return this.metodoDePagoService.create(createMetodoDePagoDto);
+  }*/
+
   @Post()
+  @Auth(Rol.ADMIN)
   create(@Body() createMetodoDePagoDto: CreateMetodoDePagoDto) {
     return this.metodoDePagoService.create(createMetodoDePagoDto);
   }
@@ -23,11 +31,23 @@ export class MetodoDePagoController {
   }
 
   @Patch(':id')
+  @Auth(Rol.ADMIN)
   update(@Param('id', ParseIntPipe) id: number, @Body() updateMetodoDePagoDto: UpdateMetodoDePagoDto) {
     return this.metodoDePagoService.update(id, updateMetodoDePagoDto);
   }
+/*
+  @Patch(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateMetodoDePagoDto: UpdateMetodoDePagoDto) {
+    return this.metodoDePagoService.update(id, updateMetodoDePagoDto);
+  }*/
+
+/*  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.metodoDePagoService.remove(id);
+  }*/
 
   @Delete(':id')
+  @Auth(Rol.ADMIN)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.metodoDePagoService.remove(id);
   }

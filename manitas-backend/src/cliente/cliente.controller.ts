@@ -1,46 +1,60 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { ClienteService } from './cliente.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { Rol } from '../common/enums/rol.enum';
+import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
+import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @Controller('cliente')
 export class ClienteController {
   constructor(private readonly clienteService: ClienteService) {}
 
-  @Post()
+/*  @Post()
   create(@Body() createClienteDto: CreateClienteDto) {
     return this.clienteService.create(createClienteDto);
-  }
-
+  }*/
+ 
   @Get()
   findAll() {
     return this.clienteService.findAll();
   }
-
+/*
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.clienteService.findOne(id);
+  }*/
+  @Get(':id')
+  @Auth(Rol.CLIENTE)
+  findOne(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.clienteService.findOnePropio(id, usuario.sub);
   }
 
-  @Patch(':id')
+ /* @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateClienteDto: UpdateClienteDto,
   ) {
     return this.clienteService.update(id, updateClienteDto);
+  }*/
+ @Patch(':id')
+  @Auth(Rol.CLIENTE)
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateClienteDto: UpdateClienteDto,
+    @UsuarioActivo() usuario: UsuarioActivoInterface,
+  ) {
+    return this.clienteService.update(id, updateClienteDto, usuario.sub);
   }
 
-  @Delete(':id')
+  /*@Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.clienteService.remove(id);
+  }*/
+   @Delete(':id')
+  @Auth(Rol.CLIENTE)
+  remove(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.clienteService.remove(id, usuario.sub);
   }
 }

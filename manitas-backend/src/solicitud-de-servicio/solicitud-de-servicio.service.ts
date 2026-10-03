@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +15,8 @@ import { AbonarServicioDto } from './dto/abonar-servicio.dto';
 import { CoordinarVisitaDto } from './dto/coordinar-visita.dto';
 import { SolicitarServicioDto } from './dto/solicitar-servicio.dto';
 import { ConfirmarServicioDto } from './dto/confirmar-servicio.dto';
+import { Rol } from '../common/enums/rol.enum';
+import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @Injectable()
 export class SolicitudDeServicioService {
@@ -32,17 +34,17 @@ export class SolicitudDeServicioService {
     private readonly profesionalRepository: Repository<Profesional>,
   ) {}
 
-  async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto) {
-    const metodoDePago = await this.metodoDePagoRepository.findOneBy({
+  async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
+    const metodoPago = await this.metodoDePagoRepository.findOneBy({
       idFormaPago: createSolicitudDeServicioDto.idMetodoDePago,
     });
 
-    if (!metodoDePago) {
+    if (!metodoPago) {
       throw new BadRequestException('El metodo de pago indicado no existe');
     }
 
     const cliente = await this.clienteRepository.findOneBy({
-      idUsuario: createSolicitudDeServicioDto.idCliente,
+      idUsuario: idCliente,
     });
 
     if (!cliente) {
@@ -59,13 +61,14 @@ export class SolicitudDeServicioService {
 
     return await this.solicitudDeServicioRepository.save({
       ...createSolicitudDeServicioDto,
-      metodoDePago,
+      metodoPago,
       cliente,
       profesional,
     });
   }
 
-  async findAll(idCliente?: number, idProfesional?: number): Promise<SolicitudDeServicio[]> {
+
+  /*async findAll(idCliente?: number, idProfesional?: number): Promise<SolicitudDeServicio[]> {
   const query = this.solicitudDeServicioRepository
     .createQueryBuilder('solicitud')
     .leftJoinAndSelect('solicitud.cliente', 'cliente')
@@ -81,9 +84,20 @@ export class SolicitudDeServicioService {
   }
 
   return await query.getMany();
-}
+}*/
 
-  async findOne(id: number) {
+async findAll(usuario: UsuarioActivoInterface) {
+    if (usuario.rol === Rol.CLIENTE) {
+      return await this.solicitudDeServicioRepository.find({
+        where: { cliente: { idUsuario: usuario.sub } },
+      });
+    }
+    return await this.solicitudDeServicioRepository.find({
+      where: { profesional: { idUsuario: usuario.sub } },
+    });
+  }
+
+  /*async findOne(id: number) {
     const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id },
       relations: {
@@ -96,15 +110,40 @@ export class SolicitudDeServicioService {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
     }
     return solicitudDeServicio;
+  }*/
+    async findOne(id: number, usuario: UsuarioActivoInterface) {
+    const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud: id },
+      relations: { cliente: true, profesional: true },
+    });
+    if (!solicitudDeServicio) {
+      throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
+    }
+     const esElCliente = usuario.rol === Rol.CLIENTE && solicitudDeServicio.cliente?.idUsuario === usuario.sub;
+    const esElProfesional = usuario.rol === Rol.PROFESIONAL && solicitudDeServicio.profesional?.idUsuario === usuario.sub;
+    if (!esElCliente && !esElProfesional) {
+      throw new ForbiddenException('No participás de esta solicitud');
+    }
+
+    return solicitudDeServicio;
   }
 
-  async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto) {
+ /* async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto) {
     const solicitudDeServicio = await this.findOne(id);
+    this.solicitudDeServicioRepository.merge(solicitudDeServicio, updateSolicitudDeServicioDto);
+    return await this.solicitudDeServicioRepository.save(solicitudDeServicio);
+  }*/
+   async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, usuario: UsuarioActivoInterface) {
+    const solicitudDeServicio = await this.findOne(id, usuario);
     this.solicitudDeServicioRepository.merge(solicitudDeServicio, updateSolicitudDeServicioDto);
     return await this.solicitudDeServicioRepository.save(solicitudDeServicio);
   }
 
-  async remove(id: number) {
+  /*async remove(id: number) {
+    return await this.solicitudDeServicioRepository.softDelete({ idSolicitud: id });
+  }*/
+   async remove(id: number, usuario: UsuarioActivoInterface) {
+    await this.findOne(id, usuario);
     return await this.solicitudDeServicioRepository.softDelete({ idSolicitud: id });
   }
 
@@ -157,17 +196,23 @@ export class SolicitudDeServicioService {
       totalReseñas: parseInt(resultado.totalReseñas, 10) || 0,
     };
   }
-  async solicitarPresupuesto(solicitarDto: SolicitarPresupuestoDto): Promise<SolicitudDeServicio> {
-    const cliente = await this.clienteRepository.findOneBy({ idUsuario: solicitarDto.idCliente });
+  async solicitarPresupuesto(
+    solicitarDto: SolicitarPresupuestoDto,
+    usuario: UsuarioActivoInterface,
+  ): Promise<SolicitudDeServicio> {
+    // 1. Obtener el cliente mediante el id extraído del token (usuario.sub)
+    const cliente = await this.clienteRepository.findOneBy({ idUsuario: usuario.sub });
     if (!cliente) {
-      throw new BadRequestException('El cliente indicado no existe');
+      throw new BadRequestException('El usuario autenticado no está registrado como cliente');
     }
 
+    // 2. Validar que el profesional exista
     const profesional = await this.profesionalRepository.findOneBy({ idUsuario: solicitarDto.idProfesional });
     if (!profesional) {
       throw new BadRequestException('El profesional indicado no existe');
     }
 
+    // 3. Validar método de pago
     const metodoDePago = await this.metodoDePagoRepository.findOneBy({ idFormaPago: solicitarDto.idMetodoDePago });
     if (!metodoDePago) {
       throw new BadRequestException('El método de pago indicado no existe');
@@ -190,8 +235,24 @@ export class SolicitudDeServicioService {
     return await this.solicitudDeServicioRepository.save(nuevaSolicitud);
   }
 
-  async emitirPresupuesto(idSolicitud: number, emitirDto: EmitirPresupuestoDto): Promise<SolicitudDeServicio> {
-    const solicitud = await this.findOne(idSolicitud);
+  async emitirPresupuesto(
+    idSolicitud: number,
+    emitirDto: EmitirPresupuestoDto,
+    usuario: UsuarioActivoInterface,
+  ): Promise<SolicitudDeServicio> {
+    const solicitud = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud: idSolicitud },
+      relations: ['profesional'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('La solicitud de servicio no existe');
+    }
+
+    // Control de acceso: Verificar que el profesional que emite el presupuesto sea el asignado
+    if (solicitud.profesional.idUsuario !== usuario.sub) {
+      throw new ForbiddenException('No tenés permisos para presupuestar esta solicitud');
+    }
 
     if (solicitud.estadoServicio !== 'PENDIENTE_PRESUPUESTO') {
       throw new BadRequestException('Solo se pueden presupuestar solicitudes en estado PENDIENTE_PRESUPUESTO');
@@ -204,8 +265,25 @@ export class SolicitudDeServicioService {
 
     return await this.solicitudDeServicioRepository.save(solicitud);
   }
-  async abonarServicio(idSolicitud: number, abonarDto: AbonarServicioDto): Promise<SolicitudDeServicio> {
-    const solicitud = await this.findOne(idSolicitud);
+
+  async abonarServicio(
+    idSolicitud: number,
+    abonarDto: AbonarServicioDto,
+    usuario: UsuarioActivoInterface,
+  ): Promise<SolicitudDeServicio> {
+    const solicitud = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud: idSolicitud },
+      relations: ['cliente'],
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException('La solicitud de servicio no existe');
+    }
+
+    // Control de acceso: Solo el cliente dueño de la solicitud puede abonarla
+    if (solicitud.cliente.idUsuario !== usuario.sub) {
+      throw new ForbiddenException('No tenés permisos para abonar esta solicitud');
+    }
 
     if (solicitud.estadoServicio === 'ABONADO' || solicitud.estadoServicio === 'PAGADO') {
       throw new BadRequestException('Esta solicitud de servicio ya se encuentra abonada');
@@ -230,7 +308,6 @@ export class SolicitudDeServicioService {
 
     return await this.solicitudDeServicioRepository.save(solicitud);
   }
-
   async coordinarVisita(
     idSolicitud: number,
     coordinarVisitaDto: CoordinarVisitaDto,

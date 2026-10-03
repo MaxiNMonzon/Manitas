@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
+import { Exclude } from "class-transformer";
 
 
 @Entity('usuario')
@@ -21,20 +22,12 @@ export abstract class Usuario {
     @Column({ type: 'varchar', length: 150, unique: true, nullable: false })
     correo!: string;
     
+    @Exclude()
     @Column({ type: 'varchar', length: 255, nullable: false })
     contraseña!: string;
  
     @Column({ nullable: true })
     telefono!: string;
-    
-    @Column({ type: 'varchar', length: 50, default: 'cliente' })
-    rol!: string;
-
-    @Column({ type: 'timestamp', nullable: true, default: null })
-    fechaBaja!: Date | null;
-
-    @Column({ type: 'timestamp', nullable: true, default: null })
-    fechaRehabilitacion!: Date | null;
 
     @DeleteDateColumn()
     deleteAt!: Date;
