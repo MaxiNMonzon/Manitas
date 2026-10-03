@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,8 @@ import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
+import { Rol } from '../common/enums/rol.enum';
+import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @Injectable()
 export class SolicitudDeServicioService {
@@ -24,7 +26,7 @@ export class SolicitudDeServicioService {
     private readonly profesionalRepository: Repository<Profesional>,
   ) {}
 
-  async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto) {
+  async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
     const metodoPago = await this.metodoDePagoRepository.findOneBy({
       idFormaPago: createSolicitudDeServicioDto.idMetodoPago,
     });
@@ -34,7 +36,7 @@ export class SolicitudDeServicioService {
     }
 
     const cliente = await this.clienteRepository.findOneBy({
-      idUsuario: createSolicitudDeServicioDto.idCliente,
+      idUsuario: idCliente,
     });
 
     if (!cliente) {
@@ -57,25 +59,43 @@ export class SolicitudDeServicioService {
     });
   }
 
-  async findAll() {
-    return await this.solicitudDeServicioRepository.find();
+  async findAll(usuario: UsuarioActivoInterface) {
+    if (usuario.rol === Rol.CLIENTE) {
+      return await this.solicitudDeServicioRepository.find({
+        where: { cliente: { idUsuario: usuario.sub } },
+      });
+    }
+    return await this.solicitudDeServicioRepository.find({
+      where: { profesional: { idUsuario: usuario.sub } },
+    });
   }
 
-  async findOne(id: number) {
-    const solicitudDeServicio = await this.solicitudDeServicioRepository.findOneBy({ idSolicitud: id });
+  async findOne(id: number, usuario: UsuarioActivoInterface) {
+    const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud: id },
+      relations: { cliente: true, profesional: true },
+    });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
     }
+
+    const esElCliente = usuario.rol === Rol.CLIENTE && solicitudDeServicio.cliente?.idUsuario === usuario.sub;
+    const esElProfesional = usuario.rol === Rol.PROFESIONAL && solicitudDeServicio.profesional?.idUsuario === usuario.sub;
+    if (!esElCliente && !esElProfesional) {
+      throw new ForbiddenException('No participás de esta solicitud');
+    }
+
     return solicitudDeServicio;
   }
 
-  async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto) {
-    const solicitudDeServicio = await this.findOne(id);
+  async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, usuario: UsuarioActivoInterface) {
+    const solicitudDeServicio = await this.findOne(id, usuario);
     this.solicitudDeServicioRepository.merge(solicitudDeServicio, updateSolicitudDeServicioDto);
     return await this.solicitudDeServicioRepository.save(solicitudDeServicio);
   }
 
-  async remove(id: number) {
+  async remove(id: number, usuario: UsuarioActivoInterface) {
+    await this.findOne(id, usuario);
     return await this.solicitudDeServicioRepository.softDelete({ idSolicitud: id });
   }
 }

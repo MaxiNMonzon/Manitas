@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { Cliente } from './entities/cliente.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
@@ -41,13 +42,19 @@ export class ClienteService {
 
     const cliente = this.clienteRepository.create({
       ...createClienteDto,
+      contraseña: await bcrypt.hash(createClienteDto.contraseña, 10),
       zonaResidencia,
     });
     return await this.clienteRepository.save(cliente);
   }
 
-  async findAll(): Promise<Cliente[]> {
-    return await this.clienteRepository.find();
+  async findOnePropio(id: number, idLogueado: number): Promise<Cliente> {
+    this.validarQueEsSuCuenta(id, idLogueado);
+    return await this.findOne(id);
+  }
+
+  async findOneByEmail(correo: string) {
+    return await this.clienteRepository.findOneBy({ correo });
   }
 
   async findOne(id: number): Promise<Cliente> {
@@ -61,7 +68,9 @@ export class ClienteService {
   async update(
     id: number,
     updateClienteDto: UpdateClienteDto,
+    idLogueado: number,
   ): Promise<Cliente> {
+    this.validarQueEsSuCuenta(id, idLogueado);
     const cliente = await this.findOne(id);
 
     const { idZonaResidencia, ...resto } = updateClienteDto;
@@ -74,13 +83,24 @@ export class ClienteService {
       cliente.zonaResidencia = zonaResidencia;
     }
 
+    if (resto.contraseña !== undefined) {
+      resto.contraseña = await bcrypt.hash(resto.contraseña, 10);
+    }
+
     this.clienteRepository.merge(cliente, resto);
     return await this.clienteRepository.save(cliente);
   }
 
-  async remove(id: number): Promise<{ message: string }> {
+  async remove(id: number, idLogueado: number): Promise<{ message: string }> {
+    this.validarQueEsSuCuenta(id, idLogueado);
     await this.findOne(id);
     await this.clienteRepository.softDelete({ idUsuario: id });
     return { message: `Cliente con ID ${id} eliminado con éxito` };
+  }
+
+  private validarQueEsSuCuenta(id: number, idLogueado: number) {
+    if (id !== idLogueado) {
+      throw new ForbiddenException('Solo podés ver o modificar tu propia cuenta');
+    }
   }
 }

@@ -12,8 +12,4 @@ export class CreatePrecioBaseDto {
         @IsInt()
         @IsPositive()
         idEspecialidad!: number;
-
-        @IsInt()
-        @IsPositive()
-        idProfesional!: number;
 }
