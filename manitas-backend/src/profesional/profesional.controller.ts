@@ -32,6 +32,11 @@ export class ProfesionalController {
     return this.profesionalService.findOne(id);
   }
 
+  @Get(':id/calificaciones')
+  calificaciones(@Param('id', ParseIntPipe) id: number) {
+    return this.profesionalService.calificaciones(id);
+  }
+
   @Patch(':id')
   @Auth(Rol.PROFESIONAL)
   update(
