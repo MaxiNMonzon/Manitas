@@ -5,6 +5,8 @@ import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio
 import { AgendarDto } from './dto/agendar.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
+import { PagarDto } from './dto/pagar.dto';
+import { CalificarDto } from './dto/calificar.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { AuthGuard } from '../auth/guard/auth.guard';
 import { Rol } from '../common/enums/rol.enum';
@@ -25,6 +27,13 @@ export class SolicitudDeServicioController {
   @UseGuards(AuthGuard)
   findAll(@UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.findAll(usuario);
+  }
+
+  // Tiene que ir antes de ':id', si no Nest piensa que "avisos" es un id
+  @Get('avisos')
+  @UseGuards(AuthGuard)
+  avisos(@UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.avisos(usuario);
   }
 
   @Get(':id')
@@ -77,6 +86,18 @@ export class SolicitudDeServicioController {
   @Auth(Rol.CLIENTE)
   rechazarPresupuesto(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.rechazarPresupuesto(id, usuario);
+  }
+
+  @Patch(':id/pagar')
+  @Auth(Rol.CLIENTE)
+  pagar(@Param('id', ParseIntPipe) id: number, @Body() pagarDto: PagarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.pagar(id, pagarDto, usuario);
+  }
+
+  @Patch(':id/calificar')
+  @Auth(Rol.CLIENTE)
+  calificar(@Param('id', ParseIntPipe) id: number, @Body() calificarDto: CalificarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.calificar(id, calificarDto, usuario);
   }
 
   // Pasos de los dos (findOne ya controla que participe de la solicitud)
