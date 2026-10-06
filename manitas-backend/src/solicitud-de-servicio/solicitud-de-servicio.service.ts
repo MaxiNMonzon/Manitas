@@ -8,6 +8,7 @@ import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
 import { Rol } from '../common/enums/rol.enum';
+import { EstadoSolicitud } from '../common/enums/estado-solicitud.enum';
 import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @Injectable()
@@ -27,14 +28,6 @@ export class SolicitudDeServicioService {
   ) {}
 
   async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
-    const metodoPago = await this.metodoDePagoRepository.findOneBy({
-      idFormaPago: createSolicitudDeServicioDto.idMetodoPago,
-    });
-
-    if (!metodoPago) {
-      throw new BadRequestException('El metodo de pago indicado no existe');
-    }
-
     const cliente = await this.clienteRepository.findOneBy({
       idUsuario: idCliente,
     });
@@ -51,9 +44,13 @@ export class SolicitudDeServicioService {
       throw new BadRequestException('El profesional indicado no existe');
     }
 
+    // El estado y las fechas los pone el sistema, no el cliente.
+    // El costo de visita se copia para que no cambie si el profesional sube su tarifa despues
     return await this.solicitudDeServicioRepository.save({
       ...createSolicitudDeServicioDto,
-      metodoPago,
+      estadoServicio: EstadoSolicitud.SOLICITADO,
+      fechaCambioEstado: new Date(),
+      costoVisita: profesional.costoVisita,
       cliente,
       profesional,
     });
@@ -90,6 +87,12 @@ export class SolicitudDeServicioService {
 
   async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.findOne(id, usuario);
+    if (usuario.rol !== Rol.CLIENTE) {
+      throw new ForbiddenException('Solo el cliente puede modificar la descripcion');
+    }
+    if (solicitudDeServicio.estadoServicio !== EstadoSolicitud.SOLICITADO) {
+      throw new BadRequestException('Solo se puede modificar mientras el profesional no la haya aceptado');
+    }
     this.solicitudDeServicioRepository.merge(solicitudDeServicio, updateSolicitudDeServicioDto);
     return await this.solicitudDeServicioRepository.save(solicitudDeServicio);
   }

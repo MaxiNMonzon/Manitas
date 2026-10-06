@@ -9,6 +9,10 @@ export class Profesional extends Usuario {
   @Column({ nullable: true })
   nroMatricula?: string;
 
+  // Opcional: solo se cobra si el cliente rechaza el presupuesto
+  @Column({ nullable: true })
+  costoVisita?: number;
+
   // Arreglo de zonas cubiertas por el profesional
   @ManyToMany(() => Zona, (zona) => zona.profesionales)
   @JoinTable({
