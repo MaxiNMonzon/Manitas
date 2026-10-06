@@ -20,6 +20,12 @@ export class PromocionController {
     return this.promocionService.findAll();
   }
 
+  // Tiene que ir antes de ':id', si no Nest piensa que "del-mes" es un id
+  @Get('del-mes')
+  delMes() {
+    return this.promocionService.delMes();
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.promocionService.findOne(id);
