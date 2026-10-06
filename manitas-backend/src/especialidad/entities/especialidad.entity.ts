@@ -1,6 +1,6 @@
-import { Column, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, DeleteDateColumn, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { TipoDeServicio } from "../../tipo-de-servicio/entities/tipo-de-servicio.entity";
-import { PrecioBase } from "../../precio-base/entities/precio-base.entity";
+import { Profesional } from "../../profesional/entities/profesional.entity";
 
 @Entity()
 export class Especialidad {
@@ -16,8 +16,8 @@ export class Especialidad {
     @OneToMany (() => TipoDeServicio, (tipoDeServicio) => tipoDeServicio.especialidad)
     servicios!: TipoDeServicio[];
 
-    @OneToMany(() => PrecioBase, (precioBase) => precioBase.especialidad)
-    precios!: PrecioBase[];
+    @ManyToMany(() => Profesional, (profesional) => profesional.especialidades)
+    profesionales!: Profesional[];
 
     @DeleteDateColumn()
     deleteAt!: Date;

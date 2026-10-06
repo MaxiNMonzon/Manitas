@@ -5,13 +5,10 @@ import { ProfesionalController } from './profesional.controller';
 import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
-import { PrecioBase } from '../precio-base/entities/precio-base.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Profesional, Zona, Especialidad, PrecioBase, Cliente]),
-  ],
+  imports: [TypeOrmModule.forFeature([Profesional, Zona, Especialidad, Cliente])],
   controllers: [ProfesionalController],
   providers: [ProfesionalService],
   exports: [ProfesionalService],
