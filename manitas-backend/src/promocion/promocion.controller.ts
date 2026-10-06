@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { PromocionService } from './promocion.service';
 import { CreatePromocionDto } from './dto/create-promocion.dto';
 import { UpdatePromocionDto } from './dto/update-promocion.dto';
@@ -9,7 +9,7 @@ import { Rol } from '../common/enums/rol.enum';
 export class PromocionController {
   constructor(private readonly promocionService: PromocionService) {}
 
- @Post()
+  @Post()
   @Auth(Rol.ADMIN)
   create(@Body() createPromocionDto: CreatePromocionDto) {
     return this.promocionService.create(createPromocionDto);
@@ -18,6 +18,12 @@ export class PromocionController {
   @Get()
   findAll() {
     return this.promocionService.findAll();
+  }
+
+  // Tiene que ir antes de ':id', si no Nest piensa que "del-mes" es un id
+  @Get('del-mes')
+  delMes() {
+    return this.promocionService.delMes();
   }
 
   @Get(':id')
@@ -36,5 +42,4 @@ export class PromocionController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.promocionService.remove(id);
   }
-  
 }

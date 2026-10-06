@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CreatePromocionDto } from './dto/create-promocion.dto';
 import { UpdatePromocionDto } from './dto/update-promocion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { Promocion } from './entities/promocion.entity';
 import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
 
@@ -38,6 +38,22 @@ constructor(
     return await this.promocionRepository.find();
   }
 
+  // Las que estan vigentes en algun momento de este mes, de mayor a menor descuento
+  async delMes() {
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+
+    return await this.promocionRepository.find({
+      where: {
+        fechaInicioVigencia: LessThanOrEqual(ultimoDia),
+        fechaFinVigencia: MoreThanOrEqual(primerDia),
+      },
+      relations: { metodosPago: true },
+      order: { porcentajeDescuento: 'DESC' },
+    });
+  }
+
   async findOne(id: number) {
     const promocion = await this.promocionRepository.findOneBy({ idPromocion: id });
     if (!promocion) {
@@ -55,5 +71,4 @@ constructor(
   async remove(id: number) {
     return await this.promocionRepository.softDelete({ idPromocion: id });
   }
-
 }
