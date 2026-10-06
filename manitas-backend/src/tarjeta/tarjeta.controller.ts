@@ -23,6 +23,12 @@ export class TarjetaController {
     return this.tarjetaService.findAll(usuario.sub);
   }
 
+  // Tiene que ir antes de ':id'
+  @Get('promociones')
+  conPromociones(@UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.tarjetaService.conPromociones(usuario.sub);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.tarjetaService.findOne(id, usuario.sub);
