@@ -4,7 +4,10 @@ import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
-import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
+import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
+import { PagarDto } from './dto/pagar.dto';
+import { Promocion } from '../promocion/entities/promocion.entity';
+import { CalificarDto } from './dto/calificar.dto';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
 import { Rol } from '../common/enums/rol.enum';
@@ -17,11 +20,11 @@ import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.inte
 @Injectable()
 export class SolicitudDeServicioService {
   constructor(
-     @InjectRepository(SolicitudDeServicio)
+    @InjectRepository(SolicitudDeServicio)
     private readonly solicitudDeServicioRepository: Repository<SolicitudDeServicio>,
 
-    @InjectRepository(MetodoDePago)
-    private readonly metodoDePagoRepository: Repository<MetodoDePago>,
+    @InjectRepository(Tarjeta)
+    private readonly tarjetaRepository: Repository<Tarjeta>,
 
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
@@ -30,7 +33,7 @@ export class SolicitudDeServicioService {
     private readonly profesionalRepository: Repository<Profesional>,
   ) {}
 
-    async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
+  async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
     const cliente = await this.clienteRepository.findOneBy({
       idUsuario: idCliente,
     });
@@ -80,7 +83,7 @@ export class SolicitudDeServicioService {
   async findOne(id: number, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id },
-      relations: { cliente: true, profesional: true, metodoPago: true },
+      relations: { cliente: true, profesional: true, tarjeta: { metodoDePago: true } },
     });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
@@ -165,7 +168,10 @@ export class SolicitudDeServicioService {
     }
     // Trabajo chico: se hace ahora, en la visita
     if (aceptarPresupuestoDto.enElMomento) {
-      solicitud.fechaInicio = new Date();
+      // Sin milisegundos: MySQL los redondea y podia quedar un segundo en el futuro
+      const ahora = new Date();
+      ahora.setMilliseconds(0);
+      solicitud.fechaInicio = ahora;
       return await this.cambiarEstado(solicitud, EstadoSolicitud.AGENDADO);
     }
     // Trabajo grande: hay que coordinar la fecha del trabajo
@@ -181,6 +187,180 @@ export class SolicitudDeServicioService {
       solicitud.costoFinal = solicitud.costoVisita;
     }
     return await this.cambiarEstado(solicitud, EstadoSolicitud.RECHAZADO);
+  }
+
+  // Paga el trabajo (Agendado -> Finalizado) o solo la visita si rechazo el presupuesto (queda Rechazado).
+  // Se cobra siempre el precio completo: el descuento de la promo lo reintegra el banco
+  async pagar(id: number, pagarDto: PagarDto, usuario: UsuarioActivoInterface) {
+    const solicitud = await this.findOne(id, usuario);
+    this.validarEstado(solicitud, [EstadoSolicitud.AGENDADO, EstadoSolicitud.RECHAZADO]);
+
+    if (solicitud.tarjeta) {
+      throw new BadRequestException('Esta solicitud ya fue pagada');
+    }
+
+    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+      if (solicitud.costoEstimado == null) {
+        throw new BadRequestException('Todavia no hay un presupuesto aceptado para pagar');
+      }
+      if (solicitud.fechaInicio > new Date()) {
+        throw new BadRequestException('Todavia no llego la fecha del trabajo');
+      }
+    }
+
+    // En Rechazado solo se paga la visita (si el profesional la cobra)
+    if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && (!solicitud.costoFinal || solicitud.fechaInicio)) {
+      throw new BadRequestException('No hay nada para pagar');
+    }
+
+    // La tarjeta tiene que ser del cliente, no estar vencida y su metodo estar activo
+    const tarjeta = await this.tarjetaRepository.findOne({
+      where: { idTarjeta: pagarDto.idTarjeta, cliente: { idUsuario: usuario.sub } },
+      relations: { metodoDePago: { promociones: true } },
+    });
+    if (!tarjeta) {
+      throw new BadRequestException('Esa tarjeta no existe o no es tuya');
+    }
+    const hoy = new Date();
+    const anioActual = hoy.getFullYear();
+    const mesActual = hoy.getMonth() + 1;
+    if (tarjeta.anioVencimiento < anioActual || (tarjeta.anioVencimiento === anioActual && tarjeta.mesVencimiento < mesActual)) {
+      throw new BadRequestException('La tarjeta esta vencida');
+    }
+    if (tarjeta.metodoDePago.estado !== 'activo') {
+      throw new BadRequestException('Ese metodo de pago no esta disponible');
+    }
+
+    // De las promos vigentes hoy para ese metodo, la de mayor descuento
+    let mejorPromocion: Promocion | null = null;
+    for (const promocion of tarjeta.metodoDePago.promociones) {
+      const inicio = new Date(promocion.fechaInicioVigencia);
+      inicio.setHours(0, 0, 0);
+      const fin = new Date(promocion.fechaFinVigencia);
+      fin.setHours(23, 59, 59);
+      const vigente = inicio <= hoy && hoy <= fin;
+      if (vigente && (!mejorPromocion || Number(promocion.porcentajeDescuento) > Number(mejorPromocion.porcentajeDescuento))) {
+        mejorPromocion = promocion;
+      }
+    }
+
+    solicitud.tarjeta = tarjeta;
+    let guardada: SolicitudDeServicio;
+    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+      solicitud.fechaFinReal = new Date();
+      guardada = await this.cambiarEstado(solicitud, EstadoSolicitud.FINALIZADO);
+    } else {
+      guardada = await this.solicitudDeServicioRepository.save(solicitud);
+    }
+
+    let reintegro: object | null = null;
+    if (mejorPromocion) {
+      const porcentaje = Number(mejorPromocion.porcentajeDescuento);
+      const dondeSeVe = tarjeta.metodoDePago.tipo.toLowerCase().includes('crédito')
+        ? 'en el resumen de tu tarjeta'
+        : 'en tu cuenta';
+      reintegro = {
+        promocion: mejorPromocion.descripcion,
+        porcentaje,
+        montoEstimado: Math.round((solicitud.costoFinal * porcentaje) / 100),
+        mensaje: `Tenes ${porcentaje}% de reintegro, te lo devuelve el banco ${dondeSeVe}`,
+      };
+    }
+
+    return { solicitud: guardada, reintegro };
+  }
+
+  // Calificar al profesional: solo una vez y con el trabajo terminado
+  async calificar(id: number, calificarDto: CalificarDto, usuario: UsuarioActivoInterface) {
+    const solicitud = await this.findOne(id, usuario);
+    this.validarEstado(solicitud, [EstadoSolicitud.FINALIZADO]);
+
+    if (solicitud.calificacionServicio != null) {
+      throw new BadRequestException('Esta solicitud ya fue calificada');
+    }
+
+    solicitud.calificacionServicio = calificarDto.calificacionServicio;
+    if (calificarDto.reseñaServicio) {
+      solicitud.reseñaServicio = calificarDto.reseñaServicio;
+    }
+    return await this.solicitudDeServicioRepository.save(solicitud);
+  }
+
+  // ---------- Avisos dentro de la app ----------
+  // No se guardan en ningun lado: se arman en el momento mirando las solicitudes
+
+  async avisos(usuario: UsuarioActivoInterface) {
+    const esCliente = usuario.rol === Rol.CLIENTE;
+    const solicitudes = await this.solicitudDeServicioRepository.find({
+      where: esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } },
+      relations: { cliente: true, profesional: true, tarjeta: true },
+    });
+
+    const avisos: { idSolicitud: number; mensaje: string }[] = [];
+    for (const solicitud of solicitudes) {
+      await this.revisarVencimiento(solicitud);
+      const mensaje = esCliente ? this.avisoParaCliente(solicitud) : this.avisoParaProfesional(solicitud);
+      if (mensaje) {
+        avisos.push({ idSolicitud: solicitud.idSolicitud, mensaje });
+      }
+    }
+    return avisos;
+  }
+
+  private avisoParaProfesional(solicitud: SolicitudDeServicio) {
+    const cliente = solicitud.cliente.nombre;
+    const horasQueQuedan = Math.floor(48 - (Date.now() - solicitud.fechaCambioEstado.getTime()) / (1000 * 60 * 60));
+
+    if (solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
+      return `Tenes una solicitud nueva de ${cliente}. Te quedan ${horasQueQuedan} hs para responder`;
+    }
+    if (solicitud.estadoServicio === EstadoSolicitud.EN_COORDINACION) {
+      return `Acordate de cargar la fecha de la solicitud de ${cliente}. Te quedan ${horasQueQuedan} hs antes de que venza`;
+    }
+    const proxima = this.proximaFechaEn24hs(solicitud);
+    if (proxima) {
+      return `Tenes ${proxima.que} con ${cliente} el ${proxima.cuando}`;
+    }
+    return null;
+  }
+
+  private avisoParaCliente(solicitud: SolicitudDeServicio) {
+    const profesional = solicitud.profesional.nombre;
+
+    if (solicitud.estadoServicio === EstadoSolicitud.PRESUPUESTADO) {
+      return `${profesional} te mando un presupuesto de $${solicitud.costoFinal}`;
+    }
+    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+      const proxima = this.proximaFechaEn24hs(solicitud);
+      if (proxima) {
+        return `Tenes ${proxima.que} con ${profesional} el ${proxima.cuando}`;
+      }
+      if (solicitud.costoEstimado != null && solicitud.fechaInicio <= new Date()) {
+        return `Cuando ${profesional} termine el trabajo, ya podes pagar $${solicitud.costoFinal}`;
+      }
+    }
+    if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && solicitud.costoFinal && !solicitud.fechaInicio && !solicitud.tarjeta) {
+      return `Tenes que pagar la visita de ${profesional}: $${solicitud.costoFinal}`;
+    }
+    if (solicitud.estadoServicio === EstadoSolicitud.FINALIZADO && solicitud.calificacionServicio == null) {
+      return `¿Como te fue con ${profesional}? Calificalo`;
+    }
+    return null;
+  }
+
+  // Si esta agendado y la visita (o el trabajo) es dentro de las proximas 24 hs
+  private proximaFechaEn24hs(solicitud: SolicitudDeServicio) {
+    if (solicitud.estadoServicio !== EstadoSolicitud.AGENDADO) {
+      return null;
+    }
+    const esLaVisita = solicitud.costoEstimado == null;
+    const fecha = esLaVisita ? solicitud.fechaVisita : solicitud.fechaInicio;
+    const horasQueFaltan = (fecha.getTime() - Date.now()) / (1000 * 60 * 60);
+    if (horasQueFaltan < 0 || horasQueFaltan > 24) {
+      return null;
+    }
+    const cuando = fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return { que: esLaVisita ? 'una visita' : 'el trabajo', cuando };
   }
 
   // ---------- Pasos de los dos ----------
@@ -231,5 +411,4 @@ export class SolicitudDeServicioService {
       await this.solicitudDeServicioRepository.save(solicitud);
     }
   }
-
 }

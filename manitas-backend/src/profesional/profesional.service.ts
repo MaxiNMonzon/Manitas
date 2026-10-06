@@ -1,19 +1,19 @@
 import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
+import { SolicitudDeServicio } from '../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
 import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
 
 @Injectable()
 export class ProfesionalService {
   constructor(
-  
-     @InjectRepository(Profesional)
+    @InjectRepository(Profesional)
     private readonly profesionalRepository: Repository<Profesional>,
 
     @InjectRepository(Zona)
@@ -24,6 +24,9 @@ export class ProfesionalService {
 
     @InjectRepository(Especialidad)
     private readonly especialidadRepository: Repository<Especialidad>,
+
+    @InjectRepository(SolicitudDeServicio)
+    private readonly solicitudRepository: Repository<SolicitudDeServicio>,
   ) {}
 
   async create(
@@ -104,6 +107,34 @@ export class ProfesionalService {
     return profesional;
   }
 
+  // Promedio y reseñas del profesional, para que los clientes lo puedan elegir.
+  // Del cliente solo se muestra el nombre
+  async calificaciones(id: number) {
+    await this.findOne(id);
+    const calificadas = await this.solicitudRepository.find({
+      where: { profesional: { idUsuario: id }, calificacionServicio: Not(IsNull()) },
+      relations: { cliente: true },
+      order: { fechaFinReal: 'DESC' },
+    });
+
+    let suma = 0;
+    for (const solicitud of calificadas) {
+      suma += solicitud.calificacionServicio;
+    }
+    const promedio = calificadas.length > 0 ? Math.round((suma / calificadas.length) * 10) / 10 : null;
+
+    return {
+      promedio,
+      cantidad: calificadas.length,
+      reseñas: calificadas.map((solicitud) => ({
+        calificacion: solicitud.calificacionServicio,
+        reseña: solicitud.reseñaServicio,
+        fecha: solicitud.fechaFinReal,
+        cliente: solicitud.cliente.nombre,
+      })),
+    };
+  }
+
   async update(
     id: number,
     updateProfesionalDto: UpdateProfesionalDto,
@@ -156,5 +187,4 @@ export class ProfesionalService {
       throw new ForbiddenException('Solo podés modificar tu propia cuenta');
     }
   }
-
-  }
+}

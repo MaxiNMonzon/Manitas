@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, //nuevo, para filtrado
 } from '@nestjs/common';
 import { ProfesionalService } from './profesional.service';
-import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { Rol } from '../common/enums/rol.enum';
@@ -16,7 +15,7 @@ export class ProfesionalController {
   //el usuario se tiene que registrar con una cuenta de correo para profesional y con otra cuenta de correo para cliente.
   //por eso no iría @Post
  
-   @Get()
+    @Get()
   findAll(
     @Query('especialidad', new ParseIntPipe({ optional: true })) idEspecialidad?: number,
     @Query('zona', new ParseIntPipe({ optional: true })) idZona?: number,
@@ -27,6 +26,11 @@ export class ProfesionalController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.profesionalService.findOne(id);
+  }
+
+  @Get(':id/calificaciones')
+  calificaciones(@Param('id', ParseIntPipe) id: number) {
+    return this.profesionalService.calificaciones(id);
   }
 
   @Patch(':id')

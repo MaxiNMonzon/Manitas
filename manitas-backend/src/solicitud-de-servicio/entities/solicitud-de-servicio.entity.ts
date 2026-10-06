@@ -1,12 +1,12 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { MetodoDePago } from "../../metodo-de-pago/entities/metodo-de-pago.entity";
+import { Tarjeta } from "../../tarjeta/entities/tarjeta.entity";
 import { Cliente } from "../../cliente/entities/cliente.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
 import { EstadoSolicitud } from "../../common/enums/estado-solicitud.enum";
 
 @Entity()
 export class SolicitudDeServicio {
-   @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn()
     idSolicitud!: number;
 
     @Column({ type: 'enum', enum: EstadoSolicitud, default: EstadoSolicitud.SOLICITADO })
@@ -52,8 +52,9 @@ export class SolicitudDeServicio {
     @Column({ nullable: true })
     reseñaServicio!: string;
 
-    @ManyToOne(() => MetodoDePago, (metodoDePago) => metodoDePago.solicitudes, { nullable: true })
-    metodoPago!: MetodoDePago;
+    // Con que tarjeta se pago (el metodo de pago se saca de la tarjeta)
+    @ManyToOne(() => Tarjeta, (tarjeta) => tarjeta.solicitudes, { nullable: true })
+    tarjeta!: Tarjeta;
 
     @ManyToOne(() => Cliente, (cliente) => cliente.solicitudes)
     cliente!: Cliente;
@@ -64,10 +65,3 @@ export class SolicitudDeServicio {
     @DeleteDateColumn()
     deleteAt!: Date;
 }
-
-
-
-
-
-  
-  
