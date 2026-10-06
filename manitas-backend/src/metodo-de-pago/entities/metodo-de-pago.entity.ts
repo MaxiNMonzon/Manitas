@@ -17,7 +17,7 @@ export class MetodoDePago {
     @JoinTable()
     promociones!: Promocion[];
 
-    @OneToMany(() => SolicitudDeServicio, (solicitud) => solicitud.metodoDePago)
+    @OneToMany(() => SolicitudDeServicio, (solicitud) => solicitud.metodoPago)
     solicitudes!: SolicitudDeServicio[];
 
     @DeleteDateColumn()

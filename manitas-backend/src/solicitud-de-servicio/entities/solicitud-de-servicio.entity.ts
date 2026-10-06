@@ -1,38 +1,46 @@
-import { Column, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { MetodoDePago } from "../../metodo-de-pago/entities/metodo-de-pago.entity";
 import { Cliente } from "../../cliente/entities/cliente.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
+import { EstadoSolicitud } from "../../common/enums/estado-solicitud.enum";
 
 @Entity()
 export class SolicitudDeServicio {
-  @PrimaryGeneratedColumn()
+   @PrimaryGeneratedColumn()
     idSolicitud!: number;
 
-    @Column()
-    estadoServicio!: string;
+    @Column({ type: 'enum', enum: EstadoSolicitud, default: EstadoSolicitud.SOLICITADO })
+    estadoServicio!: EstadoSolicitud;
 
     @Column()
-    visitaPrevia!: boolean;
+    descripcionProblema!: string;
 
-    @Column({ type: 'date' })
+    @CreateDateColumn({ type: 'datetime' })
     fechaSolicitud!: Date;
 
-    @Column({ type: 'date', nullable: true })
+    // Se actualiza en cada cambio de estado, sirve para contar las 48 hs
+    @Column({ type: 'datetime' })
+    fechaCambioEstado!: Date;
+
+    @Column({ type: 'datetime', nullable: true })
     fechaVisita!: Date;
 
-    @Column({ type: 'time' })
-    horaInicio!: string;
+    @Column({ type: 'datetime', nullable: true })
+    fechaInicio!: Date;
 
-    @Column({ type: 'time' })
-    horaFinEstimada!: string;
+    @Column({ type: 'datetime', nullable: true })
+    fechaFinEstimada!: Date;
 
-    @Column({ type: 'int', nullable: true })
+    @Column({ nullable: true })
     duracionEstimada!: number;
 
-    @Column({ type: 'time', nullable: true })
-    horaFinReal!: string;
+    @Column({ type: 'datetime', nullable: true })
+    fechaFinReal!: Date;
 
-    @Column()
+    @Column({ nullable: true })
+    costoVisita!: number;
+
+    @Column({ nullable: true })
     costoEstimado!: number;
 
     @Column({ nullable: true })
@@ -44,8 +52,8 @@ export class SolicitudDeServicio {
     @Column({ nullable: true })
     reseñaServicio!: string;
 
-    @ManyToOne(() => MetodoDePago, (metodoDePago) => metodoDePago.solicitudes)
-    metodoDePago!: MetodoDePago;
+    @ManyToOne(() => MetodoDePago, (metodoDePago) => metodoDePago.solicitudes, { nullable: true })
+    metodoPago!: MetodoDePago;
 
     @ManyToOne(() => Cliente, (cliente) => cliente.solicitudes)
     cliente!: Cliente;

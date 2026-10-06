@@ -2,7 +2,6 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query 
 import { PromocionService } from './promocion.service';
 import { CreatePromocionDto } from './dto/create-promocion.dto';
 import { UpdatePromocionDto } from './dto/update-promocion.dto';
-import { ConsultarPromocionesDto } from './dto/consultar-promociones.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { Rol } from '../common/enums/rol.enum';
 
@@ -10,7 +9,7 @@ import { Rol } from '../common/enums/rol.enum';
 export class PromocionController {
   constructor(private readonly promocionService: PromocionService) {}
 
-  @Post()
+ @Post()
   @Auth(Rol.ADMIN)
   create(@Body() createPromocionDto: CreatePromocionDto) {
     return this.promocionService.create(createPromocionDto);
@@ -37,9 +36,5 @@ export class PromocionController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.promocionService.remove(id);
   }
-
-  @Get('del-mes')
-  obtenerPromocionesDelMes(@Query() consultarDto: ConsultarPromocionesDto) {
-    return this.promocionService.obtenerPromocionesDelMes(consultarDto);
-  }
+  
 }

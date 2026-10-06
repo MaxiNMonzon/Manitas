@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Promocion } from './entities/promocion.entity';
 import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
-import { ConsultarPromocionesDto } from './dto/consultar-promociones.dto';
 
 @Injectable()
 export class PromocionService {
@@ -55,25 +54,6 @@ constructor(
 
   async remove(id: number) {
     return await this.promocionRepository.softDelete({ idPromocion: id });
-  }
-async obtenerPromocionesDelMes(consultarDto?: ConsultarPromocionesDto): Promise<Promocion[]> {
-    const ahora = new Date();
-    const mes = consultarDto?.mes ?? ahora.getMonth() + 1; // getMonth() es 0-indexed
-    const año = consultarDto?.año ?? ahora.getFullYear();
-
-    // Primer y último día del mes a consultar
-    const inicioMes = new Date(año, mes - 1, 1);
-    const finMes = new Date(año, mes, 0); // Último día del mes
-
-    // Busca promociones cuyo rango de vigencia traslape con el mes consultado
-    return await this.promocionRepository
-      .createQueryBuilder('promocion')
-      .leftJoinAndSelect('promocion.metodosPago', 'metodoDePago')
-      .where('promocion.fechaInicioVigencia <= :finMes', { finMes })
-      .andWhere('promocion.fechaFinVigencia >= :inicioMes', { inicioMes })
-      .andWhere('metodoDePago.estado = :estadoMetodo', { estadoMetodo: 'ACTIVO' })
-      .orderBy('promocion.porcentajeDescuento', 'DESC')
-      .getMany();
   }
 
 }
