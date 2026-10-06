@@ -5,6 +5,7 @@ import * as bcrypt from 'bcryptjs';
 import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
+import { Especialidad } from '../especialidad/entities/especialidad.entity';
 import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
 
@@ -19,6 +20,9 @@ export class ProfesionalService {
 
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
+
+    @InjectRepository(Especialidad)
+    private readonly especialidadRepository: Repository<Especialidad>,
   ) {}
 
   async create(
@@ -42,10 +46,19 @@ export class ProfesionalService {
       throw new BadRequestException('Alguna de las zonas de cobertura indicadas no existe');
     }
 
+    const especialidades = await this.especialidadRepository.findBy({
+      idEspecialidad: In(createProfesionalDto.idsEspecialidades),
+    });
+
+    if (especialidades.length !== createProfesionalDto.idsEspecialidades.length) {
+      throw new BadRequestException('Alguna de las especialidades indicadas no existe');
+    }
+
     const nuevoProfesional = this.profesionalRepository.create({
       ...createProfesionalDto,
       contraseña: await bcrypt.hash(createProfesionalDto.contraseña, 10),
       zonasDeCobertura,
+      especialidades,
     });
     return await this.profesionalRepository.save(nuevoProfesional);
   }
@@ -54,14 +67,12 @@ export class ProfesionalService {
     const query = this.profesionalRepository
       .createQueryBuilder('profesional')
       .leftJoinAndSelect('profesional.zonasDeCobertura', 'zona')
-      .leftJoinAndSelect('profesional.precios', 'precio')
-      .leftJoinAndSelect('precio.especialidad', 'especialidad');
+      .leftJoinAndSelect('profesional.especialidades', 'especialidad');
 
-    // Los filtros usan joins aparte para no recortar las zonas y precios que se devuelven
+    // Los filtros usan joins aparte para no recortar las zonas y especialidades que se devuelven
     if (idEspecialidad) {
       query
-        .innerJoin('profesional.precios', 'precioFiltro')
-        .innerJoin('precioFiltro.especialidad', 'especialidadFiltro')
+        .innerJoin('profesional.especialidades', 'especialidadFiltro')
         .andWhere('especialidadFiltro.idEspecialidad = :idEspecialidad', { idEspecialidad });
     }
 
@@ -83,7 +94,7 @@ export class ProfesionalService {
       where: { idUsuario: id },
       relations: {
         zonasDeCobertura: true,
-        precios: { especialidad: true },
+        especialidades: true,
       },
     });
     if (!profesional) {
@@ -100,7 +111,7 @@ export class ProfesionalService {
     this.validarQueEsSuCuenta(id, idLogueado);
     const profesional = await this.findOne(id);
 
-    const { idsZonasCobertura, ...resto } = updateProfesionalDto;
+    const { idsZonasCobertura, idsEspecialidades, ...resto } = updateProfesionalDto;
 
     if (idsZonasCobertura !== undefined) {
       const zonasDeCobertura = await this.zonaRepository.findBy({
@@ -111,6 +122,17 @@ export class ProfesionalService {
         throw new BadRequestException('Alguna de las zonas de cobertura indicadas no existe');
       }
       profesional.zonasDeCobertura = zonasDeCobertura;
+    }
+
+    if (idsEspecialidades !== undefined) {
+      const especialidades = await this.especialidadRepository.findBy({
+        idEspecialidad: In(idsEspecialidades),
+      });
+
+      if (especialidades.length !== idsEspecialidades.length) {
+        throw new BadRequestException('Alguna de las especialidades indicadas no existe');
+      }
+      profesional.especialidades = especialidades;
     }
 
     if (resto.contraseña !== undefined) {
