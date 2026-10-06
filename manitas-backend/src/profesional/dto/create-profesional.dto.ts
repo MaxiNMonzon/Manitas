@@ -16,4 +16,10 @@ export class CreateProfesionalDto extends CreateUsuarioDto {
   @ArrayMinSize(1)
   @IsInt({ each: true })
   idsZonasCobertura!: number[];
+
+  // Lo mismo con las especialidades que hace
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsInt({ each: true })
+  idsEspecialidades!: number[];
 }

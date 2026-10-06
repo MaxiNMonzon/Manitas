@@ -5,7 +5,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TiposDeServicioModule } from './tipos-de-servicio/tipos-de-servicio.module';
 import { EspecialidadModule } from './especialidad/especialidad.module';
-import { PrecioBaseModule } from './precio-base/precio-base.module';
 import { LocalidadModule } from './localidad/localidad.module';
 import { ZonaModule } from './zona/zona.module';
 import { PromocionModule } from './promocion/promocion.module';
@@ -33,7 +32,6 @@ import { AuthModule } from './auth/auth.module';
     }),
     TiposDeServicioModule,
     EspecialidadModule,
-    PrecioBaseModule,
     LocalidadModule,
     ZonaModule,
     PromocionModule,
