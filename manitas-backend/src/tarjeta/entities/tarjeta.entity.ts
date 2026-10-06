@@ -34,3 +34,17 @@ export class Tarjeta {
     @DeleteDateColumn()
     deleteAt!: Date;
 }
+
+
+
+ 
+
+
+
+
+
+
+
+
+   
+    
