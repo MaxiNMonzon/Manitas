@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
 import { PagarDto } from './dto/pagar.dto';
-import { Promocion } from '../promocion/entities/promocion.entity';
+import { mejorPromocionVigente } from '../promocion/mejor-promocion';
 import { CalificarDto } from './dto/calificar.dto';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
@@ -232,17 +232,7 @@ export class SolicitudDeServicioService {
     }
 
     // De las promos vigentes hoy para ese metodo, la de mayor descuento
-    let mejorPromocion: Promocion | null = null;
-    for (const promocion of tarjeta.metodoDePago.promociones) {
-      const inicio = new Date(promocion.fechaInicioVigencia);
-      inicio.setHours(0, 0, 0);
-      const fin = new Date(promocion.fechaFinVigencia);
-      fin.setHours(23, 59, 59);
-      const vigente = inicio <= hoy && hoy <= fin;
-      if (vigente && (!mejorPromocion || Number(promocion.porcentajeDescuento) > Number(mejorPromocion.porcentajeDescuento))) {
-        mejorPromocion = promocion;
-      }
-    }
+    const mejorPromocion = mejorPromocionVigente(tarjeta.metodoDePago.promociones);
 
     solicitud.tarjeta = tarjeta;
     let guardada: SolicitudDeServicio;

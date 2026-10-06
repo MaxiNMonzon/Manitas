@@ -5,6 +5,7 @@ import { Tarjeta } from './entities/tarjeta.entity';
 import { CreateTarjetaDto } from './dto/create-tarjeta.dto';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
+import { mejorPromocionVigente } from '../promocion/mejor-promocion';
 
 @Injectable()
 export class TarjetaService {
@@ -48,6 +49,28 @@ export class TarjetaService {
     return await this.tarjetaRepository.find({
       where: { cliente: { idUsuario: idCliente } },
       relations: { metodoDePago: true },
+    });
+  }
+
+  // Las tarjetas del cliente con la mejor promo vigente hoy de cada una,
+  // para que elija con cual pagar
+  async conPromociones(idCliente: number) {
+    const tarjetas = await this.tarjetaRepository.find({
+      where: { cliente: { idUsuario: idCliente } },
+      relations: { metodoDePago: { promociones: true } },
+    });
+
+    return tarjetas.map((tarjeta) => {
+      const promocion = mejorPromocionVigente(tarjeta.metodoDePago.promociones);
+      return {
+        idTarjeta: tarjeta.idTarjeta,
+        alias: tarjeta.alias,
+        ultimosDigitos: tarjeta.ultimosDigitos,
+        metodoDePago: tarjeta.metodoDePago.tipo,
+        promocion: promocion
+          ? { descripcion: promocion.descripcion, porcentaje: Number(promocion.porcentajeDescuento), hasta: promocion.fechaFinVigencia }
+          : null,
+      };
     });
   }
 
