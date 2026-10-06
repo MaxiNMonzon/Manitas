@@ -13,6 +13,7 @@ import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-
 import { ClienteModule } from './cliente/cliente.module';
 import { ProfesionalModule } from './profesional/profesional.module';
 import { AuthModule } from './auth/auth.module';
+import { TarjetaModule } from './tarjeta/tarjeta.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AuthModule } from './auth/auth.module';
     ClienteModule,
     ProfesionalModule,
     AuthModule,
+    TarjetaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
