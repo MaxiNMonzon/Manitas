@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryG
 import { Tarjeta } from "../../tarjeta/entities/tarjeta.entity";
 import { Cliente } from "../../cliente/entities/cliente.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
+import { Especialidad } from "../../especialidad/entities/especialidad.entity";
 import { EstadoSolicitud } from "../../common/enums/estado-solicitud.enum";
 
 @Entity()
@@ -61,6 +62,11 @@ export class SolicitudDeServicio {
 
     @ManyToOne(() => Profesional, (profesional) => profesional.solicitudes)
     profesional!: Profesional;
+
+    // La especialidad que eligio el cliente (ej: Plomeria). En la base es opcional
+    // solo por las solicitudes viejas; al crear una nueva siempre se pide
+    @ManyToOne(() => Especialidad, (especialidad) => especialidad.solicitudes, { nullable: true })
+    especialidad!: Especialidad;
 
     @DeleteDateColumn()
     deleteAt!: Date;
