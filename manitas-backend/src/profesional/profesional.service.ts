@@ -6,6 +6,7 @@ import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
+import { TiposDeServicio } from '../tipos-de-servicio/entities/tipos-de-servicio.entity';
 import { SolicitudDeServicio } from '../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
 import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
@@ -27,6 +28,9 @@ export class ProfesionalService {
 
     @InjectRepository(SolicitudDeServicio)
     private readonly solicitudRepository: Repository<SolicitudDeServicio>,
+
+    @InjectRepository(TiposDeServicio)
+    private readonly tiposDeServicioRepository: Repository<TiposDeServicio>,
   ) {}
 
   async create(
@@ -58,11 +62,17 @@ export class ProfesionalService {
       throw new BadRequestException('Alguna de las especialidades indicadas no existe');
     }
 
+    const tiposDeServicio = await this.buscarTiposDeServicio(
+      createProfesionalDto.idsTiposDeServicio ?? [],
+      createProfesionalDto.idsEspecialidades,
+    );
+
     const nuevoProfesional = this.profesionalRepository.create({
       ...createProfesionalDto,
       contraseña: await bcrypt.hash(createProfesionalDto.contraseña, 10),
       zonasDeCobertura,
       especialidades,
+      tiposDeServicio,
     });
     return await this.profesionalRepository.save(nuevoProfesional);
   }
@@ -99,6 +109,7 @@ export class ProfesionalService {
       relations: {
         zonasDeCobertura: true,
         especialidades: true,
+        tiposDeServicio: true,
       },
     });
     if (!profesional) {
@@ -143,7 +154,7 @@ export class ProfesionalService {
     this.validarQueEsSuCuenta(id, idLogueado);
     const profesional = await this.findOne(id);
 
-    const { idsZonasCobertura, idsEspecialidades, ...resto } = updateProfesionalDto;
+    const { idsZonasCobertura, idsEspecialidades, idsTiposDeServicio, ...resto } = updateProfesionalDto;
 
     if (idsZonasCobertura !== undefined) {
       const zonasDeCobertura = await this.zonaRepository.findBy({
@@ -167,12 +178,37 @@ export class ProfesionalService {
       profesional.especialidades = especialidades;
     }
 
+    if (idsTiposDeServicio !== undefined) {
+      profesional.tiposDeServicio = await this.buscarTiposDeServicio(
+        idsTiposDeServicio,
+        profesional.especialidades.map((e) => e.idEspecialidad),
+      );
+    }
+
     if (resto.contraseña !== undefined) {
       resto.contraseña = await bcrypt.hash(resto.contraseña, 10);
     }
 
     this.profesionalRepository.merge(profesional, resto);
     return await this.profesionalRepository.save(profesional);
+  }
+
+  // Las habilidades (tipos de servicio) tienen que existir y ser de alguna de las especialidades del profesional
+  private async buscarTiposDeServicio(idsTiposDeServicio: number[], idsEspecialidades: number[]): Promise<TiposDeServicio[]> {
+    if (idsTiposDeServicio.length === 0) return [];
+
+    const tiposDeServicio = await this.tiposDeServicioRepository.find({
+      where: { idServicio: In(idsTiposDeServicio) },
+      relations: { especialidad: true },
+    });
+    if (tiposDeServicio.length !== idsTiposDeServicio.length) {
+      throw new BadRequestException('Alguna de las habilidades indicadas no existe');
+    }
+    const fueraDeEspecialidad = tiposDeServicio.find((t) => !idsEspecialidades.includes(t.especialidad.idEspecialidad));
+    if (fueraDeEspecialidad) {
+      throw new BadRequestException(`La habilidad "${fueraDeEspecialidad.nombreServicio}" no es de ninguna de tus especialidades`);
+    }
+    return tiposDeServicio;
   }
 
   async remove(id: number, idLogueado: number): Promise<{ message: string }> {
