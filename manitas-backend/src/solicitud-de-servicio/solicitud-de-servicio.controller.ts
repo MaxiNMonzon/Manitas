@@ -8,6 +8,7 @@ import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
 import { PagarDto } from './dto/pagar.dto';
 import { CalificarDto } from './dto/calificar.dto';
+import { CreateUrgenteDto } from './dto/create-urgente.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { AuthGuard } from '../auth/guard/auth.guard';
 import { Rol } from '../common/enums/rol.enum';
@@ -29,6 +30,29 @@ export class SolicitudDeServicioController {
   })
   create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.create(createSolicitudDeServicioDto, usuario.sub);
+  }
+
+  @Post('urgente')
+  @Auth(Rol.CLIENTE)
+  @ApiOperation({
+    summary: 'Pedir un servicio urgente',
+    description:
+      'Sin elegir profesional: le aparece a todos los que hacen esa especialidad en la zona del cliente. ' +
+      'El primero que acepta se la queda (pasa a en_coordinacion). Si nadie acepta en 1 hora, vence.',
+  })
+  crearUrgente(@Body() createUrgenteDto: CreateUrgenteDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.crearUrgente(createUrgenteDto, usuario.sub);
+  }
+
+  // Tiene que ir antes de ':id'
+  @Get('urgentes')
+  @Auth(Rol.PROFESIONAL)
+  @ApiOperation({
+    summary: 'Urgentes disponibles cerca',
+    description: 'Las urgentes que nadie tomo todavia, de mis especialidades y en mis zonas. Del cliente solo se ve el nombre y la zona.',
+  })
+  urgentesDisponibles(@UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.urgentesDisponibles(usuario);
   }
 
   @Get()
@@ -83,7 +107,7 @@ export class SolicitudDeServicioController {
 
   @Patch(':id/aceptar')
   @Auth(Rol.PROFESIONAL)
-  @ApiOperation({ summary: 'Aceptar la solicitud', description: 'solicitado → en_coordinacion. Despues coordinan la visita por WhatsApp.' })
+  @ApiOperation({ summary: 'Aceptar la solicitud', description: 'solicitado → en_coordinacion. Despues coordinan la visita por WhatsApp. Si es una urgente sin profesional, la puede aceptar cualquiera de esa especialidad y zona: el primero se la queda.' })
   @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
   aceptar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.aceptar(id, usuario);
@@ -188,7 +212,7 @@ export class SolicitudDeServicioController {
     summary: 'Cancelar',
     description:
       'Cliente o profesional, en solicitado, en_coordinacion o agendado, mientras no haya un presupuesto aceptado. ' +
-      'Si ya esta agendada la visita, hasta 12 hs antes.',
+      'Si ya esta agendada la visita, hasta 12 hs antes. Una urgente solo se cancela mientras nadie la acepto.',
   })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
