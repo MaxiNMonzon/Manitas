@@ -6,10 +6,11 @@ import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
+import { Especialidad } from '../especialidad/entities/especialidad.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SolicitudDeServicio, Cliente, Profesional, Tarjeta]),
+    TypeOrmModule.forFeature([SolicitudDeServicio, Cliente, Profesional, Tarjeta, Especialidad]),
   ],
   controllers: [SolicitudDeServicioController],
   providers: [SolicitudDeServicioService],
