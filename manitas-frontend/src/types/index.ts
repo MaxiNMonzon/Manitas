@@ -46,3 +46,35 @@ export interface RegistroClienteRequest {
   depto?: string
   idZonaResidencia: number
 }
+
+// Catálogos de oficios: GET /especialidad, /tipos-de-servicio
+export interface Especialidad {
+  idEspecialidad: number
+  nombreEspecialidad: string
+  descripcionEspecialidad: string
+}
+
+// En el registro de profesional se muestran como "Habilidades"
+export interface TipoDeServicio {
+  idServicio: number
+  nombreServicio: string
+  descripcionServicio: string
+  especialidad: Especialidad
+}
+
+// POST /auth/register/profesional
+export interface RegistroProfesionalRequest {
+  dni: number
+  nombre: string
+  apellido: string
+  fechaNacimiento: string // YYYY-MM-DD
+  correo: string
+  contraseña: string
+  telefono: string
+  nroMatricula?: string
+  cbu?: string // CBU/CVU: 22 números
+  descripcion?: string // "Sobre mí"
+  idsEspecialidades: number[]
+  idsTiposDeServicio: number[] // habilidades
+  idsZonasCobertura: number[]
+}
