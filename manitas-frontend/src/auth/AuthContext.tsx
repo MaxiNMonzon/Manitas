@@ -17,14 +17,21 @@ function leerSesion(): Sesion | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [sesion, setSesion] = useState<Sesion | null>(leerSesion)
 
-  const login = async (rol: Rol, datos: LoginRequest) => {
-    // El backend tiene un endpoint de login distinto para cada rol
-    const { token, correo } = await api.post<LoginResponse>(`/auth/login/${rol}`, datos)
-    const nueva = { correo, rol }
+  const guardarSesion = (token: string, nueva: Sesion) => {
     tokenStorage.set(token)
     localStorage.setItem(SESION_KEY, JSON.stringify(nueva))
     setSesion(nueva)
   }
+
+  const login = async (rol: Rol, datos: LoginRequest) => {
+    // El backend tiene un endpoint de login distinto para cada rol
+    const { token, correo } = await api.post<LoginResponse>(`/auth/login/${rol}`, datos)
+    guardarSesion(token, { correo, rol })
+  }
+
+  // PROVISORIO: sesión falsa (sin backend) para recorrer las pantallas mientras no hay datos.
+  // El token 'demo' no sirve para el back: las pantallas privadas reales van a dar 401.
+  const loginDemo = (rol: Rol) => guardarSesion('demo', { correo: `demo.${rol}@manitas.com`, rol })
 
   const logout = () => {
     tokenStorage.clear()
@@ -32,5 +39,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSesion(null)
   }
 
-  return <AuthContext.Provider value={{ sesion, login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ sesion, login, loginDemo, logout }}>{children}</AuthContext.Provider>
 }
