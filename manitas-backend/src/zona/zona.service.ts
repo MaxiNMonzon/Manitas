@@ -1,12 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateZonaDto } from './dto/create-zona.dto';
 import { UpdateZonaDto } from './dto/update-zona.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Zona } from './entities/zona.entity';
 import { Localidad } from '../localidad/entities/localidad.entity';
 
@@ -15,39 +11,33 @@ export class ZonaService {
   constructor(
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
+  
     @InjectRepository(Localidad)
     private readonly localidadRepository: Repository<Localidad>,
   ) {}
 
-  async create(createZonaDto: CreateZonaDto): Promise<Zona> {
-    const localidad = await this.localidadRepository.findOneBy({
-      idLocalidad: createZonaDto.idLocalidad,
-    });
+
+  async create(createZonaDto: CreateZonaDto) {
+    const localidad = await this.localidadRepository.findOneBy({idLocalidad:createZonaDto.idLocalidad}) ;
+
     if (!localidad) {
-      throw new BadRequestException('La localidad indicada no existe');
-    }
-
-    return await this.zonaRepository.save(
-      this.zonaRepository.create({
-        nombreZona: createZonaDto.nombreZona,
+        throw new BadRequestException('La localidad indicada no existe');
+      }
+    
+    return await this.zonaRepository.save({
+        ...createZonaDto,
         localidad,
-      }),
-    );
+      });
   }
 
-  async findAll(idLocalidad?: number): Promise<Zona[]> {
-  const options: FindManyOptions<Zona> = {
-    relations: { localidad: true },
-  };
-
-  if (idLocalidad) {
-    options.where = { localidad: { idLocalidad } };
+  async findAll(idLocalidad?: number) {
+    return await this.zonaRepository.find({
+      where: idLocalidad ? { localidad: { idLocalidad } } : {},
+      relations: { localidad: true },
+    });
   }
 
-  return await this.zonaRepository.find(options);
-}
-
-  async findOne(id: number): Promise<Zona> {
+  async findOne(id: number) {
     const zona = await this.zonaRepository.findOne({
       where: { idZona: id },
       relations: { localidad: { provincia: true } },
@@ -58,25 +48,13 @@ export class ZonaService {
     return zona;
   }
 
-  async update(id: number, updateZonaDto: UpdateZonaDto): Promise<Zona> {
+  async update(id: number, updateZonaDto: UpdateZonaDto) {
     const zona = await this.findOne(id);
-    const { idLocalidad, ...resto } = updateZonaDto;
-
-    if (idLocalidad !== undefined) {
-      const localidad = await this.localidadRepository.findOneBy({ idLocalidad });
-      if (!localidad) {
-        throw new BadRequestException('La localidad indicada no existe');
-      }
-      zona.localidad = localidad;
-    }
-
-    this.zonaRepository.merge(zona, resto);
+    this.zonaRepository.merge(zona, updateZonaDto);
     return await this.zonaRepository.save(zona);
   }
 
-  async remove(id: number): Promise<{ message: string }> {
-    await this.findOne(id);
-    await this.zonaRepository.softDelete({ idZona: id });
-    return { message: `Zona con ID ${id} eliminada con éxito` };
+  async remove(id: number) {
+    return await this.zonaRepository.softDelete({idZona:id}) ; //consultar
   }
 }
