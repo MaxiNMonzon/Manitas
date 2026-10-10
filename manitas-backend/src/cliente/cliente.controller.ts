@@ -20,6 +20,13 @@ import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo
 export class ClienteController {
   constructor(private readonly clienteService: ClienteService) {}
 
+  @Get()
+  @Auth(Rol.ADMIN)
+  @ApiOperation({ summary: 'Listar todos los clientes', description: 'Solo el admin. Con su zona, localidad y provincia (sin contraseñas).' })
+  findAll() {
+    return this.clienteService.findAll();
+  }
+
   @Get(':id')
   @Auth(Rol.CLIENTE)
   @ApiOperation({ summary: 'Ver mi cuenta de cliente', description: 'Solo la propia cuenta (el id tiene que ser el del token).' })
