@@ -7,11 +7,16 @@ export class Localidad {
     @PrimaryGeneratedColumn()
     idLocalidad!: number;
     
-    @Column()
-    codigoPostal!: string;
+    // Opcional: la API Georef (de donde sale el catalogo) no trae codigo postal
+    @Column({ type: 'varchar', nullable: true })
+    codigoPostal!: string | null;
     
     @Column()
     nombreLocalidad!: string;
+
+    // Id oficial de la API Georef (ej: "8202129002"). Lo usa el seed para no duplicar
+    @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
+    idGeoref!: string | null;
     
     @ManyToOne(() => Provincia, (provincia) => provincia.localidades)
     provincia!: Provincia;

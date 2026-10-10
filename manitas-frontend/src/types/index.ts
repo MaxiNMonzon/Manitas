@@ -22,7 +22,7 @@ export interface Provincia {
 
 export interface Localidad {
   idLocalidad: number
-  codigoPostal: string
+  codigoPostal: string | null
   nombreLocalidad: string
 }
 
