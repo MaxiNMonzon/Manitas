@@ -243,17 +243,16 @@ export class SolicitudDeServicioService {
       guardada = await this.solicitudDeServicioRepository.save(solicitud);
     }
 
+    // Solo se informa: el reintegro (y su tope, que esta en la descripcion de la promo) lo hace el banco
     let reintegro: object | null = null;
     if (mejorPromocion) {
-      const porcentaje = Number(mejorPromocion.porcentajeDescuento);
       const dondeSeVe = tarjeta.metodoDePago.tipo.toLowerCase().includes('crédito')
         ? 'en el resumen de tu tarjeta'
         : 'en tu cuenta';
       reintegro = {
         promocion: mejorPromocion.descripcion,
-        porcentaje,
-        montoEstimado: Math.round((solicitud.costoFinal * porcentaje) / 100),
-        mensaje: `Tenes ${porcentaje}% de reintegro, te lo devuelve el banco ${dondeSeVe}`,
+        porcentaje: Number(mejorPromocion.porcentajeDescuento),
+        mensaje: `${mejorPromocion.descripcion}. Te lo devuelve el banco ${dondeSeVe}`,
       };
     }
 
