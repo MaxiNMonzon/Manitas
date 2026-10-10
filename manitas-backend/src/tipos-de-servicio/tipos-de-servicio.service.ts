@@ -31,12 +31,20 @@ constructor(
   });
 }
 
-  async findAll() {
-    return await this.tiposDeServicioRepository.find();
+  // Listado "Tipo de Servicio por Especialidad": si viene la especialidad, solo los de esa
+  async findAll(idEspecialidad?: number) {
+    return await this.tiposDeServicioRepository.find({
+      where: idEspecialidad ? { especialidad: { idEspecialidad } } : {},
+      relations: { especialidad: true },
+    });
   }
 
+  // Detalle: el tipo de servicio con su especialidad y los profesionales que la hacen
   async findOne(id: number) {
-    const tiposDeServicio = await this.tiposDeServicioRepository.findOneBy({ idServicio: id });
+    const tiposDeServicio = await this.tiposDeServicioRepository.findOne({
+      where: { idServicio: id },
+      relations: { especialidad: { profesionales: true } },
+    });
     if (!tiposDeServicio) {
       throw new NotFoundException(`TiposDeServicio con ID ${id} no encontrado`);
     }
