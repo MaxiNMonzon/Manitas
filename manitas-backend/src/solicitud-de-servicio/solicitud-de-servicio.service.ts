@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
+import { Especialidad } from '../especialidad/entities/especialidad.entity';
 import { PagarDto } from './dto/pagar.dto';
 import { mejorPromocionVigente } from '../promocion/mejor-promocion';
 import { CalificarDto } from './dto/calificar.dto';
@@ -31,6 +32,9 @@ export class SolicitudDeServicioService {
 
     @InjectRepository(Profesional)
     private readonly profesionalRepository: Repository<Profesional>,
+
+    @InjectRepository(Especialidad)
+    private readonly especialidadRepository: Repository<Especialidad>,
   ) {}
 
   async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
@@ -42,12 +46,27 @@ export class SolicitudDeServicioService {
       throw new BadRequestException('El cliente indicado no existe');
     }
 
-    const profesional = await this.profesionalRepository.findOneBy({
-      idUsuario: createSolicitudDeServicioDto.idProfesional,
+    const profesional = await this.profesionalRepository.findOne({
+      where: { idUsuario: createSolicitudDeServicioDto.idProfesional },
+      relations: { especialidades: true },
     });
 
     if (!profesional) {
       throw new BadRequestException('El profesional indicado no existe');
+    }
+
+    const especialidad = await this.especialidadRepository.findOneBy({
+      idEspecialidad: createSolicitudDeServicioDto.idEspecialidad,
+    });
+
+    if (!especialidad) {
+      throw new BadRequestException('La especialidad indicada no existe');
+    }
+
+    // Regla: no se le puede pedir a un profesional algo que no hace
+    const laHace = profesional.especialidades.some((e) => e.idEspecialidad === especialidad.idEspecialidad);
+    if (!laHace) {
+      throw new BadRequestException('Ese profesional no hace esa especialidad');
     }
 
     // El estado y las fechas los pone el sistema, no el cliente.
@@ -59,6 +78,7 @@ export class SolicitudDeServicioService {
       costoVisita: profesional.costoVisita,
       cliente,
       profesional,
+      especialidad,
     });
   }
 
@@ -67,10 +87,12 @@ export class SolicitudDeServicioService {
     if (usuario.rol === Rol.CLIENTE) {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { cliente: { idUsuario: usuario.sub } },
+        relations: { especialidad: true },
       });
     } else {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { profesional: { idUsuario: usuario.sub } },
+        relations: { especialidad: true },
       });
     }
 
@@ -83,7 +105,7 @@ export class SolicitudDeServicioService {
   async findOne(id: number, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id },
-      relations: { cliente: true, profesional: true, tarjeta: { metodoDePago: true } },
+      relations: { cliente: true, profesional: true, especialidad: true, tarjeta: { metodoDePago: true } },
     });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
@@ -282,7 +304,7 @@ export class SolicitudDeServicioService {
     const esCliente = usuario.rol === Rol.CLIENTE;
     const solicitudes = await this.solicitudDeServicioRepository.find({
       where: esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } },
-      relations: { cliente: true, profesional: true, tarjeta: true },
+      relations: { cliente: true, profesional: true, especialidad: true, tarjeta: true },
     });
 
     const avisos: { idSolicitud: number; mensaje: string }[] = [];
