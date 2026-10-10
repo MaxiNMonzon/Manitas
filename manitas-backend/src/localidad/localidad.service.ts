@@ -36,6 +36,7 @@ constructor(
     return await this.localidadRepository.find({
       where: idProvincia ? { provincia: { idProvincia } } : {},
       relations: { provincia: true },
+      order: { nombreLocalidad: 'ASC' },
     });
   }
 
