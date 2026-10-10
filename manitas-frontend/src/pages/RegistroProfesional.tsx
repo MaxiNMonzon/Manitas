@@ -2,7 +2,7 @@ import Alert from '@mui/material/Alert'
 import Typography from '@mui/material/Typography'
 import AuthLayout from '../components/AuthLayout'
 
-// Provisorio: el formulario se arma en el próximo paso (POST /auth/register/profesional).
+// Provisorio (POST /auth/register/profesional).
 export default function RegistroProfesional() {
   return (
     <AuthLayout volverA="/">
