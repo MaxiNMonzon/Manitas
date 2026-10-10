@@ -1,4 +1,4 @@
-import { OmitType, PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateSolicitudDeServicioDto } from './create-solicitud-de-servicio.dto';
 
 // Solo se puede corregir la descripcion, el profesional no se cambia
