@@ -25,18 +25,21 @@ const oficios = [
 
 // Pantalla dividida: panel de imagen a la izquierda y el contenido (formularios) a la derecha.
 // En celulares el panel de imagen se oculta. `volverA` muestra el botón "Volver" arriba.
+// `ancho` es para formularios grandes (registro): la tarjeta es más ancha y el panel
+// de imagen solo aparece en pantallas grandes.
 interface Props {
   children: ReactNode
   volverA?: string
+  ancho?: boolean
 }
 
-export default function AuthLayout({ children, volverA }: Props) {
+export default function AuthLayout({ children, volverA, ancho = false }: Props) {
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex' }}>
       <Box
         sx={{
           flex: 1.1,
-          display: { xs: 'none', md: 'flex' },
+          display: { xs: 'none', [ancho ? 'lg' : 'md']: 'flex' },
           flexDirection: 'column',
           justifyContent: 'center',
           gap: 5,
@@ -86,7 +89,7 @@ export default function AuthLayout({ children, volverA }: Props) {
           bgcolor: 'grey.50',
         }}
       >
-        <Paper elevation={0} sx={{ width: '100%', maxWidth: 440, p: { xs: 3, sm: 5 }, border: 1, borderColor: 'divider' }}>
+        <Paper elevation={0} sx={{ width: '100%', maxWidth: ancho ? 760 : 440, p: { xs: 3, sm: 5 }, border: 1, borderColor: 'divider' }}>
           {volverA && (
             <Button component={RouterLink} to={volverA} startIcon={<ArrowBackIcon />} size="small" sx={{ mb: 1, ml: -1 }}>
               Volver

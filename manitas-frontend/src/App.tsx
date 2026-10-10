@@ -4,7 +4,8 @@ import Layout from './components/Layout'
 import Bienvenida from './pages/Bienvenida'
 import Login from './pages/Login'
 import Panel from './pages/Panel'
-import Registro from './pages/Registro'
+import RegistroCliente from './pages/RegistroCliente'
+import RegistroProfesional from './pages/RegistroProfesional'
 
 export default function App() {
   return (
@@ -13,8 +14,8 @@ export default function App() {
         <Routes>
           <Route index element={<Bienvenida />} />
           <Route path="login" element={<Login />} />
-          <Route path="registro/cliente" element={<Registro rol="cliente" />} />
-          <Route path="registro/profesional" element={<Registro rol="profesional" />} />
+          <Route path="registro/cliente" element={<RegistroCliente />} />
+          <Route path="registro/profesional" element={<RegistroProfesional />} />
 
           {/* Parte privada (requiere sesión) */}
           <Route path="app" element={<Layout />}>
