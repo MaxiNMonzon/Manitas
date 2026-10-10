@@ -57,6 +57,15 @@ export class ClienteService {
     return await this.clienteRepository.findOneBy({ correo });
   }
 
+  // La lista completa: solo la usa el admin (la ruta tiene @Auth(Rol.ADMIN))
+  async findAll(): Promise<Cliente[]> {
+    return await this.clienteRepository.find({
+      relations: {
+        zonaResidencia: { localidad: { provincia: true } },
+      },
+    });
+  }
+
   async findOne(id: number): Promise<Cliente> {
     const cliente = await this.clienteRepository.findOne({
       where: { idUsuario: id },
