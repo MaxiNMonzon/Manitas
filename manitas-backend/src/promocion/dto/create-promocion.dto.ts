@@ -3,7 +3,7 @@ import { IsArray, IsDateString, IsInt, IsNumber, IsOptional, IsPositive, IsStrin
 
 export class CreatePromocionDto {
 
-    @ApiProperty({ example: 'VISA20' })
+    @ApiProperty({ example: 'GALICIA30' })
     @IsString()
     codigo!: string;
 
@@ -15,12 +15,12 @@ export class CreatePromocionDto {
     @IsDateString()
     fechaFinVigencia!: string;
 
-    @ApiProperty({ example: 20 })
+    @ApiProperty({ example: 30 })
     @IsNumber()
     @IsPositive()
     porcentajeDescuento!: number;
 
-    @ApiProperty({ example: '20% de reintegro con Visa credito' })
+    @ApiProperty({ example: '30% de reintegro con Visa y Mastercard del Banco Galicia (tope de $20.000)', description: 'Si la promo tiene tope de reintegro, se aclara aca' })
     @IsString()
     descripcion!: string;
 
