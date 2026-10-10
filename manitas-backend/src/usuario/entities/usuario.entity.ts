@@ -1,30 +1,32 @@
-import { Column, DeleteDateColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
+import { Exclude } from "class-transformer";
 
 export abstract class Usuario {
-  @PrimaryGeneratedColumn()
-  idUsuario!: number;
+    @PrimaryGeneratedColumn()
+    idUsuario!: number;               //AVISAR!!!!!!!!!!
+    
+    @Column()
+    dni!: number;
 
-  @Column()
-  dni!: string;
+    @Column()
+    nombre!: string;
 
-  @Column()
-  nombre!: string;
+    @Column()
+    apellido!: string;
 
-  @Column()
-  apellido!: string;
+    @Column({ type: 'date' })
+    fechaNacimiento!: Date;
 
-  @Column({ type: 'date' })
-  fechaNacimiento!: Date;
+    @Column({unique:true, nullable: false})
+    correo!: string;
+    
+    @Exclude()
+    @Column({nullable: false})
+    contraseña!: string;
+    
+    @Column()
+    telefono!: string;
 
-  @Column({ unique: true })
-  correo!: string;
-
-  @Column()
-  contraseña!: string;
-
-  @Column({ nullable: true })
-  telefono!: string;
-
-  @DeleteDateColumn()
-  deleteAt!: Date;
+    @DeleteDateColumn()
+    deleteAt!: Date;
 }

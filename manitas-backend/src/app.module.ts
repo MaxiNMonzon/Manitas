@@ -7,13 +7,13 @@ import { ClienteModule } from './cliente/cliente.module';
 import { ProfesionalModule } from './profesional/profesional.module';
 import { TiposDeServicioModule } from './tipos-de-servicio/tipos-de-servicio.module';
 import { EspecialidadModule } from './especialidad/especialidad.module';
-import { PrecioBaseModule } from './precio-base/precio-base.module';
 import { LocalidadModule } from './localidad/localidad.module';
 import { ZonaModule } from './zona/zona.module';
 import { PromocionModule } from './promocion/promocion.module';
 import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
 import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-servicio.module';
 import { AuthModule } from './auth/auth.module';
+import { TarjetaModule } from './tarjeta/tarjeta.module';
 
 @Module({
   imports: [
@@ -36,7 +36,6 @@ import { AuthModule } from './auth/auth.module';
       }),
     }),
     EspecialidadModule,
-    PrecioBaseModule,
     LocalidadModule,
     ClienteModule,
     ProfesionalModule,
@@ -46,6 +45,7 @@ import { AuthModule } from './auth/auth.module';
     MetodoDePagoModule,
     SolicitudDeServicioModule,
     AuthModule,
+    TarjetaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
