@@ -12,4 +12,10 @@ export class CreateSolicitudDeServicioDto {
     @IsInt()
     @IsPositive()
     idProfesional!: number;
+
+    // La especialidad que necesita el cliente (el profesional tiene que hacerla)
+    @ApiProperty({ example: 1 })
+    @IsInt()
+    @IsPositive()
+    idEspecialidad!: number;
 }
