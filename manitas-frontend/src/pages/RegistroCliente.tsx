@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
@@ -10,15 +10,13 @@ import Typography from '@mui/material/Typography'
 import AuthLayout from '../components/AuthLayout'
 import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
+import { useListado } from '../hooks/useListado'
+import { CamposContraseña, CamposDatosPersonales } from './registro/CamposDatosPersonales'
+import { datosPersonalesParaEnviar, datosPersonalesVacios, validarDatosPersonales } from './registro/datosPersonales'
 import type { Localidad, Provincia, RegistroClienteRequest, Zona } from '../types'
 
 const vacio = {
-  dni: '',
-  fechaNacimiento: '',
-  nombre: '',
-  apellido: '',
-  correo: '',
-  telefono: '',
+  ...datosPersonalesVacios,
   idProvincia: '',
   idLocalidad: '',
   idZona: '',
@@ -26,8 +24,6 @@ const vacio = {
   altura: '',
   piso: '',
   depto: '',
-  contraseña: '',
-  confirmarContraseña: '',
 }
 
 type Campos = typeof vacio
@@ -35,13 +31,7 @@ type Errores = Partial<Record<keyof Campos, string>>
 
 // Mismas reglas que valida el backend (CreateClienteDto), para avisar antes de enviar
 function validar(c: Campos): Errores {
-  const e: Errores = {}
-  if (!/^\d{7,8}$/.test(c.dni)) e.dni = 'Ingresá un DNI válido (7 u 8 números)'
-  if (!c.fechaNacimiento) e.fechaNacimiento = 'Ingresá tu fecha de nacimiento'
-  if (!c.nombre.trim()) e.nombre = 'Ingresá tu nombre'
-  if (!c.apellido.trim()) e.apellido = 'Ingresá tu apellido'
-  if (!/^\S+@\S+\.\S+$/.test(c.correo)) e.correo = 'Ingresá un email válido'
-  if (!/^\d{8,15}$/.test(c.telefono)) e.telefono = 'Ingresá solo números, con característica'
+  const e: Errores = validarDatosPersonales(c)
   if (!c.idProvincia) e.idProvincia = 'Elegí una provincia'
   if (!c.idLocalidad) e.idLocalidad = 'Elegí una localidad'
   if (!c.idZona) e.idZona = 'Elegí una zona'
@@ -49,8 +39,6 @@ function validar(c: Campos): Errores {
   if (!/^[1-9]\d*$/.test(c.altura)) e.altura = 'Solo números'
   if (c.piso.length > 10) e.piso = 'Máximo 10 caracteres'
   if (c.depto.length > 10) e.depto = 'Máximo 10 caracteres'
-  if (c.contraseña.length < 8) e.contraseña = 'Mínimo 8 caracteres'
-  if (c.confirmarContraseña !== c.contraseña) e.confirmarContraseña = 'Las contraseñas no coinciden'
   return e
 }
 
@@ -63,29 +51,10 @@ export default function RegistroCliente() {
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const [provincias, setProvincias] = useState<Provincia[]>([])
-  const [localidades, setLocalidades] = useState<Localidad[]>([])
-  const [zonas, setZonas] = useState<Zona[]>([])
-
-  useEffect(() => {
-    api.get<Provincia[]>('/provincia').then(setProvincias).catch((e: Error) => setError(e.message))
-  }, [])
-
-  useEffect(() => {
-    if (!campos.idProvincia) return
-    api
-      .get<Localidad[]>(`/localidad?provincia=${campos.idProvincia}`)
-      .then(setLocalidades)
-      .catch((e: Error) => setError(e.message))
-  }, [campos.idProvincia])
-
-  useEffect(() => {
-    if (!campos.idLocalidad) return
-    api
-      .get<Zona[]>(`/zona?localidad=${campos.idLocalidad}`)
-      .then(setZonas)
-      .catch((e: Error) => setError(e.message))
-  }, [campos.idLocalidad])
+  const provincias = useListado<Provincia>('/provincia')
+  const localidades = useListado<Localidad>(campos.idProvincia ? `/localidad?provincia=${campos.idProvincia}` : null)
+  const zonas = useListado<Zona>(campos.idLocalidad ? `/zona?localidad=${campos.idLocalidad}` : null)
+  const errorCarga = provincias.error ?? localidades.error ?? zonas.error
 
   const errores = intentoEnviar ? validar(campos) : {}
 
@@ -95,14 +64,9 @@ export default function RegistroCliente() {
     value: campos[nombre],
     onChange: (e: { target: { value: string } }) => {
       const valor = e.target.value
-      // Al cambiar provincia o localidad se reinician los selects que dependen de ellos
-      if (nombre === 'idProvincia') {
-        setLocalidades([])
-        setZonas([])
-      }
-      if (nombre === 'idLocalidad') setZonas([])
       setCampos((c) => {
         const nuevo = { ...c, [nombre]: valor }
+        // Al cambiar provincia o localidad se reinician los selects que dependen de ellos
         if (nombre === 'idProvincia') Object.assign(nuevo, { idLocalidad: '', idZona: '' })
         if (nombre === 'idLocalidad') nuevo.idZona = ''
         return nuevo
@@ -120,19 +84,13 @@ export default function RegistroCliente() {
     if (Object.keys(validar(campos)).length > 0) return
 
     const datos: RegistroClienteRequest = {
-      dni: Number(campos.dni),
-      nombre: campos.nombre.trim(),
-      apellido: campos.apellido.trim(),
-      fechaNacimiento: campos.fechaNacimiento,
-      correo: campos.correo.trim(),
-      telefono: campos.telefono,
+      ...datosPersonalesParaEnviar(campos),
       calle: campos.calle.trim(),
       altura: Number(campos.altura),
       // Piso y depto son opcionales: si están vacíos no se mandan
       piso: campos.piso.trim() || undefined,
       depto: campos.depto.trim() || undefined,
       idZonaResidencia: Number(campos.idZona),
-      contraseña: campos.contraseña,
     }
 
     setEnviando(true)
@@ -154,50 +112,18 @@ export default function RegistroCliente() {
         Registrarme como cliente
       </Typography>
 
-      {error && (
+      {(error ?? errorCarga) && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+          {error ?? errorCarga}
         </Alert>
       )}
 
       <Grid container spacing={2} component="form" onSubmit={onSubmit} noValidate>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField label="DNI" required slotProps={{ htmlInput: { inputMode: 'numeric' } }} {...campo('dni')} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            label="Fecha de nacimiento"
-            type="date"
-            required
-            slotProps={{ inputLabel: { shrink: true } }}
-            {...campo('fechaNacimiento')}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField label="Nombre" required autoComplete="given-name" {...campo('nombre')} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField label="Apellido" required autoComplete="family-name" {...campo('apellido')} />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField label="Email" type="email" required autoComplete="email" {...campo('correo')} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            label="Teléfono"
-            type="tel"
-            required
-            autoComplete="tel"
-            placeholder="3411234567"
-            {...campo('telefono')}
-          />
-        </Grid>
+        <CamposDatosPersonales campo={campo} />
 
         <Grid size={{ xs: 12, sm: 4 }}>
           <TextField select label="Provincia" required {...campo('idProvincia')}>
-            {provincias.map((p) => (
+            {provincias.datos.map((p) => (
               <MenuItem key={p.idProvincia} value={String(p.idProvincia)}>
                 {p.nombreProvincia}
               </MenuItem>
@@ -206,7 +132,7 @@ export default function RegistroCliente() {
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <TextField select label="Localidad" required disabled={!campos.idProvincia} {...campo('idLocalidad')}>
-            {localidades.map((l) => (
+            {localidades.datos.map((l) => (
               <MenuItem key={l.idLocalidad} value={String(l.idLocalidad)}>
                 {l.nombreLocalidad}
               </MenuItem>
@@ -215,7 +141,7 @@ export default function RegistroCliente() {
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <TextField select label="Zona" required disabled={!campos.idLocalidad} {...campo('idZona')}>
-            {zonas.map((z) => (
+            {zonas.datos.map((z) => (
               <MenuItem key={z.idZona} value={String(z.idZona)}>
                 {z.nombreZona}
               </MenuItem>
@@ -236,18 +162,7 @@ export default function RegistroCliente() {
           <TextField label="Depto" {...campo('depto')} />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField label="Contraseña" type="password" required autoComplete="new-password" {...campo('contraseña')} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            label="Confirmar contraseña"
-            type="password"
-            required
-            autoComplete="new-password"
-            {...campo('confirmarContraseña')}
-          />
-        </Grid>
+        <CamposContraseña campo={campo} />
 
         <Grid size={12} sx={{ mt: 1 }}>
           <Button type="submit" variant="contained" size="large" fullWidth loading={enviando}>
