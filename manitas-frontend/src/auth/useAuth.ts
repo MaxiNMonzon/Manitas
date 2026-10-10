@@ -9,6 +9,7 @@ export interface Sesion {
 export interface AuthContextValue {
   sesion: Sesion | null
   login: (rol: Rol, datos: LoginRequest) => Promise<void>
+  loginDemo: (rol: Rol) => void // PROVISORIO, ver AuthContext
   logout: () => void
 }
 
