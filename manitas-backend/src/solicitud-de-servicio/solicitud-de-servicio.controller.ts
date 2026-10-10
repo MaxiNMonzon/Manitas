@@ -25,7 +25,7 @@ export class SolicitudDeServicioController {
   @Auth(Rol.CLIENTE)
   @ApiOperation({
     summary: 'Solicitar presupuesto',
-    description: 'El cliente le pide un trabajo a un profesional contando el problema. Queda en estado "solicitado". El estado, las fechas y el costo de visita los pone el sistema.',
+    description: 'El cliente le pide un trabajo a un profesional, eligiendo la especialidad que necesita (el profesional tiene que hacerla) y contando el problema. Queda en estado "solicitado". El estado, las fechas y el costo de visita los pone el sistema.',
   })
   create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.create(createSolicitudDeServicioDto, usuario.sub);
