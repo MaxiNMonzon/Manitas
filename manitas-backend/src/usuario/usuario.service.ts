@@ -1,17 +1,14 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 
-
-//Las acciones se realizan sobre la entidad usuario en la base de datos.
 @Injectable()
 export class UsuarioService {
- 
 constructor(
-    @InjectRepository(Usuario)
+  @InjectRepository(Usuario)
   private readonly usuarioRepository: Repository<Usuario>,
 ) {}
 

@@ -10,6 +10,7 @@ import { Especialidad } from '../especialidad/entities/especialidad.entity';
   controllers: [TipoDeServicioController],
   providers: [TipoDeServicioService],
   exports: [TypeOrmModule],
+
 }) //importa las modulos TiposDeServicio y Especialidad y crea automáticamente 
 //el controlador y proveedor de servicio de TiposDeServicio.
 export class TipoDeServicioModule {}

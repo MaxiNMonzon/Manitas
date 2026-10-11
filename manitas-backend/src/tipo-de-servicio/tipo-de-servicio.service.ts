@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TipoDeServicio } from './entities/tipo-de-servicio.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
-//Crea tipo de servicio e implementa sus cruds y mapea especialidades.
+
 @Injectable()
 export class TipoDeServicioService {
 constructor(
@@ -31,20 +31,27 @@ constructor(
   });
 }
 
-  async findAll() {
-    return await this.tipoDeServicioRepository.find();
+  // Listado "Tipo de Servicio por Especialidad": si viene la especialidad, solo los de esa
+  async findAll(idEspecialidad?: number) {
+    return await this.tipoDeServicioRepository.find({
+      where: idEspecialidad ? { especialidad: { idEspecialidad } } : {},
+      relations: { especialidad: true },
+    });
   }
 
-
-   async findOne(id: number) {
-    const tipoDeServicio = await this.tipoDeServicioRepository.findOneBy({ idServicio: id });
+  // Detalle: el tipo de servicio con su especialidad y los profesionales que la hacen
+  async findOne(id: number) {
+    const tipoDeServicio = await this.tipoDeServicioRepository.findOne({
+      where: { idServicio: id },
+      relations: { especialidad: { profesionales: true } },
+    });
     if (!tipoDeServicio) {
-      throw new NotFoundException(`TiposDeServicio con ID ${id} no encontrado`);
+      throw new NotFoundException(`TipoDeServicio con ID ${id} no encontrado`);
     }
     return tipoDeServicio;
   }
 
-   async update(id: number, updateTipoDeServicioDto: UpdateTipoDeServicioDto) {
+  async update(id: number, updateTipoDeServicioDto: UpdateTipoDeServicioDto) {
     const tipoDeServicio = await this.findOne(id);
     this.tipoDeServicioRepository.merge(tipoDeServicio, updateTipoDeServicioDto);
     return await this.tipoDeServicioRepository.save(tipoDeServicio);
@@ -53,5 +60,4 @@ constructor(
   async remove(id: number) {
     return await this.tipoDeServicioRepository.softDelete({ idServicio: id });
   }
-
 }

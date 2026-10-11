@@ -1,10 +1,12 @@
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
+import { CreateUrgenteDto } from './dto/create-urgente.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
+import { Especialidad } from '../especialidad/entities/especialidad.entity';
 import { PagarDto } from './dto/pagar.dto';
 import { mejorPromocionVigente } from '../promocion/mejor-promocion';
 import { CalificarDto } from './dto/calificar.dto';
@@ -31,6 +33,9 @@ export class SolicitudDeServicioService {
 
     @InjectRepository(Profesional)
     private readonly profesionalRepository: Repository<Profesional>,
+
+    @InjectRepository(Especialidad)
+    private readonly especialidadRepository: Repository<Especialidad>,
   ) {}
 
   async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
@@ -42,12 +47,27 @@ export class SolicitudDeServicioService {
       throw new BadRequestException('El cliente indicado no existe');
     }
 
-    const profesional = await this.profesionalRepository.findOneBy({
-      idUsuario: createSolicitudDeServicioDto.idProfesional,
+    const profesional = await this.profesionalRepository.findOne({
+      where: { idUsuario: createSolicitudDeServicioDto.idProfesional },
+      relations: { especialidades: true },
     });
 
     if (!profesional) {
       throw new BadRequestException('El profesional indicado no existe');
+    }
+
+    const especialidad = await this.especialidadRepository.findOneBy({
+      idEspecialidad: createSolicitudDeServicioDto.idEspecialidad,
+    });
+
+    if (!especialidad) {
+      throw new BadRequestException('La especialidad indicada no existe');
+    }
+
+    // Regla: no se le puede pedir a un profesional algo que no hace
+    const laHace = profesional.especialidades.some((e) => e.idEspecialidad === especialidad.idEspecialidad);
+    if (!laHace) {
+      throw new BadRequestException('Ese profesional no hace esa especialidad');
     }
 
     // El estado y las fechas los pone el sistema, no el cliente.
@@ -59,7 +79,82 @@ export class SolicitudDeServicioService {
       costoVisita: profesional.costoVisita,
       cliente,
       profesional,
+      especialidad,
     });
+  }
+
+  // ---------- Servicio urgente ----------
+
+  // El cliente no elige profesional: se la muestra a todos los de esa especialidad en su zona
+  async crearUrgente(createUrgenteDto: CreateUrgenteDto, idCliente: number) {
+    const cliente = await this.clienteRepository.findOneBy({ idUsuario: idCliente });
+    if (!cliente) {
+      throw new BadRequestException('El cliente indicado no existe');
+    }
+
+    const especialidad = await this.especialidadRepository.findOneBy({
+      idEspecialidad: createUrgenteDto.idEspecialidad,
+    });
+    if (!especialidad) {
+      throw new BadRequestException('La especialidad indicada no existe');
+    }
+
+    return await this.solicitudDeServicioRepository.save({
+      descripcionProblema: createUrgenteDto.descripcionProblema,
+      urgente: true,
+      estadoServicio: EstadoSolicitud.SOLICITADO,
+      fechaCambioEstado: new Date(),
+      cliente,
+      especialidad,
+    });
+  }
+
+  // Las urgentes que todavia nadie tomo, de las especialidades del profesional y en sus zonas
+  async urgentesDisponibles(usuario: UsuarioActivoInterface) {
+    const profesional = await this.profesionalRepository.findOne({
+      where: { idUsuario: usuario.sub },
+      relations: { especialidades: true, zonasDeCobertura: true },
+    });
+    if (!profesional) {
+      throw new NotFoundException('Profesional no encontrado');
+    }
+
+    const idsEspecialidades = profesional.especialidades.map((e) => e.idEspecialidad);
+    const idsZonas = profesional.zonasDeCobertura.map((z) => z.idZona);
+    if (idsEspecialidades.length === 0 || idsZonas.length === 0) {
+      return [];
+    }
+
+    const urgentes = await this.solicitudDeServicioRepository.find({
+      where: {
+        urgente: true,
+        estadoServicio: EstadoSolicitud.SOLICITADO,
+        profesional: IsNull(),
+        especialidad: { idEspecialidad: In(idsEspecialidades) },
+        cliente: { zonaResidencia: { idZona: In(idsZonas) } },
+      },
+      relations: { especialidad: true, cliente: { zonaResidencia: true } },
+      order: { fechaSolicitud: 'ASC' },
+    });
+
+    // Se sacan las que ya vencieron (pasó la hora)
+    const disponibles: SolicitudDeServicio[] = [];
+    for (const solicitud of urgentes) {
+      await this.revisarVencimiento(solicitud);
+      if (solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
+        disponibles.push(solicitud);
+      }
+    }
+
+    // Del cliente solo el nombre y la zona: la direccion y el telefono los ve el que la acepta
+    return disponibles.map((solicitud) => ({
+      idSolicitud: solicitud.idSolicitud,
+      especialidad: solicitud.especialidad.nombreEspecialidad,
+      descripcionProblema: solicitud.descripcionProblema,
+      zona: solicitud.cliente.zonaResidencia.nombreZona,
+      cliente: solicitud.cliente.nombre,
+      minutosQueQuedan: this.minutosQueQuedan(solicitud),
+    }));
   }
 
   async findAll(usuario: UsuarioActivoInterface) {
@@ -67,10 +162,12 @@ export class SolicitudDeServicioService {
     if (usuario.rol === Rol.CLIENTE) {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { cliente: { idUsuario: usuario.sub } },
+        relations: { especialidad: true },
       });
     } else {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { profesional: { idUsuario: usuario.sub } },
+        relations: { especialidad: true },
       });
     }
 
@@ -83,7 +180,7 @@ export class SolicitudDeServicioService {
   async findOne(id: number, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id },
-      relations: { cliente: true, profesional: true, tarjeta: { metodoDePago: true } },
+      relations: { cliente: true, profesional: true, especialidad: true, tarjeta: { metodoDePago: true } },
     });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
@@ -114,9 +211,65 @@ export class SolicitudDeServicioService {
   // ---------- Pasos del profesional ----------
 
   async aceptar(id: number, usuario: UsuarioActivoInterface) {
+    // Una urgente que nadie tomo todavia la puede aceptar cualquier profesional de esa especialidad y zona
+    const urgente = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud: id, urgente: true, profesional: IsNull() },
+      relations: { especialidad: true, cliente: { zonaResidencia: true } },
+    });
+    if (urgente) {
+      return await this.tomarUrgente(urgente, usuario);
+    }
+
+    // Si era urgente y ya la tomo otro, se avisa claro en vez de "no participas"
+    const yaTomada = await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud: id, urgente: true },
+      relations: { profesional: true },
+    });
+    if (yaTomada && yaTomada.profesional.idUsuario !== usuario.sub) {
+      throw new BadRequestException('Otro profesional ya tomo esta urgente');
+    }
+
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO]);
     return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
+  }
+
+  private async tomarUrgente(solicitud: SolicitudDeServicio, usuario: UsuarioActivoInterface) {
+    await this.revisarVencimiento(solicitud);
+    this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO]);
+
+    const profesional = await this.profesionalRepository.findOne({
+      where: { idUsuario: usuario.sub },
+      relations: { especialidades: true, zonasDeCobertura: true },
+    });
+    if (!profesional) {
+      throw new NotFoundException('Profesional no encontrado');
+    }
+    const haceLaEspecialidad = profesional.especialidades.some((e) => e.idEspecialidad === solicitud.especialidad.idEspecialidad);
+    const cubreLaZona = profesional.zonasDeCobertura.some((z) => z.idZona === solicitud.cliente.zonaResidencia.idZona);
+    if (!haceLaEspecialidad || !cubreLaZona) {
+      throw new ForbiddenException('Esta urgente no es de tu especialidad o de tu zona');
+    }
+
+    // Se asigna solo si sigue sin profesional: si dos aceptan a la vez, gana el primero
+    const resultado = await this.solicitudDeServicioRepository
+      .createQueryBuilder()
+      .update(SolicitudDeServicio)
+      .set({
+        profesional: { idUsuario: profesional.idUsuario },
+        estadoServicio: EstadoSolicitud.EN_COORDINACION,
+        fechaCambioEstado: new Date(),
+        costoVisita: profesional.costoVisita,
+      })
+      .where('idSolicitud = :id', { id: solicitud.idSolicitud })
+      .andWhere('profesionalIdUsuario IS NULL')
+      .andWhere('estadoServicio = :estado', { estado: EstadoSolicitud.SOLICITADO })
+      .execute();
+
+    if (resultado.affected === 0) {
+      throw new BadRequestException('Otro profesional ya tomo esta urgente');
+    }
+    return await this.findOne(solicitud.idSolicitud, usuario);
   }
 
   async rechazar(id: number, usuario: UsuarioActivoInterface) {
@@ -243,17 +396,16 @@ export class SolicitudDeServicioService {
       guardada = await this.solicitudDeServicioRepository.save(solicitud);
     }
 
+    // Solo se informa: el reintegro (y su tope, que esta en la descripcion de la promo) lo hace el banco
     let reintegro: object | null = null;
     if (mejorPromocion) {
-      const porcentaje = Number(mejorPromocion.porcentajeDescuento);
       const dondeSeVe = tarjeta.metodoDePago.tipo.toLowerCase().includes('crédito')
         ? 'en el resumen de tu tarjeta'
         : 'en tu cuenta';
       reintegro = {
         promocion: mejorPromocion.descripcion,
-        porcentaje,
-        montoEstimado: Math.round((solicitud.costoFinal * porcentaje) / 100),
-        mensaje: `Tenes ${porcentaje}% de reintegro, te lo devuelve el banco ${dondeSeVe}`,
+        porcentaje: Number(mejorPromocion.porcentajeDescuento),
+        mensaje: `${mejorPromocion.descripcion}. Te lo devuelve el banco ${dondeSeVe}`,
       };
     }
 
@@ -283,10 +435,21 @@ export class SolicitudDeServicioService {
     const esCliente = usuario.rol === Rol.CLIENTE;
     const solicitudes = await this.solicitudDeServicioRepository.find({
       where: esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } },
-      relations: { cliente: true, profesional: true, tarjeta: true },
+      relations: { cliente: true, profesional: true, especialidad: true, tarjeta: true },
     });
 
     const avisos: { idSolicitud: number; mensaje: string }[] = [];
+
+    // Al profesional, primero las urgentes cerca que todavia nadie tomo
+    if (usuario.rol === Rol.PROFESIONAL) {
+      for (const urgente of await this.urgentesDisponibles(usuario)) {
+        avisos.push({
+          idSolicitud: urgente.idSolicitud,
+          mensaje: `URGENTE de ${urgente.especialidad} en ${urgente.zona}: ${urgente.descripcionProblema}. Quedan ${urgente.minutosQueQuedan} minutos`,
+        });
+      }
+    }
+
     for (const solicitud of solicitudes) {
       await this.revisarVencimiento(solicitud);
       const mensaje = esCliente ? this.avisoParaCliente(solicitud) : this.avisoParaProfesional(solicitud);
@@ -315,6 +478,13 @@ export class SolicitudDeServicioService {
   }
 
   private avisoParaCliente(solicitud: SolicitudDeServicio) {
+    // Urgente que todavia nadie acepto
+    if (!solicitud.profesional) {
+      if (solicitud.urgente && solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
+        return `Buscando un profesional para tu urgencia. Quedan ${this.minutosQueQuedan(solicitud)} minutos`;
+      }
+      return null;
+    }
     const profesional = solicitud.profesional.nombre;
 
     if (solicitud.estadoServicio === EstadoSolicitud.PRESUPUESTADO) {
@@ -365,6 +535,11 @@ export class SolicitudDeServicioService {
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO, EstadoSolicitud.EN_COORDINACION, EstadoSolicitud.AGENDADO]);
 
+    // Una urgente solo se cancela si nadie la acepto: despues el profesional ya va en camino
+    if (solicitud.urgente && solicitud.estadoServicio !== EstadoSolicitud.SOLICITADO) {
+      throw new BadRequestException('Una urgente solo se puede cancelar mientras nadie la haya aceptado');
+    }
+
     if (solicitud.costoEstimado != null) {
       throw new BadRequestException('No se puede cancelar porque el presupuesto ya fue aceptado');
     }
@@ -392,13 +567,20 @@ export class SolicitudDeServicioService {
     return await this.solicitudDeServicioRepository.save(solicitud);
   }
 
-  // Si pasaron 48 hs sin respuesta (Solicitado) o sin fecha cargada (EnCoordinacion), vence
+  // Si pasaron 48 hs sin respuesta (Solicitado) o sin fecha cargada (EnCoordinacion), vence.
+  // Una urgente que nadie acepto vence en 1 hora
   private async revisarVencimiento(solicitud: SolicitudDeServicio) {
     const puedeVencer = solicitud.estadoServicio === EstadoSolicitud.SOLICITADO || solicitud.estadoServicio === EstadoSolicitud.EN_COORDINACION;
     const horasPasadas = (Date.now() - solicitud.fechaCambioEstado.getTime()) / (1000 * 60 * 60);
-    if (puedeVencer && horasPasadas >= 48) {
+    const limite = solicitud.urgente && solicitud.estadoServicio === EstadoSolicitud.SOLICITADO ? 1 : 48;
+    if (puedeVencer && horasPasadas >= limite) {
       solicitud.estadoServicio = EstadoSolicitud.EXPIRADO;
       await this.solicitudDeServicioRepository.save(solicitud);
     }
+  }
+
+  // Cuantos minutos le quedan a una urgente para que alguien la acepte
+  private minutosQueQuedan(solicitud: SolicitudDeServicio) {
+    return Math.max(0, Math.floor(60 - (Date.now() - solicitud.fechaCambioEstado.getTime()) / (1000 * 60)));
   }
 }

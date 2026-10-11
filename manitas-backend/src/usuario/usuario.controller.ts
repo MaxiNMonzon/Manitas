@@ -1,16 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 
-
-//Se implementa el controlador del usuario con las acciones que gestionará el mismo.
-//las acciones se realizan sobre el controlador del usuario.
 @Controller('usuario')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
-
-//CRUDS de entidad
 
   @Post()
   create(@Body() createUsuarioDto: CreateUsuarioDto) {
@@ -36,10 +31,4 @@ export class UsuarioController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usuarioService.remove(id);
   }
-  
-
 }
-
-
-
-

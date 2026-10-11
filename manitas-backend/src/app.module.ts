@@ -16,6 +16,7 @@ import { AuthModule } from './auth/auth.module';
 import { TarjetaModule } from './tarjeta/tarjeta.module';
 
 
+
 @Module({
 
   imports: [
@@ -36,7 +37,11 @@ import { TarjetaModule } from './tarjeta/tarjeta.module';
             database: config.get('DB_NAME'),
             entities: [__dirname + '/**/*.entity{.ts,.js}'], //también hubiera sido válido autoLoadEntities: true,
           //En la línea 71 las entidades se generan automáticamente.
-        synchronize: true, //En esta línea las entidades se sincronizan con los controladores y servicios.
+            synchronize: true, //En esta línea las entidades se sincronizan con los controladores y servicios.
+
+      //  ssl: {
+      //      rejectUnauthorized: false, // Requerido habitualmente para Aiven Cloud
+   // },
       }),
     }),
     TipoDeServicioModule,

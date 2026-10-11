@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -13,6 +13,7 @@ export class ClienteService {
   constructor(
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
+
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
 
@@ -20,7 +21,7 @@ export class ClienteService {
     private readonly profesionalRepository: Repository<Profesional>,
   ) {}
 
-   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
+  async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
     const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo: createClienteDto.correo }, withDeleted: true });
     if (clienteConEseCorreo) {
       throw new ConflictException('Ya existe un cliente registrado con ese correo');
@@ -54,6 +55,15 @@ export class ClienteService {
 
   async findOneByEmail(correo: string) {
     return await this.clienteRepository.findOneBy({ correo });
+  }
+
+  // La lista completa: solo la usa el admin (la ruta tiene @Auth(Rol.ADMIN))
+  async findAll(): Promise<Cliente[]> {
+    return await this.clienteRepository.find({
+      relations: {
+        zonaResidencia: { localidad: { provincia: true } },
+      },
+    });
   }
 
   async findOne(id: number): Promise<Cliente> {
@@ -107,5 +117,4 @@ export class ClienteService {
       throw new ForbiddenException('Solo podés ver o modificar tu propia cuenta');
     }
   }
- 
 }

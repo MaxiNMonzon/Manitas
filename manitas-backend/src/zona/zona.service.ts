@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateZonaDto } from './dto/create-zona.dto';
 import { UpdateZonaDto } from './dto/update-zona.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Zona } from './entities/zona.entity';
 import { Localidad } from '../localidad/entities/localidad.entity';
 
@@ -11,11 +11,13 @@ export class ZonaService {
   constructor(
     @InjectRepository(Zona)
     private readonly zonaRepository: Repository<Zona>,
+  
     @InjectRepository(Localidad)
     private readonly localidadRepository: Repository<Localidad>,
   ) {}
 
-   async create(createZonaDto: CreateZonaDto) {
+
+  async create(createZonaDto: CreateZonaDto) {
     const localidad = await this.localidadRepository.findOneBy({idLocalidad:createZonaDto.idLocalidad}) ;
 
     if (!localidad) {
@@ -28,13 +30,14 @@ export class ZonaService {
       });
   }
 
-async findAll(idLocalidad?: number) {
+  async findAll(idLocalidad?: number) {
     return await this.zonaRepository.find({
       where: idLocalidad ? { localidad: { idLocalidad } } : {},
       relations: { localidad: true },
     });
   }
-   async findOne(id: number) {
+
+  async findOne(id: number) {
     const zona = await this.zonaRepository.findOne({
       where: { idZona: id },
       relations: { localidad: { provincia: true } },
@@ -52,8 +55,6 @@ async findAll(idLocalidad?: number) {
   }
 
   async remove(id: number) {
-    return await this.zonaRepository.softDelete({idZona:id}) ;
+    return await this.zonaRepository.softDelete({idZona:id}) ; //consultar
   }
-  
- 
 }

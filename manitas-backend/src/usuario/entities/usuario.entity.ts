@@ -1,41 +1,32 @@
-import { Column, Entity, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
+import { Column, PrimaryGeneratedColumn, DeleteDateColumn } from "typeorm";
 import { Exclude } from "class-transformer";
 
-
-@Entity('usuario')
 export abstract class Usuario {
     @PrimaryGeneratedColumn()
-    idUsuario!: number;  //El id debería ser único para cada usuario.
+    idUsuario!: number;               //AVISAR!!!!!!!!!!
     
-    @Column({ type: 'varchar' })
-    dni!: string;
+    @Column()
+    dni!: number;
 
-    @Column({ type: 'varchar', length: 100 })
+    @Column()
     nombre!: string;
 
-    @Column({ type: 'varchar', length: 100 })
+    @Column()
     apellido!: string;
 
     @Column({ type: 'date' })
     fechaNacimiento!: Date;
-    
-    @Column({ type: 'varchar', length: 150, unique: true, nullable: false })
+
+    @Column({unique:true, nullable: false})
     correo!: string;
     
     @Exclude()
-    @Column({ type: 'varchar', length: 255, nullable: false })
+    @Column({nullable: false})
     contraseña!: string;
- 
-    @Column({ nullable: true })
+    
+    @Column()
     telefono!: string;
 
     @DeleteDateColumn()
     deleteAt!: Date;
-
 }
-
-
-
-
-
-
