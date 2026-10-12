@@ -162,27 +162,51 @@ export function agendarDemo(idSolicitud: number, inicio: Date, duracionMinutos: 
   ]
 }
 
-// Simula PATCH /:id/aceptar: una solicitud nueva, o una urgente (el primero que acepta se la queda)
-export function aceptarDemo(idSolicitud: number): void {
+// Simula PATCH /:id/aceptar: una solicitud nueva, o una urgente (el primero que acepta se la queda).
+// La urgente pasa directo a agendada, con la visita a la hora de llegada
+export function aceptarDemo(idSolicitud: number, minutosLlegada?: number): void {
   const nueva = solicitudesDemo.find((s) => s.idSolicitud === idSolicitud && s.estadoServicio === 'solicitado')
-  if (nueva) {
+  if (nueva && !nueva.urgente) {
     cambiarEstadoDemo(idSolicitud, { estadoServicio: 'en_coordinacion' })
     return
   }
   const urgente = urgentesDemo.find((u) => u.idSolicitud === idSolicitud)
   if (!urgente) throw new Error('Otro profesional ya tomó esta urgente')
+  if (!minutosLlegada) throw new Error('En una urgente tenés que indicar en cuántos minutos llegás')
   urgentesDemo = urgentesDemo.filter((u) => u.idSolicitud !== idSolicitud)
+
+  const llegada = masMinutos(new Date(), minutosLlegada)
+  const fin = masMinutos(llegada, 60)
+  const cliente: ClienteDeSolicitud = { nombre: urgente.cliente, apellido: '', telefono: '3410000000', calle: 'Entre Ríos', altura: 900, zonaResidencia: { nombreZona: urgente.zona } }
   solicitudesDemo = [
     ...solicitudesDemo,
     solicitud({
       idSolicitud,
-      estadoServicio: 'en_coordinacion',
+      estadoServicio: 'agendado',
       urgente: true,
       descripcionProblema: urgente.descripcionProblema,
       especialidad: { nombreEspecialidad: urgente.especialidad },
-      cliente: { nombre: urgente.cliente, apellido: '', telefono: '3410000000', calle: 'Entre Ríos', altura: 900, zonaResidencia: { nombreZona: urgente.zona } },
+      cliente,
       fechaCambioEstado: new Date().toISOString(),
+      fechaVisita: llegada.toISOString(),
+      fechaFinEstimada: fin.toISOString(),
     }),
+  ]
+  eventosDemo = [
+    ...eventosDemo,
+    {
+      idSolicitud,
+      tipo: 'visita',
+      inicio: llegada,
+      fin,
+      estado: 'agendado',
+      urgente: true,
+      especialidad: urgente.especialidad,
+      descripcionProblema: urgente.descripcionProblema,
+      con: cliente,
+      direccion: 'Entre Ríos 900',
+      zona: urgente.zona,
+    },
   ]
 }
 

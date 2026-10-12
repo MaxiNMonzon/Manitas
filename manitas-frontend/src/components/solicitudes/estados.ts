@@ -2,7 +2,7 @@
 import dayjs from 'dayjs'
 import type { ClienteDeSolicitud, EstadoSolicitud, SolicitudResumen } from '../../types'
 
-type ColorChip = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'
+export type ColorChip = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'
 
 // Nombres en castellano para el usuario (los del back son técnicos)
 // `plural` es para los títulos de los grupos (ej: la carpeta "Agendadas")
@@ -55,6 +55,10 @@ export function proximoPaso(s: SolicitudResumen): string {
         ? `Coordiná la visita y cargá la fecha (vence en ${tiempoQueQueda(s)})`
         : `Coordiná la fecha del trabajo (vence en ${tiempoQueQueda(s)})`
     case 'agendado':
+      // Urgente: la visita es a la hora de llegada que dio al aceptarla
+      if (s.urgente && s.costoEstimado == null && s.fechaVisita) {
+        return `Urgente: llegá a las ${dayjs(s.fechaVisita).format('HH:mm')} y después mandá el presupuesto`
+      }
       return s.costoEstimado == null
         ? 'Después de la visita, mandá el presupuesto'
         : `A cobrar cuando termines: ${formatoPesos(s.costoFinal)}`

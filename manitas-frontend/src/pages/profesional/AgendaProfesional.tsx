@@ -7,6 +7,9 @@ import Typography from '@mui/material/Typography'
 import dayjs, { type Dayjs } from 'dayjs'
 import { traerAgenda } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
+// MEDIDOR DE CARGA (desactivado, archivo local sin subir; ver NOTAS-SESION.md punto 23):
+// import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
+// import MedidorCarga from '../../components/MedidorCarga'
 import CalendarioMensual from '../../components/agenda/CalendarioMensual'
 import ListaDeEventos from '../../components/agenda/ListaDeEventos'
 import SeccionTarjeta from '../../components/SeccionTarjeta'
@@ -31,10 +34,15 @@ export default function AgendaProfesional() {
     traerAgenda(mes.startOf('month').format('YYYY-MM-DD'), mes.endOf('month').format('YYYY-MM-DD')),
   )
 
+  // (Desactivado) Velocímetro de carga, solo al entrar: al cambiar de mes carga el calendario solo
+  // const medidor = useMedidorDeCarga(agendaMes.cargando)
+
   // Lo del día elegido (incluye trabajos de varios días que pasan por ese día)
   const delDia = (agendaMes.datos ?? []).filter(
     (e) => dayjs(e.inicio).isBefore(diaElegido.endOf('day')) && dayjs(e.fin).isAfter(diaElegido.startOf('day')),
   )
+
+  // if (medidor.visible) return <MedidorCarga key={medidor.ronda} />
 
   return (
     <>

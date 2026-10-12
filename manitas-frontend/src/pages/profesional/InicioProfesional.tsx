@@ -20,10 +20,14 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import dayjs from 'dayjs'
 import { aceptarSolicitud, traerAgenda, traerMiCalificacion, traerMisSolicitudes, traerUrgentes } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
+// MEDIDOR DE CARGA (desactivado, archivo local sin subir; ver NOTAS-SESION.md punto 23):
+// import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
+// import MedidorCarga from '../../components/MedidorCarga'
 import AgendarDialog from '../../components/agenda/AgendarDialog'
 import MedidorCalificacion from '../../components/profesional/MedidorCalificacion'
 import ListaDeEventos from '../../components/agenda/ListaDeEventos'
 import SeccionTarjeta from '../../components/SeccionTarjeta'
+import TiempoLlegadaDialog, { type UrgenteAAceptar } from '../../components/solicitudes/TiempoLlegadaDialog'
 import type { SolicitudResumen } from '../../types'
 
 const PLAZO_PARA_AGENDAR_HS = 48 // igual que el back: después vence
@@ -103,7 +107,8 @@ export default function InicioProfesional() {
   const navigate = useNavigate()
   const hoy = dayjs().format('YYYY-MM-DD')
   const [aAgendar, setAAgendar] = useState<SolicitudResumen | null>(null)
-  const [aceptando, setAceptando] = useState<number | null>(null)
+  const [aTomar, setATomar] = useState<UrgenteAAceptar | null>(null)
+  const [aceptando, setAceptando] = useState(false)
   const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
 
   const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
@@ -112,26 +117,36 @@ export default function InicioProfesional() {
   const calificacion = useCarga('mi-calificacion', traerMiCalificacion)
 
   const datos = resumen(solicitudes.datos ?? [])
-  // Las que aceptó y todavía no tienen fecha: vencen a las 48 h, primero las más apuradas
+  // Las que aceptó y todavía no tienen fecha: vencen a las 48 h. Urgentes primero, después las más apuradas.
+  // (La visita de una urgente no se agenda: es en el día, con la hora de llegada que dio al aceptarla)
   const pendientes = (solicitudes.datos ?? [])
-    .filter((s) => s.estadoServicio === 'en_coordinacion')
-    .sort((a, b) => horasQueQuedan(a) - horasQueQuedan(b))
+    .filter((s) => s.estadoServicio === 'en_coordinacion' && !(s.urgente && s.costoEstimado == null))
+    .sort((a, b) => Number(b.urgente) - Number(a.urgente) || horasQueQuedan(a) - horasQueQuedan(b))
   const error = solicitudes.error ?? agendaHoy.error ?? urgentes.error ?? calificacion.error
+  // const medidor = useMedidorDeCarga(solicitudes.cargando || calificacion.cargando || agendaHoy.cargando)
 
-  const aceptarUrgente = async (idSolicitud: number) => {
-    setAceptando(idSolicitud)
+  // Se acepta después de elegir en cuánto llega (TiempoLlegadaDialog)
+  const aceptarUrgente = async (minutos: number) => {
+    if (!aTomar) return
+    setAceptando(true)
     try {
-      await aceptarSolicitud(idSolicitud)
-      setMensaje({ texto: '¡La tomaste! Coordiná la visita con el cliente y cargá la fecha.', tipo: 'success' })
+      await aceptarSolicitud(aTomar.idSolicitud, minutos)
+      const llegada = dayjs().add(minutos, 'minute').format('HH:mm')
+      setMensaje({ texto: `¡La tomaste! Le avisamos a ${aTomar.cliente} que llegás a las ${llegada}.`, tipo: 'success' })
     } catch (e) {
       // Ej: "Otro profesional ya tomó esta urgente"
       setMensaje({ texto: e instanceof Error ? e.message : 'No se pudo aceptar', tipo: 'error' })
     } finally {
-      setAceptando(null)
+      setAceptando(false)
+      setATomar(null)
       urgentes.recargar()
       solicitudes.recargar()
+      agendaHoy.recargar()
     }
   }
+
+  // (Desactivado) Al entrar: el velocímetro de carga (5 s)
+  // if (medidor.visible) return <MedidorCarga key={medidor.ronda} />
 
   return (
     <>
@@ -219,8 +234,7 @@ export default function InicioProfesional() {
                   <Button
                     variant="contained"
                     color="error"
-                    onClick={() => aceptarUrgente(u.idSolicitud)}
-                    loading={aceptando === u.idSolicitud}
+                    onClick={() => setATomar({ idSolicitud: u.idSolicitud, cliente: u.cliente, descripcionProblema: u.descripcionProblema })}
                     sx={{ flexShrink: 0 }}
                   >
                     Aceptar
@@ -301,6 +315,8 @@ export default function InicioProfesional() {
           </SeccionTarjeta>
         </Grid>
       </Grid>
+
+      <TiempoLlegadaDialog urgente={aTomar} cargando={aceptando} onClose={() => setATomar(null)} onConfirmar={aceptarUrgente} />
 
       <AgendarDialog
         solicitud={aAgendar}

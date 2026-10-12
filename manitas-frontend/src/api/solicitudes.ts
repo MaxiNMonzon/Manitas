@@ -30,10 +30,11 @@ export async function traerUrgentes(): Promise<UrgenteDisponible[]> {
   return api.get<UrgenteDisponible[]>('/solicitud-de-servicio/urgentes')
 }
 
-// Profesional: aceptar una solicitud (en una urgente, el primero que acepta se la queda)
-export async function aceptarSolicitud(idSolicitud: number): Promise<void> {
-  if (tokenStorage.esDemo()) return aceptarDemo(idSolicitud)
-  await api.patch(`/solicitud-de-servicio/${idSolicitud}/aceptar`, {})
+// Profesional: aceptar una solicitud (en una urgente, el primero que acepta se la queda).
+// Una urgente no se agenda: se manda en cuántos minutos llega y queda agendada para ese momento
+export async function aceptarSolicitud(idSolicitud: number, minutosLlegada?: number): Promise<void> {
+  if (tokenStorage.esDemo()) return aceptarDemo(idSolicitud, minutosLlegada)
+  await api.patch(`/solicitud-de-servicio/${idSolicitud}/aceptar`, minutosLlegada ? { minutosLlegada } : {})
 }
 
 // Profesional: rechazar una solicitud nueva (ej: no hace ese trabajo)

@@ -8,11 +8,11 @@ import { alpha, lighten, useTheme } from '@mui/material/styles'
 import FolderIcon from '@mui/icons-material/Folder'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { estados } from './estados'
-import type { EstadoSolicitud } from '../../types'
+import type { ColorChip } from './estados'
 
 interface Props {
-  estado: EstadoSolicitud
+  titulo: string
+  color: ColorChip
   cantidad: number
   abierto: boolean
   onAlternar: () => void
@@ -21,11 +21,10 @@ interface Props {
 
 const RADIO = 12
 
-// Grupo de solicitudes de un mismo estado con forma de carpeta: la pestaña de arriba es el
-// título (con el color del estado) y al tocarla se abre o se cierra la lista
-export default function GrupoCarpeta({ estado, cantidad, abierto, onAlternar, children }: Props) {
+// Grupo de solicitudes (de un mismo estado, o las urgentes) con forma de carpeta: la pestaña de
+// arriba es el título (con su color) y al tocarla se abre o se cierra la lista
+export default function GrupoCarpeta({ titulo, color, cantidad, abierto, onAlternar, children }: Props) {
   const theme = useTheme()
-  const { plural, color } = estados[estado]
   const tono = color === 'default' ? theme.palette.grey[600] : theme.palette[color].main
   // Fondos sólidos (no transparentes) para que la pestaña tape el borde del cuerpo
   const fondoCuerpo = lighten(tono, 0.95)
@@ -56,7 +55,7 @@ export default function GrupoCarpeta({ estado, cantidad, abierto, onAlternar, ch
       >
         {abierto ? <FolderOpenIcon /> : <FolderIcon />}
         <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-          {plural}
+          {titulo}
         </Typography>
         <Box
           component="span"
