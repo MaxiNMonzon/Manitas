@@ -15,6 +15,7 @@ import { Profesional } from '../profesional/entities/profesional.entity';
 import { Rol } from '../common/enums/rol.enum';
 import { EstadoSolicitud } from '../common/enums/estado-solicitud.enum';
 import { AgendarDto } from './dto/agendar.dto';
+import { AceptarDto } from './dto/aceptar.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
 import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
@@ -235,14 +236,14 @@ export class SolicitudDeServicioService {
 
   // ---------- Pasos del profesional ----------
 
-  async aceptar(id: number, usuario: UsuarioActivoInterface) {
+  async aceptar(id: number, aceptarDto: AceptarDto, usuario: UsuarioActivoInterface) {
     // Una urgente que nadie tomo todavia la puede aceptar cualquier profesional de esa especialidad y zona
     const urgente = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id, urgente: true, profesional: IsNull() },
       relations: { especialidad: true, cliente: { zonaResidencia: true } },
     });
     if (urgente) {
-      return await this.tomarUrgente(urgente, usuario);
+      return await this.tomarUrgente(urgente, aceptarDto, usuario);
     }
 
     // Si era urgente y ya la tomo otro, se avisa claro en vez de "no participas"
@@ -259,9 +260,14 @@ export class SolicitudDeServicioService {
     return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
   }
 
-  private async tomarUrgente(solicitud: SolicitudDeServicio, usuario: UsuarioActivoInterface) {
+  // Una urgente no se agenda (es en el dia): al aceptarla, el profesional dice en cuanto llega
+  // y queda agendada directo, con la visita a esa hora
+  private async tomarUrgente(solicitud: SolicitudDeServicio, aceptarDto: AceptarDto, usuario: UsuarioActivoInterface) {
     await this.revisarVencimiento(solicitud);
     this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO]);
+    if (!aceptarDto.minutosLlegada) {
+      throw new BadRequestException('En una urgente tenes que indicar en cuantos minutos llegas (minutosLlegada)');
+    }
 
     const profesional = await this.profesionalRepository.findOne({
       where: { idUsuario: usuario.sub },
@@ -276,15 +282,22 @@ export class SolicitudDeServicioService {
       throw new ForbiddenException('Esta urgente no es de tu especialidad o de tu zona');
     }
 
+    const ahora = new Date();
+    ahora.setMilliseconds(0); // MySQL redondea los milisegundos
+    const llegada = new Date(ahora.getTime() + aceptarDto.minutosLlegada * UN_MINUTO);
+
     // Se asigna solo si sigue sin profesional: si dos aceptan a la vez, gana el primero
     const resultado = await this.solicitudDeServicioRepository
       .createQueryBuilder()
       .update(SolicitudDeServicio)
       .set({
         profesional: { idUsuario: profesional.idUsuario },
-        estadoServicio: EstadoSolicitud.EN_COORDINACION,
-        fechaCambioEstado: new Date(),
+        estadoServicio: EstadoSolicitud.AGENDADO,
+        fechaCambioEstado: ahora,
         costoVisita: profesional.costoVisita,
+        fechaVisita: llegada,
+        duracionEstimada: DURACION_POR_DEFECTO_MIN,
+        fechaFinEstimada: new Date(llegada.getTime() + DURACION_POR_DEFECTO_MIN * UN_MINUTO),
       })
       .where('idSolicitud = :id', { id: solicitud.idSolicitud })
       .andWhere('profesionalIdUsuario IS NULL')
@@ -306,6 +319,11 @@ export class SolicitudDeServicioService {
   async agendar(id: number, agendarDto: AgendarDto, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.EN_COORDINACION]);
+    // La visita de una urgente no se agenda: es en el dia, con el tiempo de llegada que se dio al aceptar
+    // (el trabajo grande que sale despues del presupuesto si se puede agendar)
+    if (solicitud.urgente && solicitud.costoEstimado == null) {
+      throw new BadRequestException('Una urgente no se agenda: la visita es en el dia, con el tiempo de llegada que diste al aceptarla');
+    }
 
     const fecha = new Date(agendarDto.fecha);
     if (fecha <= new Date()) {
@@ -502,6 +520,10 @@ export class SolicitudDeServicioService {
     if (solicitud.estadoServicio === EstadoSolicitud.EN_COORDINACION) {
       return `Acordate de cargar la fecha de la solicitud de ${cliente}. Te quedan ${horasQueQuedan} hs antes de que venza`;
     }
+    const llegada = this.llegadaUrgente(solicitud);
+    if (llegada) {
+      return `URGENTE: tenes que llegar a lo de ${cliente} a las ${llegada.hora}`;
+    }
     const proxima = this.proximaFechaEn24hs(solicitud);
     if (proxima) {
       return `Tenes ${proxima.que} con ${cliente} el ${proxima.cuando}`;
@@ -523,6 +545,12 @@ export class SolicitudDeServicioService {
       return `${profesional} te mando un presupuesto de $${solicitud.costoFinal}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+      const llegada = this.llegadaUrgente(solicitud);
+      if (llegada) {
+        return llegada.minutos > 0
+          ? `${profesional} acepto tu urgencia y va en camino: llega a las ${llegada.hora} (en ${llegada.minutos} minutos)`
+          : `${profesional} acepto tu urgencia y ya deberia estar llegando`;
+      }
       const proxima = this.proximaFechaEn24hs(solicitud);
       if (proxima) {
         return `Tenes ${proxima.que} con ${profesional} el ${proxima.cuando}`;
@@ -538,6 +566,20 @@ export class SolicitudDeServicioService {
       return `¿Como te fue con ${profesional}? Calificalo`;
     }
     return null;
+  }
+
+  // La visita de una urgente aceptada: a que hora llega el profesional y cuanto falta.
+  // Se avisa hasta una hora despues de la hora de llegada
+  private llegadaUrgente(solicitud: SolicitudDeServicio) {
+    if (!solicitud.urgente || solicitud.estadoServicio !== EstadoSolicitud.AGENDADO || solicitud.costoEstimado != null || !solicitud.fechaVisita) {
+      return null;
+    }
+    const minutos = Math.ceil((solicitud.fechaVisita.getTime() - Date.now()) / UN_MINUTO);
+    if (minutos < -60) {
+      return null;
+    }
+    const hora = solicitud.fechaVisita.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    return { hora, minutos: Math.max(0, minutos) };
   }
 
   // Si esta agendado y la visita (o el trabajo) es dentro de las proximas 24 hs
@@ -680,6 +722,10 @@ export class SolicitudDeServicioService {
   async reprogramar(id: number, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.AGENDADO]);
+    // La visita de una urgente es en el dia: no se reprograma (no se puede volver a agendar)
+    if (solicitud.urgente && solicitud.costoEstimado == null) {
+      throw new BadRequestException('La visita de una urgente no se reprograma: es en el dia');
+    }
     return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
   }
 

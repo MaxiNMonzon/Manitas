@@ -18,13 +18,18 @@ import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
 import { aceptarSolicitud, rechazarSolicitud, traerMisSolicitudes } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
+// MEDIDOR DE CARGA (desactivado, archivo local sin subir; ver NOTAS-SESION.md punto 23):
+// import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
+// import MedidorCarga from '../../components/MedidorCarga'
 import AgendarDialog from '../../components/agenda/AgendarDialog'
 import TarjetaSolicitud from '../../components/solicitudes/TarjetaSolicitud'
 import DetalleSolicitudDialog from '../../components/solicitudes/DetalleSolicitudDialog'
 import PresupuestarDialog from '../../components/solicitudes/PresupuestarDialog'
-import { fechaPrincipal, grupoDe, type Grupo } from '../../components/solicitudes/estados'
+import { estados, fechaPrincipal, grupoDe, type ColorChip, type Grupo } from '../../components/solicitudes/estados'
 import GrupoCarpeta from '../../components/solicitudes/GrupoCarpeta'
-import type { EstadoSolicitud, SolicitudResumen } from '../../types'
+import TiempoLlegadaDialog from '../../components/solicitudes/TiempoLlegadaDialog'
+import type { SolicitudResumen } from '../../types'
+import dayjs from 'dayjs'
 
 const POR_PAGINA = 5
 
@@ -35,55 +40,73 @@ const pestañas: { valor: Grupo; label: string; vacio: string }[] = [
 ]
 
 const tiempo = (fecha: string | null | undefined) => (fecha ? new Date(fecha).getTime() : 0)
+const urgentesPrimero = (a: SolicitudResumen, b: SolicitudResumen) => Number(b.urgente) - Number(a.urgente)
 
-// Orden de cada pestaña: primero lo que más apura
+// En curso, las urgentes van todas juntas en su propia carpeta, arriba de todo
+const URGENTES = 'urgentes'
+const claveDe = (grupo: Grupo, s: SolicitudResumen) => (grupo === 'en_curso' && s.urgente ? URGENTES : s.estadoServicio)
+
+// Orden de cada pestaña: primero las urgentes, después lo que más apura
 function ordenar(grupo: Grupo, lista: SolicitudResumen[]): SolicitudResumen[] {
   const copia = [...lista]
   if (grupo === 'nuevas') {
-    // Urgentes primero, después las más viejas (son las que vencen antes)
-    return copia.sort((a, b) => Number(b.urgente) - Number(a.urgente) || tiempo(a.fechaCambioEstado) - tiempo(b.fechaCambioEstado))
+    // Después de las urgentes, las más viejas (son las que vencen antes)
+    return copia.sort((a, b) => urgentesPrimero(a, b) || tiempo(a.fechaCambioEstado) - tiempo(b.fechaCambioEstado))
   }
   if (grupo === 'en_curso') {
-    // Primero las que hay que coordinar, después las agendadas por fecha, al final las presupuestadas
+    // Las urgentes; después las que hay que coordinar, las agendadas por fecha y al final las presupuestadas
     const prioridad = { en_coordinacion: 0, agendado: 1, presupuestado: 2 } as Record<string, number>
     return copia.sort(
       (a, b) =>
-        prioridad[a.estadoServicio] - prioridad[b.estadoServicio] ||
+        urgentesPrimero(a, b) ||
+        (a.urgente ? 0 : prioridad[a.estadoServicio] - prioridad[b.estadoServicio]) ||
         tiempo(fechaPrincipal(a)?.fecha) - tiempo(fechaPrincipal(b)?.fecha) ||
         tiempo(a.fechaCambioEstado) - tiempo(b.fechaCambioEstado),
     )
   }
-  // Historial: agrupadas por estado y, dentro de cada uno, lo más reciente arriba
+  // Historial: agrupadas por estado y, dentro de cada uno, las urgentes y después lo más reciente
   const ordenHistorial = ['finalizado', 'rechazado', 'cancelado', 'expirado']
   return copia.sort(
     (a, b) =>
       ordenHistorial.indexOf(a.estadoServicio) - ordenHistorial.indexOf(b.estadoServicio) ||
+      urgentesPrimero(a, b) ||
       tiempo(b.fechaFinReal ?? b.fechaCambioEstado) - tiempo(a.fechaFinReal ?? a.fechaCambioEstado),
   )
 }
 
-// Junta las solicitudes seguidas que tienen el mismo estado (la lista ya viene ordenada por estado)
-function porEstado(lista: SolicitudResumen[]): { estado: EstadoSolicitud; items: SolicitudResumen[] }[] {
-  const grupos: { estado: EstadoSolicitud; items: SolicitudResumen[] }[] = []
+interface Carpeta {
+  clave: string
+  titulo: string
+  color: ColorChip
+  items: SolicitudResumen[]
+}
+
+// Junta las solicitudes seguidas de la misma carpeta (la lista ya viene ordenada así)
+function enCarpetas(grupo: Grupo, lista: SolicitudResumen[]): Carpeta[] {
+  const carpetas: Carpeta[] = []
   for (const s of lista) {
-    const ultimo = grupos[grupos.length - 1]
-    if (ultimo?.estado === s.estadoServicio) ultimo.items.push(s)
-    else grupos.push({ estado: s.estadoServicio, items: [s] })
+    const clave = claveDe(grupo, s)
+    const ultima = carpetas[carpetas.length - 1]
+    if (ultima?.clave === clave) ultima.items.push(s)
+    else if (clave === URGENTES) carpetas.push({ clave, titulo: 'Urgentes', color: 'error', items: [s] })
+    else carpetas.push({ clave, titulo: estados[s.estadoServicio].plural, color: estados[s.estadoServicio].color, items: [s] })
   }
-  return grupos
+  return carpetas
 }
 
 // Pestaña "Solicitudes" del profesional (boceto "Mis solicitudes")
 export default function SolicitudesProfesional() {
   const [grupo, setGrupo] = useState<Grupo>('nuevas')
   // Carpetas cerradas por el usuario (al entrar están todas abiertas)
-  const [cerradas, setCerradas] = useState<Set<EstadoSolicitud>>(new Set())
+  const [cerradas, setCerradas] = useState<Set<string>>(new Set())
   const [cantidadVisible, setCantidadVisible] = useState(POR_PAGINA)
   const [detalle, setDetalle] = useState<SolicitudResumen | null>(null)
   const [aAgendar, setAAgendar] = useState<SolicitudResumen | null>(null)
   const [aPresupuestar, setAPresupuestar] = useState<SolicitudResumen | null>(null)
   const [aRechazar, setARechazar] = useState<SolicitudResumen | null>(null)
   const [aceptando, setAceptando] = useState(false)
+  // Urgente a aceptar: antes se elige en cuánto llega
+  const [aTomar, setATomar] = useState<SolicitudResumen | null>(null)
   const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
 
   const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
@@ -91,6 +114,7 @@ export default function SolicitudesProfesional() {
   const delGrupo = (g: Grupo) => todas.filter((s) => grupoDe(s.estadoServicio) === g)
   const lista = ordenar(grupo, delGrupo(grupo))
   const pestaña = pestañas.find((p) => p.valor === grupo)!
+  // const medidor = useMedidorDeCarga(solicitudes.cargando)
 
   // Aceptar o rechazar desde el detalle, con aviso del resultado
   const responder = async (accion: () => Promise<void>, ok: string) => {
@@ -107,9 +131,10 @@ export default function SolicitudesProfesional() {
     }
   }
 
-  // En la tarjeta: el botón de la acción que le toca a cada estado. Las nuevas se responden en el detalle
+  // En la tarjeta: el botón de la acción que le toca a cada estado. Las nuevas se responden en el detalle.
+  // La visita de una urgente no se agenda (es en el día)
   const accionesDe = (s: SolicitudResumen) => {
-    if (s.estadoServicio === 'en_coordinacion') {
+    if (s.estadoServicio === 'en_coordinacion' && !(s.urgente && s.costoEstimado == null)) {
       return (
         <Button size="small" variant="contained" startIcon={<EventAvailableIcon />} onClick={() => setAAgendar(s)}>
           Agendar
@@ -126,13 +151,22 @@ export default function SolicitudesProfesional() {
     return null
   }
 
+  // (Desactivado) Al entrar y al actualizar: el velocímetro de carga (5 s)
+  // if (medidor.visible) return <MedidorCarga key={medidor.ronda} />
+
   return (
     <>
       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           Mis solicitudes
         </Typography>
-        <Button startIcon={<RefreshIcon />} onClick={solicitudes.recargar}>
+        <Button
+          startIcon={<RefreshIcon />}
+          onClick={() => {
+            // medidor.reiniciar()
+            solicitudes.recargar()
+          }}
+        >
           Actualizar
         </Button>
       </Stack>
@@ -175,32 +209,33 @@ export default function SolicitudesProfesional() {
           <Typography color="text.secondary">{pestaña.vacio}</Typography>
         </Paper>
       ) : (
-        // Una sola lista, con las del mismo estado juntas bajo un encabezado de su color
+        // Una sola lista, con las del mismo estado (o las urgentes) juntas en una carpeta de su color
         <Stack spacing={1.5}>
-          {porEstado(lista.slice(0, cantidadVisible)).map(({ estado, items }) => {
+          {enCarpetas(grupo, lista.slice(0, cantidadVisible)).map(({ clave, titulo, color, items }) => {
             const tarjetas = items.map((s) => (
               <TarjetaSolicitud
                 key={s.idSolicitud}
                 solicitud={s}
                 onVerDetalles={() => setDetalle(s)}
                 acciones={accionesDe(s)}
-                // El estado ya lo dice la carpeta (o la pestaña, en Nuevas)
-                mostrarEstado={false}
+                // El estado ya lo dice la carpeta (o la pestaña, en Nuevas); en la de urgentes se mezclan
+                mostrarEstado={clave === URGENTES}
               />
             ))
             // En Nuevas hay un solo estado: no hace falta carpeta
             if (grupo === 'nuevas') return tarjetas
             return (
               <GrupoCarpeta
-                key={estado}
-                estado={estado}
-                cantidad={lista.filter((s) => s.estadoServicio === estado).length}
-                abierto={!cerradas.has(estado)}
+                key={clave}
+                titulo={titulo}
+                color={color}
+                cantidad={lista.filter((s) => claveDe(grupo, s) === clave).length}
+                abierto={!cerradas.has(clave)}
                 onAlternar={() =>
                   setCerradas((c) => {
                     const nuevas = new Set(c)
-                    if (nuevas.has(estado)) nuevas.delete(estado)
-                    else nuevas.add(estado)
+                    if (nuevas.has(clave)) nuevas.delete(clave)
+                    else nuevas.add(clave)
                     return nuevas
                   })
                 }
@@ -232,10 +267,13 @@ export default function SolicitudesProfesional() {
                 color="success"
                 loading={aceptando}
                 onClick={() =>
-                  responder(
-                    () => aceptarSolicitud(detalle.idSolicitud),
-                    'Aceptada. Coordiná la visita con el cliente y cargá la fecha.',
-                  )
+                  // Una urgente es en el día: primero se elige en cuánto llega
+                  detalle.urgente
+                    ? setATomar(detalle)
+                    : responder(
+                        () => aceptarSolicitud(detalle.idSolicitud),
+                        'Aceptada. Coordiná la visita con el cliente y cargá la fecha.',
+                      )
                 }
               >
                 Aceptar
@@ -243,6 +281,25 @@ export default function SolicitudesProfesional() {
             </>
           )
         }
+      />
+      <TiempoLlegadaDialog
+        urgente={
+          aTomar && {
+            idSolicitud: aTomar.idSolicitud,
+            cliente: aTomar.cliente?.nombre ?? 'Cliente',
+            descripcionProblema: aTomar.descripcionProblema,
+          }
+        }
+        cargando={aceptando}
+        onClose={() => setATomar(null)}
+        onConfirmar={(minutos) => {
+          const s = aTomar!
+          setATomar(null)
+          responder(
+            () => aceptarSolicitud(s.idSolicitud, minutos),
+            `Aceptada. Le avisamos a ${s.cliente?.nombre ?? 'el cliente'} que llegás a las ${dayjs().add(minutos, 'minute').format('HH:mm')}.`,
+          )
+        }}
       />
       <AgendarDialog solicitud={aAgendar} onClose={() => setAAgendar(null)} onAgendado={solicitudes.recargar} />
       <PresupuestarDialog
