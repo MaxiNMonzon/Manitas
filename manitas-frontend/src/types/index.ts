@@ -104,7 +104,9 @@ export interface SolicitudResumen {
   urgente: boolean
   descripcionProblema: string
   fechaCambioEstado: string
-  costoEstimado: number | null
+  costoEstimado: number | null // presupuesto aceptado
+  costoFinal: number | null // lo que se cobra
+  fechaFinReal: string | null // cuándo se terminó (al pagar)
   especialidad: { nombreEspecialidad: string } | null
   cliente?: PersonaResumen // viene cuando pregunta el profesional
   profesional?: PersonaResumen | null // viene cuando pregunta el cliente
@@ -129,4 +131,20 @@ export interface EventoAgenda {
 export interface Aviso {
   idSolicitud: number
   mensaje: string
+}
+
+// GET /solicitud-de-servicio/urgentes (profesional): urgentes cerca que nadie tomó
+export interface UrgenteDisponible {
+  idSolicitud: number
+  especialidad: string
+  descripcionProblema: string
+  zona: string
+  cliente: string // solo el nombre
+  minutosQueQuedan: number
+}
+
+// GET /profesional/:id/calificaciones (solo lo que usa el front)
+export interface Calificaciones {
+  promedio: number | null // 1 decimal; null si todavía no tiene
+  cantidad: number
 }
