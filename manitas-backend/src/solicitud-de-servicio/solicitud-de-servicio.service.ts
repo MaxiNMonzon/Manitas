@@ -27,6 +27,27 @@ const UN_MINUTO = 60 * 1000;
 
 type TipoEvento = 'visita' | 'trabajo';
 
+// El deposito al profesional se simula: llega a los 3 dias habiles del pago
+const DIAS_HABILES_DEPOSITO = 3;
+
+// Un cobro del profesional: un trabajo, o una visita que el cliente paga al rechazar el presupuesto.
+// pendiente_cobro: el cliente todavia no pago, o pago y falta que se deposite; cobrado: ya depositado
+export interface Cobro {
+  idSolicitud: number;
+  concepto: TipoEvento;
+  estado: 'pendiente_cobro' | 'cobrado';
+  monto: number;
+  fechaPago: Date | null;
+  depositoEstimado: Date | null;
+  // Solo el tipo (ej: "Visa credito Banco Nacion"), nunca los digitos de la tarjeta del cliente
+  medioDePago: string | null;
+  especialidad: string | null;
+  descripcionProblema: string;
+  cliente: { nombre: string; apellido: string };
+  // Cuando fue el trabajo (o la visita): para los que todavia esperan el pago
+  fechaServicio: Date | null;
+}
+
 // Una visita o un trabajo en el calendario
 export interface EventoAgenda {
   idSolicitud: number;
@@ -438,6 +459,8 @@ export class SolicitudDeServicioService {
     const mejorPromocion = mejorPromocionVigente(tarjeta.metodoDePago.promociones);
 
     solicitud.tarjeta = tarjeta;
+    solicitud.fechaPago = new Date();
+    solicitud.fechaPago.setMilliseconds(0); // MySQL redondea los milisegundos
     let guardada: SolicitudDeServicio;
     if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
       solicitud.fechaFinReal = new Date();
@@ -595,6 +618,73 @@ export class SolicitudDeServicioService {
     }
     const cuando = fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     return { que: esLaVisita ? 'una visita' : 'el trabajo', cuando };
+  }
+
+  // ---------- Cobros del profesional ----------
+
+  // Todo lo que cobro o tiene para cobrar: trabajos y visitas pagadas, y lo que el cliente todavia no pago.
+  // Ordenado de lo mas nuevo a lo mas viejo. Tambien los ultimos 4 numeros del CBU/CVU donde se deposita
+  async cobros(usuario: UsuarioActivoInterface) {
+    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: usuario.sub });
+    if (!profesional) {
+      throw new NotFoundException('Profesional no encontrado');
+    }
+    const solicitudes = await this.solicitudDeServicioRepository.find({
+      where: {
+        profesional: { idUsuario: usuario.sub },
+        estadoServicio: In([EstadoSolicitud.AGENDADO, EstadoSolicitud.FINALIZADO, EstadoSolicitud.RECHAZADO]),
+      },
+      relations: { cliente: true, especialidad: true, tarjeta: { metodoDePago: true } },
+    });
+
+    const ahora = new Date();
+    const cobros: Cobro[] = [];
+    for (const solicitud of solicitudes) {
+      const pagada = solicitud.tarjeta != null;
+      // Que se cobra: el trabajo con presupuesto aceptado, o la visita de un presupuesto rechazado
+      const esTrabajo = solicitud.costoEstimado != null && solicitud.estadoServicio !== EstadoSolicitud.RECHAZADO;
+      const esVisita = solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && !!solicitud.costoFinal && !solicitud.fechaInicio;
+      if (!esTrabajo && !esVisita) {
+        continue;
+      }
+      // Pagadas antes de que existiera fechaPago: se usa la fecha en que termino
+      const fechaPago = pagada ? (solicitud.fechaPago ?? solicitud.fechaFinReal ?? solicitud.fechaCambioEstado) : null;
+      const depositoEstimado = fechaPago ? this.sumarDiasHabiles(fechaPago, DIAS_HABILES_DEPOSITO) : null;
+      cobros.push({
+        idSolicitud: solicitud.idSolicitud,
+        concepto: esTrabajo ? 'trabajo' : 'visita',
+        estado: depositoEstimado && depositoEstimado <= ahora ? 'cobrado' : 'pendiente_cobro',
+        monto: Number(solicitud.costoFinal ?? solicitud.costoEstimado ?? 0),
+        fechaPago,
+        depositoEstimado,
+        medioDePago: solicitud.tarjeta?.metodoDePago?.tipo ?? null,
+        especialidad: solicitud.especialidad?.nombreEspecialidad ?? null,
+        descripcionProblema: solicitud.descripcionProblema,
+        // El cliente puede haberse dado de baja
+        cliente: { nombre: solicitud.cliente?.nombre ?? 'Cliente', apellido: solicitud.cliente?.apellido ?? '' },
+        fechaServicio: esTrabajo ? (solicitud.fechaInicio ?? solicitud.fechaVisita) : solicitud.fechaVisita,
+      });
+    }
+
+    const orden = (c: Cobro) => (c.fechaPago ?? c.fechaServicio ?? ahora).getTime();
+    return {
+      cuentaDeposito: profesional.cbu ? profesional.cbu.slice(-4) : null,
+      cobros: cobros.sort((a, b) => orden(b) - orden(a)),
+    };
+  }
+
+  // Suma dias de lunes a viernes (los feriados no se tienen en cuenta)
+  private sumarDiasHabiles(desde: Date, dias: number): Date {
+    const fecha = new Date(desde);
+    let sumados = 0;
+    while (sumados < dias) {
+      fecha.setDate(fecha.getDate() + 1);
+      const diaSemana = fecha.getDay();
+      if (diaSemana !== 0 && diaSemana !== 6) {
+        sumados++;
+      }
+    }
+    return fecha;
   }
 
   // ---------- Agenda (calendario) ----------

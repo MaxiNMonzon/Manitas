@@ -85,6 +85,20 @@ export class SolicitudDeServicioController {
   }
 
   // Tiene que ir antes de ':id'
+  @Get('cobros')
+  @Auth(Rol.PROFESIONAL)
+  @ApiOperation({
+    summary: 'Mis cobros (profesional)',
+    description:
+      'Los trabajos y visitas que cobro o tiene para cobrar, de lo mas nuevo a lo mas viejo. Cada uno con su estado: ' +
+      'pendiente_cobro (el cliente todavia no pago, o pago y falta el deposito; fechaPago dice cual) o cobrado (ya depositado). ' +
+      'El deposito se simula a los 3 dias habiles del pago. Del medio de pago solo se ve el tipo, nunca los numeros de la tarjeta. ' +
+      'Tambien devuelve los ultimos 4 numeros del CBU/CVU donde se deposita (cuentaDeposito).',
+  })
+  cobros(@UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.cobros(usuario);
+  }
+
   @Get('agenda')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
