@@ -4,11 +4,14 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import LogoutIcon from '@mui/icons-material/Logout'
 import { useAuth } from '../auth/useAuth'
+import PerfilProfesional from './profesional/PerfilProfesional'
 
-// Provisorio: datos de la sesión y cerrar sesión. La edición del perfil se desarrolla después.
+// El profesional tiene su perfil completo. Para el cliente, provisorio: datos de la sesión y cerrar sesión.
 export default function MiPerfil() {
   const { sesion, logout } = useAuth()
   const navigate = useNavigate()
+
+  if (sesion?.rol === 'profesional') return <PerfilProfesional />
 
   return (
     <Paper variant="outlined" sx={{ p: 4 }}>

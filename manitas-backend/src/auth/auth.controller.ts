@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateClienteDto } from '../cliente/dto/create-cliente.dto';
 import { CreateProfesionalDto } from '../profesional/dto/create-profesional.dto';
 import { LoginDto } from './dto/login.dto';
+import { CambiarContrasenaDto } from './dto/cambiar-contrasena.dto';
 import { AuthGuard } from './guard/auth.guard';
 import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
 import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
@@ -58,5 +59,15 @@ export class AuthController {
     @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
     perfil(@UsuarioActivo() usuario: UsuarioActivoInterface) {
         return this.authService.perfil(usuario);
+    }
+
+    @Patch('contrasena')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Cambiar mi contraseña', description: 'Cliente o profesional. Pide la contraseña actual; la nueva, minimo 8 caracteres y distinta de la actual.' })
+    @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
+    @ApiBadRequestResponse({ description: 'La contraseña actual no es correcta, o la nueva es igual o muy corta' })
+    cambiarContraseña(@UsuarioActivo() usuario: UsuarioActivoInterface, @Body() dto: CambiarContrasenaDto) {
+        return this.authService.cambiarContraseña(usuario, dto);
     }
 }

@@ -4,11 +4,13 @@ import { Zona } from '../../zona/entities/zona.entity';
 import { Especialidad } from '../../especialidad/entities/especialidad.entity';
 import { TiposDeServicio } from '../../tipos-de-servicio/entities/tipos-de-servicio.entity';
 import { SolicitudDeServicio } from '../../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
+import { Matricula } from './matricula.entity';
 
 @Entity('profesionales')
 export class Profesional extends Usuario {
-  @Column({ nullable: true })
-  nroMatricula?: string;
+  // Sus matriculas (puede tener una o mas por especialidad). Se guardan junto con el profesional
+  @OneToMany(() => Matricula, (matricula) => matricula.profesional, { cascade: true })
+  matriculas!: Matricula[];
 
   // Opcional: solo se cobra si el cliente rechaza el presupuesto
   @Column({ nullable: true })
