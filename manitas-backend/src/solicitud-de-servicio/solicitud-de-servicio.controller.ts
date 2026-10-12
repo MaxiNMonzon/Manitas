@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiForbiddenResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { SolicitudDeServicioService } from './solicitud-de-servicio.service';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { AgendarDto } from './dto/agendar.dto';
+import { AgendaQueryDto } from './dto/agenda-query.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
 import { PagarDto } from './dto/pagar.dto';
@@ -82,6 +83,23 @@ export class SolicitudDeServicioController {
     return this.solicitudDeServicioService.avisos(usuario);
   }
 
+  // Tiene que ir antes de ':id'
+  @Get('agenda')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Mi agenda (calendario de visitas y trabajos)',
+    description:
+      'Las visitas y trabajos con fecha entre "desde" y "hasta" (incluidos, maximo 3 meses), ordenados por hora. ' +
+      'Cada uno con inicio y fin estimado (si no se cargo la duracion, 1 hora), el estado y la otra persona. ' +
+      'La direccion del cliente solo se le muestra al profesional. No incluye canceladas ni expiradas.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
+  @ApiBadRequestResponse({ description: 'Fechas mal escritas o rango de mas de 3 meses' })
+  agenda(@Query() query: AgendaQueryDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.agenda(query, usuario);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -125,9 +143,12 @@ export class SolicitudDeServicioController {
   @Auth(Rol.PROFESIONAL)
   @ApiOperation({
     summary: 'Coordinar visita (cargar fecha y hora)',
-    description: 'en_coordinacion → agendado. Si todavia no hay presupuesto aceptado es la fecha de la visita; si ya hay, es la del trabajo. La fecha tiene que ser futura.',
+    description:
+      'en_coordinacion → agendado. Si todavia no hay presupuesto aceptado es la fecha de la visita; si ya hay, es la del trabajo. ' +
+      'La fecha tiene que ser futura. Se puede mandar cuanto dura (duracionEstimada, en minutos; si no, 1 hora): ' +
+      'no se puede superponer con otra visita o trabajo agendado del mismo profesional.',
   })
-  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o la fecha ya paso` })
+  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, la fecha ya paso, o se pisa con otra visita/trabajo` })
   agendar(@Param('id', ParseIntPipe) id: number, @Body() agendarDto: AgendarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.agendar(id, agendarDto, usuario);
   }
