@@ -3,7 +3,6 @@
 //   categorias      → GET /especialidad
 //   profesionales   → GET /profesional?zona=<zona del cliente> (+ GET /profesional/:id/calificaciones)
 //   promociones     → GET /promocion/del-mes
-//   notificaciones  → (todavía no hay endpoint; CUU "Notificar próximas visitas")
 
 export interface Categoria {
   idEspecialidad: number
@@ -28,13 +27,6 @@ export interface PromoBancaria {
   titulo: string
   detalle: string
   color: string // color de la marca del banco, para el ícono
-}
-
-export interface Notificacion {
-  id: number
-  texto: string
-  cuando: string
-  leida: boolean
 }
 
 export const categorias: Categoria[] = [
@@ -130,10 +122,4 @@ export const promocionesDelMes: PromoBancaria[] = [
     detalle: 'Con tarjeta de débito Macro',
     color: '#1c3f94',
   },
-]
-
-export const notificaciones: Notificacion[] = [
-  { id: 1, texto: 'Mañana a las 10:00 tenés la visita de Elvio Solís (Plomería).', cuando: 'Hace 1 hora', leida: false },
-  { id: 2, texto: 'Oscar Gómez te envió un presupuesto.', cuando: 'Ayer', leida: false },
-  { id: 3, texto: 'Nueva promo: 20% OFF con Banco Nación.', cuando: 'Hace 3 días', leida: true },
 ]
