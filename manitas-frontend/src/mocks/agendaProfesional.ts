@@ -1,7 +1,7 @@
 // DATOS MOCK del profesional, solo para la sesión demo (ver AccesosDemo).
 // Las fechas se arman a partir de hoy para que siempre haya algo que ver.
 // Con sesión real se usan GET /solicitud-de-servicio, /agenda y /urgentes.
-import type { EventoAgenda, SolicitudResumen, UrgenteDisponible } from '../types'
+import type { ClienteDeSolicitud, EventoAgenda, SolicitudResumen, UrgenteDisponible } from '../types'
 
 function dia(desdeHoy: number, hora: number, minutos = 0): Date {
   const d = new Date()
@@ -16,11 +16,13 @@ function masMinutos(fecha: Date, minutos: number): Date {
 
 const haceHoras = (horas: number) => masMinutos(new Date(), -horas * 60).toISOString()
 
-const sofia = { nombre: 'Sofía', apellido: 'Pérez', telefono: '3411112222' }
-const ana = { nombre: 'Ana', apellido: 'López', telefono: '3413334444' }
-const carlos = { nombre: 'Carlos', apellido: 'Díaz', telefono: '3415556666' }
-const laura = { nombre: 'Laura', apellido: 'Méndez', telefono: '3417778888' }
-const juan = { nombre: 'Juan', apellido: 'Pérez', telefono: '3419990000' }
+const centro = { nombreZona: 'Centro' }
+const sur = { nombreZona: 'Zona Sur' }
+const sofia: ClienteDeSolicitud = { nombre: 'Sofía', apellido: 'Pérez', telefono: '3411112222', calle: 'Córdoba', altura: 1234, piso: '3', depto: 'B', zonaResidencia: centro }
+const ana: ClienteDeSolicitud = { nombre: 'Ana', apellido: 'López', telefono: '3413334444', calle: 'San Martín', altura: 560, zonaResidencia: sur }
+const carlos: ClienteDeSolicitud = { nombre: 'Carlos', apellido: 'Díaz', telefono: '3415556666', calle: 'Mitre', altura: 845, zonaResidencia: centro }
+const laura: ClienteDeSolicitud = { nombre: 'Laura', apellido: 'Méndez', telefono: '3417778888', calle: 'Oroño', altura: 1450, zonaResidencia: centro }
+const juan: ClienteDeSolicitud = { nombre: 'Juan', apellido: 'Pérez', telefono: '3419990000', calle: 'Pellegrini', altura: 2200, zonaResidencia: sur }
 
 const plomeria = { nombreEspecialidad: 'Plomería' }
 const gas = { nombreEspecialidad: 'Gas' }
@@ -29,6 +31,7 @@ function solicitud(datos: Partial<SolicitudResumen> & Pick<SolicitudResumen, 'id
   return {
     urgente: false,
     descripcionProblema: '',
+    fechaSolicitud: haceHoras(26),
     fechaCambioEstado: haceHoras(2),
     costoEstimado: null,
     costoFinal: null,
@@ -47,14 +50,16 @@ export let solicitudesDemo: SolicitudResumen[] = [
   solicitud({ idSolicitud: 201, estadoServicio: 'en_coordinacion', descripcionProblema: 'Destapar la pileta del lavadero.', cliente: laura, fechaCambioEstado: haceHoras(5) }),
   solicitud({ idSolicitud: 202, estadoServicio: 'en_coordinacion', descripcionProblema: 'Arreglar el calefón (presupuesto ya aceptado).', cliente: sofia, especialidad: gas, costoEstimado: 35000, costoFinal: 35000, fechaCambioEstado: haceHoras(40) }),
   // Agendadas (las de la agenda)
-  solicitud({ idSolicitud: 102, estadoServicio: 'agendado', descripcionProblema: 'Pierde agua la canilla de la cocina.', cliente: sofia }),
-  solicitud({ idSolicitud: 103, estadoServicio: 'agendado', descripcionProblema: 'Instalación de termotanque.', cliente: ana, costoEstimado: 40000, costoFinal: 40000 }),
-  solicitud({ idSolicitud: 105, estadoServicio: 'agendado', descripcionProblema: 'Revisión de la instalación de gas.', cliente: carlos, especialidad: gas, costoEstimado: 35000, costoFinal: 35000 }),
+  solicitud({ idSolicitud: 102, estadoServicio: 'agendado', descripcionProblema: 'Pierde agua la canilla de la cocina.', cliente: sofia, fechaVisita: dia(0, 9).toISOString(), fechaFinEstimada: dia(0, 10).toISOString(), costoVisita: 5000 }),
+  solicitud({ idSolicitud: 103, estadoServicio: 'agendado', descripcionProblema: 'Instalación de termotanque.', cliente: ana, costoEstimado: 40000, costoFinal: 40000, fechaVisita: dia(-3, 10).toISOString(), fechaInicio: dia(0, 15).toISOString(), fechaFinEstimada: dia(0, 17, 30).toISOString() }),
+  solicitud({ idSolicitud: 105, estadoServicio: 'agendado', descripcionProblema: 'Revisión de la instalación de gas.', cliente: carlos, especialidad: gas, costoEstimado: 35000, costoFinal: 35000, fechaVisita: dia(-1, 11).toISOString(), fechaInicio: dia(3, 9).toISOString(), fechaFinEstimada: dia(3, 13).toISOString() }),
   // Esperando que el cliente acepte el presupuesto
-  solicitud({ idSolicitud: 106, estadoServicio: 'presupuestado', descripcionProblema: 'Cambiar el flotante del tanque.', cliente: laura, costoFinal: 18000 }),
-  // Terminadas y cobradas este mes
-  solicitud({ idSolicitud: 101, estadoServicio: 'finalizado', descripcionProblema: 'Cambio de cañería del baño.', cliente: carlos, costoEstimado: 60000, costoFinal: 60000, fechaFinReal: dia(-2, 12).toISOString() }),
-  solicitud({ idSolicitud: 107, estadoServicio: 'finalizado', descripcionProblema: 'Destapación de cloaca.', cliente: juan, costoEstimado: 22000, costoFinal: 22000, fechaFinReal: dia(-1, 18).toISOString() }),
+  solicitud({ idSolicitud: 106, estadoServicio: 'presupuestado', descripcionProblema: 'Cambiar el flotante del tanque.', cliente: laura, costoFinal: 18000, fechaVisita: dia(-1, 16).toISOString() }),
+  // Historial
+  solicitud({ idSolicitud: 101, estadoServicio: 'finalizado', descripcionProblema: 'Cambio de cañería del baño.', cliente: carlos, costoEstimado: 60000, costoFinal: 60000, fechaVisita: dia(-5, 10).toISOString(), fechaInicio: dia(-2, 9).toISOString(), fechaFinReal: dia(-2, 12).toISOString() }),
+  solicitud({ idSolicitud: 107, estadoServicio: 'finalizado', descripcionProblema: 'Destapación de cloaca.', cliente: juan, costoEstimado: 22000, costoFinal: 22000, fechaVisita: dia(-1, 17).toISOString(), fechaInicio: dia(-1, 17).toISOString(), fechaFinReal: dia(-1, 18).toISOString() }),
+  solicitud({ idSolicitud: 108, estadoServicio: 'cancelado', descripcionProblema: 'Colocación de cerámicos en el baño.', cliente: juan, fechaCambioEstado: haceHoras(72) }),
+  solicitud({ idSolicitud: 109, estadoServicio: 'rechazado', descripcionProblema: 'Arreglar el portón eléctrico.', cliente: ana, fechaCambioEstado: haceHoras(120) }),
 ]
 
 export let urgentesDemo: UrgenteDisponible[] = [
@@ -133,12 +138,17 @@ export function agendarDemo(idSolicitud: number, inicio: Date, duracionMinutos: 
   const s = solicitudesDemo.find((x) => x.idSolicitud === idSolicitud)
   if (!s) throw new Error('Solicitud no encontrada')
 
-  solicitudesDemo = solicitudesDemo.map((x) => (x.idSolicitud === idSolicitud ? { ...x, estadoServicio: 'agendado' } : x))
+  const esVisita = s.costoEstimado == null
+  cambiarEstadoDemo(idSolicitud, {
+    estadoServicio: 'agendado',
+    [esVisita ? 'fechaVisita' : 'fechaInicio']: inicio.toISOString(),
+    fechaFinEstimada: fin.toISOString(),
+  })
   eventosDemo = [
     ...eventosDemo,
     {
       idSolicitud,
-      tipo: s.costoEstimado == null ? 'visita' : 'trabajo',
+      tipo: esVisita ? 'visita' : 'trabajo',
       inicio,
       fin,
       estado: 'agendado',
@@ -152,8 +162,13 @@ export function agendarDemo(idSolicitud: number, inicio: Date, duracionMinutos: 
   ]
 }
 
-// Simula PATCH /:id/aceptar de una urgente: pasa a "en coordinación" (pendiente de fecha)
-export function aceptarUrgenteDemo(idSolicitud: number): void {
+// Simula PATCH /:id/aceptar: una solicitud nueva, o una urgente (el primero que acepta se la queda)
+export function aceptarDemo(idSolicitud: number): void {
+  const nueva = solicitudesDemo.find((s) => s.idSolicitud === idSolicitud && s.estadoServicio === 'solicitado')
+  if (nueva) {
+    cambiarEstadoDemo(idSolicitud, { estadoServicio: 'en_coordinacion' })
+    return
+  }
   const urgente = urgentesDemo.find((u) => u.idSolicitud === idSolicitud)
   if (!urgente) throw new Error('Otro profesional ya tomó esta urgente')
   urgentesDemo = urgentesDemo.filter((u) => u.idSolicitud !== idSolicitud)
@@ -165,8 +180,24 @@ export function aceptarUrgenteDemo(idSolicitud: number): void {
       urgente: true,
       descripcionProblema: urgente.descripcionProblema,
       especialidad: { nombreEspecialidad: urgente.especialidad },
-      cliente: { nombre: urgente.cliente, apellido: '', telefono: '3410000000' },
+      cliente: { nombre: urgente.cliente, apellido: '', telefono: '3410000000', calle: 'Entre Ríos', altura: 900, zonaResidencia: { nombreZona: urgente.zona } },
       fechaCambioEstado: new Date().toISOString(),
     }),
   ]
+}
+
+// Simula PATCH /:id/rechazar
+export function rechazarDemo(idSolicitud: number): void {
+  cambiarEstadoDemo(idSolicitud, { estadoServicio: 'rechazado' })
+}
+
+// Simula PATCH /:id/presupuestar (después de la visita)
+export function presupuestarDemo(idSolicitud: number, costo: number): void {
+  cambiarEstadoDemo(idSolicitud, { estadoServicio: 'presupuestado', costoFinal: costo })
+}
+
+function cambiarEstadoDemo(idSolicitud: number, cambios: Partial<SolicitudResumen>): void {
+  solicitudesDemo = solicitudesDemo.map((s) =>
+    s.idSolicitud === idSolicitud ? { ...s, ...cambios, fechaCambioEstado: new Date().toISOString() } : s,
+  )
 }
