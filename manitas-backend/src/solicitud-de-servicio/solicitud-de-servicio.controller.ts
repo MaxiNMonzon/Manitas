@@ -4,6 +4,7 @@ import { SolicitudDeServicioService } from './solicitud-de-servicio.service';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { AgendarDto } from './dto/agendar.dto';
+import { AceptarDto } from './dto/aceptar.dto';
 import { AgendaQueryDto } from './dto/agenda-query.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
@@ -125,10 +126,16 @@ export class SolicitudDeServicioController {
 
   @Patch(':id/aceptar')
   @Auth(Rol.PROFESIONAL)
-  @ApiOperation({ summary: 'Aceptar la solicitud', description: 'solicitado → en_coordinacion. Despues coordinan la visita por WhatsApp. Si es una urgente sin profesional, la puede aceptar cualquiera de esa especialidad y zona: el primero se la queda.' })
-  @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
-  aceptar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.aceptar(id, usuario);
+  @ApiOperation({
+    summary: 'Aceptar la solicitud',
+    description:
+      'solicitado → en_coordinacion. Despues coordinan la visita por WhatsApp. ' +
+      'Si es una urgente sin profesional, la puede aceptar cualquiera de esa especialidad y zona: el primero se la queda. ' +
+      'Una urgente no se agenda (es en el dia): hay que mandar minutosLlegada y pasa directo a agendado, con la visita a esa hora; al cliente le llega el aviso de cuando llega.',
+  })
+  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, otro profesional ya tomo la urgente, o falta minutosLlegada en una urgente` })
+  aceptar(@Param('id', ParseIntPipe) id: number, @Body() aceptarDto: AceptarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.aceptar(id, aceptarDto, usuario);
   }
 
   @Patch(':id/rechazar')
