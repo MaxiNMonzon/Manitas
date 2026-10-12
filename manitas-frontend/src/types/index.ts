@@ -78,3 +78,55 @@ export interface RegistroProfesionalRequest {
   idsTiposDeServicio: number[] // habilidades
   idsZonasCobertura: number[]
 }
+
+// ---------- Solicitudes ----------
+
+export type EstadoSolicitud =
+  | 'solicitado'
+  | 'en_coordinacion'
+  | 'presupuestado'
+  | 'agendado'
+  | 'finalizado'
+  | 'rechazado'
+  | 'cancelado'
+  | 'expirado'
+
+export interface PersonaResumen {
+  nombre: string
+  apellido: string
+  telefono: string
+}
+
+// GET /solicitud-de-servicio (solo los campos que usa el front)
+export interface SolicitudResumen {
+  idSolicitud: number
+  estadoServicio: EstadoSolicitud
+  urgente: boolean
+  descripcionProblema: string
+  fechaCambioEstado: string
+  costoEstimado: number | null
+  especialidad: { nombreEspecialidad: string } | null
+  cliente?: PersonaResumen // viene cuando pregunta el profesional
+  profesional?: PersonaResumen | null // viene cuando pregunta el cliente
+}
+
+// GET /solicitud-de-servicio/agenda?desde=&hasta= (las fechas ya convertidas a Date)
+export interface EventoAgenda {
+  idSolicitud: number
+  tipo: 'visita' | 'trabajo'
+  inicio: Date
+  fin: Date
+  estado: EstadoSolicitud
+  urgente: boolean
+  especialidad: string | null
+  descripcionProblema: string
+  con: PersonaResumen | null // la otra persona
+  direccion: string | null // solo para el profesional
+  zona: string | null
+}
+
+// GET /solicitud-de-servicio/avisos
+export interface Aviso {
+  idSolicitud: number
+  mensaje: string
+}

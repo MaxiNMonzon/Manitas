@@ -3,7 +3,7 @@ import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { CreateUrgenteDto } from './dto/create-urgente.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { Between, In, IsNull, Not, Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
@@ -18,6 +18,30 @@ import { AgendarDto } from './dto/agendar.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
 import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
+import { AgendaQueryDto } from './dto/agenda-query.dto';
+
+// Si al agendar no se dice cuanto dura, se toma una hora
+const DURACION_POR_DEFECTO_MIN = 60;
+const UN_MINUTO = 60 * 1000;
+
+type TipoEvento = 'visita' | 'trabajo';
+
+// Una visita o un trabajo en el calendario
+export interface EventoAgenda {
+  idSolicitud: number;
+  tipo: TipoEvento;
+  inicio: Date;
+  fin: Date;
+  estado: EstadoSolicitud;
+  urgente: boolean;
+  especialidad: string | null;
+  descripcionProblema: string;
+  // La otra persona: al profesional le muestra el cliente y al cliente, el profesional
+  con: { nombre: string; apellido: string; telefono: string } | null;
+  // La direccion solo se le muestra al profesional (es el que tiene que ir)
+  direccion: string | null;
+  zona: string | null;
+}
 
 @Injectable()
 export class SolicitudDeServicioService {
@@ -162,12 +186,13 @@ export class SolicitudDeServicioService {
     if (usuario.rol === Rol.CLIENTE) {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { cliente: { idUsuario: usuario.sub } },
-        relations: { especialidad: true },
+        // Con la otra persona, para poder mostrar "con quien" en las listas del front
+        relations: { especialidad: true, profesional: true },
       });
     } else {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { profesional: { idUsuario: usuario.sub } },
-        relations: { especialidad: true },
+        relations: { especialidad: true, cliente: true },
       });
     }
 
@@ -287,12 +312,19 @@ export class SolicitudDeServicioService {
       throw new BadRequestException('La fecha tiene que ser en el futuro');
     }
 
+    // Cuanto dura: con eso se arma el calendario y se controla que no se pise con otra
+    const duracion = agendarDto.duracionEstimada ?? DURACION_POR_DEFECTO_MIN;
+    const fin = new Date(fecha.getTime() + duracion * UN_MINUTO);
+    await this.validarQueNoSePise(solicitud, fecha, fin);
+
     // Si todavia no hay presupuesto aceptado es la visita, si ya hay es el trabajo
     if (solicitud.costoEstimado == null) {
       solicitud.fechaVisita = fecha;
     } else {
       solicitud.fechaInicio = fecha;
     }
+    solicitud.duracionEstimada = duracion;
+    solicitud.fechaFinEstimada = fin;
     return await this.cambiarEstado(solicitud, EstadoSolicitud.AGENDADO);
   }
 
@@ -521,6 +553,126 @@ export class SolicitudDeServicioService {
     }
     const cuando = fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     return { que: esLaVisita ? 'una visita' : 'el trabajo', cuando };
+  }
+
+  // ---------- Agenda (calendario) ----------
+
+  // Las visitas y trabajos del profesional o del cliente entre dos dias (incluidos)
+  async agenda(query: AgendaQueryDto, usuario: UsuarioActivoInterface): Promise<EventoAgenda[]> {
+    // En hora local: new Date('2026-10-01') seria medianoche UTC (el dia anterior aca)
+    const desde = this.fechaLocal(query.desde);
+    const hasta = this.fechaLocal(query.hasta);
+    hasta.setDate(hasta.getDate() + 1); // hasta el final del ultimo dia
+    if (hasta <= desde) {
+      throw new BadRequestException('"hasta" no puede ser anterior a "desde"');
+    }
+    if (hasta.getTime() - desde.getTime() > 93 * 24 * 60 * UN_MINUTO) {
+      throw new BadRequestException('Se pueden pedir hasta 3 meses juntos');
+    }
+
+    const esCliente = usuario.rol === Rol.CLIENTE;
+    const mias = esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } };
+    const enElRango = Between(desde, new Date(hasta.getTime() - 1));
+    const solicitudes = await this.solicitudDeServicioRepository.find({
+      where: [
+        { ...mias, fechaVisita: enElRango },
+        { ...mias, fechaInicio: enElRango },
+      ],
+      relations: { cliente: { zonaResidencia: true }, profesional: true, especialidad: true },
+    });
+
+    const eventos: EventoAgenda[] = [];
+    for (const solicitud of solicitudes) {
+      const cliente = solicitud.cliente;
+      const otro = esCliente ? solicitud.profesional : cliente;
+      for (const { tipo, inicio, fin } of this.fechasEnAgenda(solicitud)) {
+        if (inicio < desde || inicio >= hasta) {
+          continue;
+        }
+        eventos.push({
+          idSolicitud: solicitud.idSolicitud,
+          tipo,
+          inicio,
+          fin,
+          estado: solicitud.estadoServicio,
+          urgente: solicitud.urgente,
+          especialidad: solicitud.especialidad?.nombreEspecialidad ?? null,
+          descripcionProblema: solicitud.descripcionProblema,
+          con: otro ? { nombre: otro.nombre, apellido: otro.apellido, telefono: otro.telefono } : null,
+          direccion: esCliente
+            ? null
+            : `${cliente.calle} ${cliente.altura}` + (cliente.piso ? `, piso ${cliente.piso}` : '') + (cliente.depto ? `, depto ${cliente.depto}` : ''),
+          zona: cliente.zonaResidencia?.nombreZona ?? null,
+        });
+      }
+    }
+    return eventos.sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+  }
+
+  // Que fechas de la solicitud van al calendario (puede tener la visita y el trabajo).
+  // No van las canceladas/expiradas, ni la fecha vieja de algo que se esta reprogramando
+  private fechasEnAgenda(solicitud: SolicitudDeServicio): { tipo: TipoEvento; inicio: Date; fin: Date }[] {
+    const estado = solicitud.estadoServicio;
+    if (estado === EstadoSolicitud.CANCELADO || estado === EstadoSolicitud.EXPIRADO) {
+      return [];
+    }
+    const reprogramando = estado === EstadoSolicitud.EN_COORDINACION;
+    const presupuestoAceptado = solicitud.costoEstimado != null;
+    const fechas: { tipo: TipoEvento; inicio: Date; fin: Date }[] = [];
+
+    // La visita: si se reprograma antes del presupuesto, su fecha vieja ya no vale
+    if (solicitud.fechaVisita && !(reprogramando && !presupuestoAceptado)) {
+      // fechaFinEstimada es de lo ultimo que se agendo: es de la visita solo mientras no hay presupuesto
+      const finVisita = presupuestoAceptado ? null : solicitud.fechaFinEstimada;
+      fechas.push({ tipo: 'visita', inicio: solicitud.fechaVisita, fin: this.finDe(solicitud.fechaVisita, finVisita) });
+    }
+    if (solicitud.fechaInicio && !reprogramando) {
+      fechas.push({ tipo: 'trabajo', inicio: solicitud.fechaInicio, fin: this.finDe(solicitud.fechaInicio, solicitud.fechaFinEstimada) });
+    }
+    return fechas;
+  }
+
+  // Si no se sabe cuando termina (solicitudes viejas o trabajo chico hecho en la visita), una hora
+  private finDe(inicio: Date, fechaFinEstimada: Date | null): Date {
+    if (fechaFinEstimada && fechaFinEstimada > inicio) {
+      return fechaFinEstimada;
+    }
+    return new Date(inicio.getTime() + DURACION_POR_DEFECTO_MIN * UN_MINUTO);
+  }
+
+  // Regla: el profesional no puede tener dos visitas o trabajos agendados que se superpongan
+  private async validarQueNoSePise(solicitud: SolicitudDeServicio, inicio: Date, fin: Date) {
+    const otras = await this.solicitudDeServicioRepository.find({
+      where: {
+        profesional: { idUsuario: solicitud.profesional.idUsuario },
+        estadoServicio: EstadoSolicitud.AGENDADO,
+        idSolicitud: Not(solicitud.idSolicitud),
+      },
+      relations: { cliente: true },
+    });
+    const hora = (fecha: Date) =>
+      fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+    for (const otra of otras) {
+      for (const ocupado of this.fechasEnAgenda(otra)) {
+        if (inicio < ocupado.fin && ocupado.inicio < fin) {
+          const que = ocupado.tipo === 'visita' ? 'la visita' : 'el trabajo';
+          throw new BadRequestException(
+            `Se pisa con ${que} de ${otra.cliente.nombre} (${hora(ocupado.inicio)} a ${hora(ocupado.fin)})`,
+          );
+        }
+      }
+    }
+  }
+
+  // "2026-10-01" -> 1/10/2026 a las 00:00 en hora local
+  private fechaLocal(texto: string): Date {
+    const [anio, mes, dia] = texto.split('-').map(Number);
+    const fecha = new Date(anio, mes - 1, dia);
+    if (fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+      throw new BadRequestException(`La fecha ${texto} no existe`);
+    }
+    return fecha;
   }
 
   // ---------- Pasos de los dos ----------
