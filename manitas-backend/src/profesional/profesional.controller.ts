@@ -46,7 +46,12 @@ export class ProfesionalController {
 
   @Patch(':id')
   @Auth(Rol.PROFESIONAL)
-  @ApiOperation({ summary: 'Editar mi cuenta de profesional', description: 'Si se mandan idsZonasCobertura o idsEspecialidades, reemplazan a las que tenia.' })
+  @ApiOperation({
+    summary: 'Editar mi cuenta de profesional',
+    description:
+      'Si se mandan idsZonasCobertura, idsEspecialidades o matriculas, reemplazan a las que tenia (cada matricula tiene que ser de una de sus especialidades; ' +
+      'si saca una especialidad, se van sus matriculas). El correo se puede cambiar si no lo usa otra cuenta (409).',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProfesionalDto: UpdateProfesionalDto,

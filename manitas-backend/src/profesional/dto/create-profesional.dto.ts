@@ -1,12 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, ArrayMinSize, IsInt, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
+import { IsArray, ArrayMinSize, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { MatriculaDto } from './matricula.dto';
 import { CreateUsuarioDto } from '../../usuario/dto/create-usuario.dto';
 
 export class CreateProfesionalDto extends CreateUsuarioDto {
-  @ApiPropertyOptional({ example: 'MAT-4521' })
+  // Sus matriculas, cada una de una de sus especialidades. En el PATCH, si se manda, reemplaza la lista
+  @ApiPropertyOptional({ type: [MatriculaDto] })
   @IsOptional()
-  @IsString()
-  nroMatricula?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MatriculaDto)
+  matriculas?: MatriculaDto[];
 
   @ApiPropertyOptional({ example: 5000 })
   @IsOptional()

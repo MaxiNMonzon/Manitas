@@ -10,6 +10,8 @@ import { TiposDeServicio } from '../tipos-de-servicio/entities/tipos-de-servicio
 import { SolicitudDeServicio } from '../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
 import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
+import { MatriculaDto } from './dto/matricula.dto';
+import { Matricula } from './entities/matricula.entity';
 
 @Injectable()
 export class ProfesionalService {
@@ -36,15 +38,7 @@ export class ProfesionalService {
   async create(
     createProfesionalDto: CreateProfesionalDto,
   ): Promise<Profesional> {
-    const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
-    if (profesionalConEseCorreo) {
-      throw new ConflictException('Ya existe un profesional registrado con ese correo');
-    }
-
-    const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo: createProfesionalDto.correo }, withDeleted: true });
-    if (clienteConEseCorreo) {
-      throw new ConflictException('Ese correo ya está registrado como cliente, usá otro correo');
-    }
+    await this.validarCorreoLibre(createProfesionalDto.correo);
 
     const zonasDeCobertura = await this.zonaRepository.findBy({
       idZona: In(createProfesionalDto.idsZonasCobertura),
@@ -67,12 +61,14 @@ export class ProfesionalService {
       createProfesionalDto.idsEspecialidades,
     );
 
+    const { matriculas, ...datos } = createProfesionalDto;
     const nuevoProfesional = this.profesionalRepository.create({
-      ...createProfesionalDto,
+      ...datos,
       contraseña: await bcrypt.hash(createProfesionalDto.contraseña, 10),
       zonasDeCobertura,
       especialidades,
       tiposDeServicio,
+      matriculas: this.armarMatriculas(matriculas ?? [], especialidades),
     });
     return await this.profesionalRepository.save(nuevoProfesional);
   }
@@ -106,10 +102,12 @@ export class ProfesionalService {
   async findOne(id: number): Promise<Profesional> {
     const profesional = await this.profesionalRepository.findOne({
       where: { idUsuario: id },
+      // Con la localidad de cada zona y la especialidad de cada habilidad, para mostrarlas en el perfil
       relations: {
-        zonasDeCobertura: true,
+        zonasDeCobertura: { localidad: { provincia: true } },
         especialidades: true,
-        tiposDeServicio: true,
+        tiposDeServicio: { especialidad: true },
+        matriculas: { especialidad: true },
       },
     });
     if (!profesional) {
@@ -154,7 +152,12 @@ export class ProfesionalService {
     this.validarQueEsSuCuenta(id, idLogueado);
     const profesional = await this.findOne(id);
 
-    const { idsZonasCobertura, idsEspecialidades, idsTiposDeServicio, ...resto } = updateProfesionalDto;
+    const { idsZonasCobertura, idsEspecialidades, idsTiposDeServicio, matriculas, ...resto } = updateProfesionalDto;
+
+    // El correo se puede cambiar, pero no a uno que ya use otra cuenta (de cliente o de profesional)
+    if (resto.correo !== undefined && resto.correo !== profesional.correo) {
+      await this.validarCorreoLibre(resto.correo);
+    }
 
     if (idsZonasCobertura !== undefined) {
       const zonasDeCobertura = await this.zonaRepository.findBy({
@@ -185,12 +188,54 @@ export class ProfesionalService {
       );
     }
 
+    if (matriculas !== undefined) {
+      profesional.matriculas = this.armarMatriculas(matriculas, profesional.especialidades);
+    } else if (idsEspecialidades !== undefined) {
+      // Si dejo una especialidad, sus matriculas tambien se van
+      const ids = new Set(profesional.especialidades.map((e) => e.idEspecialidad));
+      profesional.matriculas = profesional.matriculas.filter((m) => ids.has(m.especialidad.idEspecialidad));
+    }
+
     if (resto.contraseña !== undefined) {
       resto.contraseña = await bcrypt.hash(resto.contraseña, 10);
     }
 
     this.profesionalRepository.merge(profesional, resto);
-    return await this.profesionalRepository.save(profesional);
+    await this.profesionalRepository.save(profesional);
+    return await this.findOne(id);
+  }
+
+  // El correo no se puede repetir entre clientes y profesionales, ni con cuentas dadas de baja
+  private async validarCorreoLibre(correo: string) {
+    const profesionalConEseCorreo = await this.profesionalRepository.findOne({ where: { correo }, withDeleted: true });
+    if (profesionalConEseCorreo) {
+      throw new ConflictException('Ya existe un profesional registrado con ese correo');
+    }
+    const clienteConEseCorreo = await this.clienteRepository.findOne({ where: { correo }, withDeleted: true });
+    if (clienteConEseCorreo) {
+      throw new ConflictException('Ese correo ya está registrado como cliente, usá otro correo');
+    }
+  }
+
+  // Cada matricula tiene que ser de una de las especialidades del profesional, sin numeros repetidos
+  private armarMatriculas(dtos: MatriculaDto[], especialidades: Especialidad[]): Matricula[] {
+    const vistas = new Set<string>();
+    return dtos.map((dto) => {
+      const especialidad = especialidades.find((e) => e.idEspecialidad === dto.idEspecialidad);
+      if (!especialidad) {
+        throw new BadRequestException(`La matricula ${dto.numero} es de una especialidad que no tenes`);
+      }
+      const clave = `${dto.idEspecialidad}-${dto.numero.trim().toLowerCase()}`;
+      if (vistas.has(clave)) {
+        throw new BadRequestException(`Repetiste la matricula ${dto.numero}`);
+      }
+      vistas.add(clave);
+      const matricula = new Matricula();
+      matricula.numero = dto.numero.trim();
+      matricula.descripcion = dto.descripcion?.trim() || null;
+      matricula.especialidad = especialidad;
+      return matricula;
+    });
   }
 
   // Las habilidades (tipos de servicio) tienen que existir y ser de alguna de las especialidades del profesional

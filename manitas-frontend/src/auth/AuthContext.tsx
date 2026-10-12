@@ -39,5 +39,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSesion(null)
   }
 
-  return <AuthContext.Provider value={{ sesion, login, loginDemo, logout }}>{children}</AuthContext.Provider>
+  const actualizarCorreo = (correo: string) => {
+    if (!sesion) return
+    const nueva = { ...sesion, correo }
+    localStorage.setItem(SESION_KEY, JSON.stringify(nueva))
+    setSesion(nueva)
+  }
+
+  return <AuthContext.Provider value={{ sesion, login, loginDemo, logout, actualizarCorreo }}>{children}</AuthContext.Provider>
 }

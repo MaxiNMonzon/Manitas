@@ -9,6 +9,8 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import AuthLayout from '../components/AuthLayout'
 import SelectorConChips, { type Opcion } from '../components/SelectorConChips'
+import EditorMatriculas from '../components/perfil/EditorMatriculas'
+import { erroresMatriculas, matriculasParaEnviar, type MatriculaForm } from '../components/perfil/matriculas'
 import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { useListado } from '../hooks/useListado'
@@ -23,18 +25,18 @@ const vacio = {
   // Provincia y localidad solo filtran la lista de zonas de trabajo
   idProvincia: '',
   idLocalidad: '',
-  nroMatricula: '',
   cbu: '',
   descripcion: '',
 }
 
 type Campos = typeof vacio
-type Errores = Partial<Record<keyof Campos | 'especialidades' | 'zonas', string>>
+type Errores = Partial<Record<keyof Campos | 'especialidades' | 'zonas' | 'matriculas', string>>
 
 interface Seleccion {
   especialidades: Opcion[]
   habilidades: Opcion[]
   zonas: Opcion[]
+  matriculas: MatriculaForm[]
 }
 
 // Mismas reglas que valida el backend (CreateProfesionalDto), para avisar antes de enviar
@@ -44,6 +46,7 @@ function validar(c: Campos, s: Seleccion): Errores {
   if (c.descripcion.length > MAX_DESCRIPCION) e.descripcion = `Máximo ${MAX_DESCRIPCION} caracteres`
   if (s.especialidades.length === 0) e.especialidades = 'Elegí al menos una especialidad'
   if (s.zonas.length === 0) e.zonas = 'Elegí al menos una zona de trabajo'
+  if (Object.keys(erroresMatriculas(s.matriculas)).length > 0) e.matriculas = 'Revisá las matrículas'
   return e
 }
 
@@ -52,7 +55,7 @@ export default function RegistroProfesional() {
   const { login } = useAuth()
 
   const [campos, setCampos] = useState<Campos>(vacio)
-  const [seleccion, setSeleccion] = useState<Seleccion>({ especialidades: [], habilidades: [], zonas: [] })
+  const [seleccion, setSeleccion] = useState<Seleccion>({ especialidades: [], habilidades: [], zonas: [], matriculas: [] })
   const [intentoEnviar, setIntentoEnviar] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -111,11 +114,12 @@ export default function RegistroProfesional() {
 
   const cambiarEspecialidades = (elegidas: Opcion[]) => {
     const ids = new Set(elegidas.map((e) => e.id))
-    // Si se saca una especialidad, también se sacan sus habilidades
+    // Si se saca una especialidad, también se sacan sus habilidades y sus matrículas
     setSeleccion((s) => ({
       ...s,
       especialidades: elegidas,
       habilidades: s.habilidades.filter((h) => h.grupoId !== undefined && ids.has(h.grupoId)),
+      matriculas: s.matriculas.filter((m) => !m.idEspecialidad || ids.has(Number(m.idEspecialidad))),
     }))
   }
 
@@ -128,7 +132,7 @@ export default function RegistroProfesional() {
     const datos: RegistroProfesionalRequest = {
       ...datosPersonalesParaEnviar(campos),
       // Los opcionales vacíos no se mandan
-      nroMatricula: campos.nroMatricula.trim() || undefined,
+      matriculas: seleccion.matriculas.length ? matriculasParaEnviar(seleccion.matriculas) : undefined,
       cbu: campos.cbu || undefined,
       descripcion: campos.descripcion.trim() || undefined,
       idsEspecialidades: seleccion.especialidades.map((o) => o.id),
@@ -183,10 +187,7 @@ export default function RegistroProfesional() {
           </TextField>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField label="Matrícula" {...campo('nroMatricula')} helperText="Opcional" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid size={12}>
           <TextField
             label="CBU / CVU"
             slotProps={{ htmlInput: { inputMode: 'numeric' } }}
@@ -225,6 +226,15 @@ export default function RegistroProfesional() {
             disabled={!campos.idLocalidad}
             ayuda={!campos.idLocalidad ? 'Primero elegí provincia y localidad' : undefined}
             error={errores.zonas}
+          />
+        </Grid>
+
+        <Grid size={12}>
+          <EditorMatriculas
+            especialidades={seleccion.especialidades}
+            matriculas={seleccion.matriculas}
+            onChange={(matriculas) => setSeleccion((s) => ({ ...s, matriculas }))}
+            errores={intentoEnviar ? erroresMatriculas(seleccion.matriculas) : undefined}
           />
         </Grid>
 
