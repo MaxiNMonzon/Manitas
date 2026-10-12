@@ -97,18 +97,32 @@ export interface PersonaResumen {
   telefono: string
 }
 
-// GET /solicitud-de-servicio (solo los campos que usa el front)
+// El cliente tal como viene en las solicitudes del profesional (con su dirección y zona)
+export interface ClienteDeSolicitud extends PersonaResumen {
+  calle?: string
+  altura?: number
+  piso?: string | null
+  depto?: string | null
+  zonaResidencia?: { nombreZona: string } | null
+}
+
+// GET /solicitud-de-servicio (solo los campos que usa el front). Fechas en texto ISO
 export interface SolicitudResumen {
   idSolicitud: number
   estadoServicio: EstadoSolicitud
   urgente: boolean
   descripcionProblema: string
+  fechaSolicitud?: string
   fechaCambioEstado: string
+  fechaVisita?: string | null
+  fechaInicio?: string | null // inicio del trabajo
+  fechaFinEstimada?: string | null
+  costoVisita?: number | null
   costoEstimado: number | null // presupuesto aceptado
   costoFinal: number | null // lo que se cobra
   fechaFinReal: string | null // cuándo se terminó (al pagar)
   especialidad: { nombreEspecialidad: string } | null
-  cliente?: PersonaResumen // viene cuando pregunta el profesional
+  cliente?: ClienteDeSolicitud // viene cuando pregunta el profesional
   profesional?: PersonaResumen | null // viene cuando pregunta el cliente
 }
 

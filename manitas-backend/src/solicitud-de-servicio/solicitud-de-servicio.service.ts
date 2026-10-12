@@ -192,7 +192,7 @@ export class SolicitudDeServicioService {
     } else {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { profesional: { idUsuario: usuario.sub } },
-        relations: { especialidad: true, cliente: true },
+        relations: { especialidad: true, cliente: { zonaResidencia: true } },
       });
     }
 
