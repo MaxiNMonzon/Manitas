@@ -29,6 +29,9 @@ const accesos: { rol: Rol; titulo: string; rutas: { label: string; path: string 
     titulo: 'Como profesional',
     rutas: [
       { label: 'Inicio', path: '/app' },
+      { label: 'Solicitudes', path: '/app/solicitudes' },
+      { label: 'Agenda', path: '/app/agenda' },
+      { label: 'Cobros', path: '/app/cobros' },
       { label: 'Mi perfil', path: '/app/perfil' },
     ],
   },

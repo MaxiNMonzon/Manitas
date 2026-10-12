@@ -1,128 +1,241 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type ReactElement, type ReactNode } from 'react'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import ButtonBase from '@mui/material/ButtonBase'
 import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
+import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { alpha } from '@mui/material/styles'
+import AssignmentIcon from '@mui/icons-material/Assignment'
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
+import StarIcon from '@mui/icons-material/Star'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
-import dayjs, { type Dayjs } from 'dayjs'
-import { traerAgenda, traerMisSolicitudes } from '../../api/solicitudes'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import dayjs from 'dayjs'
+import { aceptarSolicitud, traerAgenda, traerMiCalificacion, traerMisSolicitudes, traerUrgentes } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
-import CalendarioMensual from '../../components/agenda/CalendarioMensual'
-import ItemAgenda from '../../components/agenda/ItemAgenda'
 import AgendarDialog from '../../components/agenda/AgendarDialog'
-import type { EventoAgenda, SolicitudResumen } from '../../types'
+import MedidorCalificacion from '../../components/profesional/MedidorCalificacion'
+import ListaDeEventos from '../../components/agenda/ListaDeEventos'
+import SeccionTarjeta from '../../components/SeccionTarjeta'
+import type { SolicitudResumen } from '../../types'
 
 const PLAZO_PARA_AGENDAR_HS = 48 // igual que el back: después vence
+const CADA_UN_MINUTO = 60 * 1000 // las urgentes vencen en 1 hora: se revisan seguido
 
-function Seccion({ titulo, extra, children }: { titulo: string; extra?: ReactNode; children: ReactNode }) {
-  return (
-    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          {titulo}
-        </Typography>
-        {extra}
-      </Stack>
-      {children}
-    </Paper>
-  )
-}
-
-function ListaDeEventos({ eventos, cargando, vacio }: { eventos: EventoAgenda[]; cargando: boolean; vacio: string }) {
-  if (cargando) {
-    return (
-      <Stack spacing={1.5}>
-        <Skeleton variant="rounded" height={110} />
-        <Skeleton variant="rounded" height={110} />
-      </Stack>
-    )
-  }
-  if (eventos.length === 0) {
-    return <Typography color="text.secondary">{vacio}</Typography>
-  }
-  return (
-    <Stack spacing={1.5}>
-      {eventos.map((e) => (
-        <ItemAgenda key={`${e.idSolicitud}-${e.tipo}`} evento={e} />
-      ))}
-    </Stack>
-  )
-}
+const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
 function horasQueQuedan(s: SolicitudResumen): number {
   const pasadas = (Date.now() - new Date(s.fechaCambioEstado).getTime()) / (1000 * 60 * 60)
   return Math.max(0, Math.floor(PLAZO_PARA_AGENDAR_HS - pasadas))
 }
 
-// Pantalla principal del profesional: su agenda de visitas y trabajos
-export default function InicioProfesional() {
-  const hoy = dayjs().format('YYYY-MM-DD')
-  const [mes, setMes] = useState<Dayjs>(dayjs().startOf('month'))
-  const [diaElegido, setDiaElegido] = useState<Dayjs>(dayjs())
-  const [aAgendar, setAAgendar] = useState<SolicitudResumen | null>(null)
+// Números del resumen, calculados con las solicitudes del profesional
+function resumen(solicitudes: SolicitudResumen[]) {
+  const enCurso = solicitudes.filter((s) => ['en_coordinacion', 'agendado', 'presupuestado'].includes(s.estadoServicio))
+  // Por cobrar: trabajos con presupuesto aceptado que todavía no se pagaron
+  const porCobrar = solicitudes.filter((s) => s.estadoServicio === 'agendado' && s.costoEstimado != null)
+  return {
+    activas: enCurso.length,
+    porCobrar: porCobrar.reduce((total, s) => total + (s.costoFinal ?? 0), 0),
+    cantidadPorCobrar: porCobrar.length,
+  }
+}
 
-  const agendaHoy = useCarga(`hoy-${hoy}`, () => traerAgenda(hoy, hoy))
-  const agendaMes = useCarga(`mes-${mes.format('YYYY-MM')}`, () =>
-    traerAgenda(mes.startOf('month').format('YYYY-MM-DD'), mes.endOf('month').format('YYYY-MM-DD')),
+interface DatoProps {
+  icono: ReactElement
+  titulo: string
+  valor?: string
+  detalle?: string
+  // Contenido propio en vez de valor + detalle (ej: el medidor de la calificación)
+  children?: ReactNode
+  color: 'primary' | 'secondary' | 'warning'
+  onClick: () => void
+}
+
+// Recuadro informativo del resumen (los de arriba del boceto)
+function TarjetaDato({ icono, titulo, valor, detalle, children, color, onClick }: DatoProps) {
+  return (
+    <ButtonBase
+      onClick={onClick}
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        textAlign: 'left',
+        p: 2,
+        borderRadius: 2,
+        border: 1,
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        transition: 'box-shadow .2s, border-color .2s',
+        '&:hover': { boxShadow: 2, borderColor: `${color}.main` },
+      }}
+    >
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: `${color}.main`, mb: 1 }}>
+        {icono}
+        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          {titulo}
+        </Typography>
+      </Stack>
+      {children ?? (
+        <>
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            {valor}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {detalle}
+          </Typography>
+        </>
+      )}
+    </ButtonBase>
   )
-  const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
+}
 
-  // Las que el profesional aceptó y todavía no tienen fecha: vencen a las 48 h
+// Pantalla principal del profesional
+export default function InicioProfesional() {
+  const navigate = useNavigate()
+  const hoy = dayjs().format('YYYY-MM-DD')
+  const [aAgendar, setAAgendar] = useState<SolicitudResumen | null>(null)
+  const [aceptando, setAceptando] = useState<number | null>(null)
+  const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
+
+  const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
+  const urgentes = useCarga('urgentes', traerUrgentes, CADA_UN_MINUTO)
+  const agendaHoy = useCarga(`hoy-${hoy}`, () => traerAgenda(hoy, hoy))
+  const calificacion = useCarga('mi-calificacion', traerMiCalificacion)
+
+  const datos = resumen(solicitudes.datos ?? [])
+  // Las que aceptó y todavía no tienen fecha: vencen a las 48 h, primero las más apuradas
   const pendientes = (solicitudes.datos ?? [])
     .filter((s) => s.estadoServicio === 'en_coordinacion')
     .sort((a, b) => horasQueQuedan(a) - horasQueQuedan(b))
+  const error = solicitudes.error ?? agendaHoy.error ?? urgentes.error ?? calificacion.error
 
-  // Lo del día elegido en el calendario (incluye trabajos de varios días que pasan por ese día)
-  const delDia = (agendaMes.datos ?? []).filter(
-    (e) => dayjs(e.inicio).isBefore(diaElegido.endOf('day')) && dayjs(e.fin).isAfter(diaElegido.startOf('day')),
-  )
-
-  const error = agendaHoy.error ?? agendaMes.error ?? solicitudes.error
-
-  const recargarTodo = () => {
-    agendaHoy.recargar()
-    agendaMes.recargar()
-    solicitudes.recargar()
+  const aceptarUrgente = async (idSolicitud: number) => {
+    setAceptando(idSolicitud)
+    try {
+      await aceptarSolicitud(idSolicitud)
+      setMensaje({ texto: '¡La tomaste! Coordiná la visita con el cliente y cargá la fecha.', tipo: 'success' })
+    } catch (e) {
+      // Ej: "Otro profesional ya tomó esta urgente"
+      setMensaje({ texto: e instanceof Error ? e.message : 'No se pudo aceptar', tipo: 'error' })
+    } finally {
+      setAceptando(null)
+      urgentes.recargar()
+      solicitudes.recargar()
+    }
   }
 
   return (
     <>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Tu agenda
-      </Typography>
-      <Typography color="text.secondary" sx={{ mb: 3, '&::first-letter': { textTransform: 'uppercase' } }}>
-        {dayjs().format('dddd D [de] MMMM')}
-      </Typography>
-
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
-      <Grid container spacing={2}>
-        {/* Hoy */}
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Seccion
-            titulo="Hoy"
-            extra={agendaHoy.datos && <Chip size="small" label={`${agendaHoy.datos.length} en agenda`} />}
-          >
-            <ListaDeEventos
-              eventos={agendaHoy.datos ?? []}
-              cargando={agendaHoy.cargando}
-              vacio="No tenés visitas ni trabajos para hoy."
-            />
-          </Seccion>
-        </Grid>
+      {/* Resumen */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {solicitudes.cargando || calificacion.cargando ? (
+          [0, 1, 2].map((i) => (
+            <Grid key={i} size={{ xs: 12, sm: 4 }}>
+              <Skeleton variant="rounded" height={112} />
+            </Grid>
+          ))
+        ) : (
+          <>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TarjetaDato
+                icono={<AssignmentIcon />}
+                titulo="Solicitudes activas"
+                valor={String(datos.activas)}
+                detalle="En coordinación, agendadas o presupuestadas"
+                color="primary"
+                onClick={() => navigate('/app/solicitudes')}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TarjetaDato
+                icono={<RequestQuoteIcon />}
+                titulo="Cobros pendientes"
+                valor={pesos.format(datos.porCobrar)}
+                detalle={`${datos.cantidadPorCobrar} trabajo${datos.cantidadPorCobrar === 1 ? '' : 's'} aceptado${datos.cantidadPorCobrar === 1 ? '' : 's'} sin pagar`}
+                color="secondary"
+                onClick={() => navigate('/app/cobros')}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TarjetaDato
+                icono={<StarIcon />}
+                titulo="Tu calificación"
+                color="warning"
+                onClick={() => navigate('/app/perfil')}
+              >
+                <MedidorCalificacion
+                  promedio={calificacion.datos?.promedio ?? null}
+                  cantidad={calificacion.datos?.cantidad ?? 0}
+                />
+              </TarjetaDato>
+            </Grid>
+          </>
+        )}
+      </Grid>
 
+      {/* Urgencias: solo si hay */}
+      {urgentes.datos && urgentes.datos.length > 0 && (
+        <Paper
+          variant="outlined"
+          sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'error.main', bgcolor: (t) => alpha(t.palette.error.main, 0.06) }}
+        >
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'error.main', mb: 2 }}>
+            <WarningAmberIcon />
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Urgencias cerca tuyo
+            </Typography>
+            <Chip size="small" color="error" label={urgentes.datos.length} />
+          </Stack>
+          <Stack spacing={1.5}>
+            {urgentes.datos.map((u) => (
+              <Paper key={u.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'error.main' }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Typography sx={{ fontWeight: 600 }}>
+                        {u.especialidad} · {u.zona}
+                      </Typography>
+                      <Chip size="small" color="error" variant="outlined" label={`Quedan ${u.minutosQueQuedan} min`} />
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary">
+                      {u.cliente}: {u.descripcionProblema}
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => aceptarUrgente(u.idSolicitud)}
+                    loading={aceptando === u.idSolicitud}
+                    sx={{ flexShrink: 0 }}
+                  >
+                    Aceptar
+                  </Button>
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        </Paper>
+      )}
+
+      <Grid container spacing={2}>
         {/* Pendientes de fecha */}
         <Grid size={{ xs: 12, md: 5 }}>
-          <Seccion
+          <SeccionTarjeta
             titulo="Pendientes de fecha"
             extra={pendientes.length > 0 && <Chip size="small" color="warning" label={pendientes.length} />}
           >
@@ -148,6 +261,7 @@ export default function InicioProfesional() {
                             )}
                           </Typography>
                           <Typography variant="body2" color={horas <= 12 ? 'error' : 'text.secondary'}>
+                            {s.urgente && 'Urgente · '}
                             {s.costoEstimado != null ? 'Trabajo' : 'Visita'} · vence en {horas} h
                           </Typography>
                         </Box>
@@ -166,50 +280,49 @@ export default function InicioProfesional() {
                 })}
               </Stack>
             )}
-          </Seccion>
+          </SeccionTarjeta>
         </Grid>
 
-        {/* Calendario del mes + lo del día elegido */}
-        <Grid size={12}>
-          <Seccion titulo="Calendario">
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <CalendarioMensual
-                  eventos={agendaMes.datos ?? []}
-                  diaElegido={diaElegido}
-                  onElegirDia={setDiaElegido}
-                  onCambiarMes={(m) => setMes(m.startOf('month'))}
-                  cargando={agendaMes.cargando}
-                />
-                <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-                  <Referencia color="primary.main" texto="Visita" />
-                  <Referencia color="secondary.main" texto="Trabajo" />
-                  <Referencia color="error.main" texto="Urgente" />
-                </Stack>
-              </Grid>
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, '&::first-letter': { textTransform: 'uppercase' } }}>
-                  {diaElegido.format('dddd D [de] MMMM')}
-                </Typography>
-                <ListaDeEventos eventos={delDia} cargando={agendaMes.cargando} vacio="Día libre." />
-              </Grid>
-            </Grid>
-          </Seccion>
+        {/* Hoy */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <SeccionTarjeta
+            titulo="Hoy"
+            extra={
+              <Button component={RouterLink} to="/app/agenda" size="small">
+                Ver agenda
+              </Button>
+            }
+          >
+            <ListaDeEventos
+              eventos={agendaHoy.datos ?? []}
+              cargando={agendaHoy.cargando}
+              vacio="No tenés visitas ni trabajos para hoy."
+            />
+          </SeccionTarjeta>
         </Grid>
       </Grid>
 
-      <AgendarDialog solicitud={aAgendar} onClose={() => setAAgendar(null)} onAgendado={recargarTodo} />
-    </>
-  )
-}
+      <AgendarDialog
+        solicitud={aAgendar}
+        onClose={() => setAAgendar(null)}
+        onAgendado={() => {
+          solicitudes.recargar()
+          agendaHoy.recargar()
+        }}
+      />
 
-function Referencia({ color, texto }: { color: string; texto: string }) {
-  return (
-    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color }} />
-      <Typography variant="caption" color="text.secondary">
-        {texto}
-      </Typography>
-    </Stack>
+      <Snackbar
+        open={mensaje !== null}
+        autoHideDuration={5000}
+        onClose={() => setMensaje(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        {mensaje ? (
+          <Alert severity={mensaje.tipo} variant="filled" onClose={() => setMensaje(null)}>
+            {mensaje.texto}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
+    </>
   )
 }
