@@ -43,6 +43,11 @@ export class SolicitudDeServicio {
     @Column({ type: 'datetime', nullable: true })
     fechaFinReal!: Date;
 
+    // Cuando pago el cliente (el trabajo, o la visita si rechazo el presupuesto).
+    // Con esto el profesional ve sus cobros por mes y cuando se le deposita
+    @Column({ type: 'datetime', nullable: true })
+    fechaPago!: Date;
+
     @Column({ nullable: true })
     costoVisita!: number;
 
