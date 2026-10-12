@@ -2,7 +2,7 @@
 // Con la sesión demo (provisoria) devuelven datos mock en vez de llamar a la API.
 import { api, tokenStorage } from './client'
 import type { Aviso, Calificaciones, EventoAgenda, Rol, SolicitudResumen, UrgenteDisponible } from '../types'
-import { aceptarUrgenteDemo, agendarDemo, eventosDemo, solicitudesDemo, urgentesDemo } from '../mocks/agendaProfesional'
+import { aceptarDemo, agendarDemo, eventosDemo, presupuestarDemo, rechazarDemo, solicitudesDemo, urgentesDemo } from '../mocks/agendaProfesional'
 import { avisosDemo } from '../mocks/avisos'
 
 // La API manda las fechas como texto (ISO); acá se pasan a Date
@@ -32,8 +32,20 @@ export async function traerUrgentes(): Promise<UrgenteDisponible[]> {
 
 // Profesional: aceptar una solicitud (en una urgente, el primero que acepta se la queda)
 export async function aceptarSolicitud(idSolicitud: number): Promise<void> {
-  if (tokenStorage.esDemo()) return aceptarUrgenteDemo(idSolicitud)
+  if (tokenStorage.esDemo()) return aceptarDemo(idSolicitud)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/aceptar`, {})
+}
+
+// Profesional: rechazar una solicitud nueva (ej: no hace ese trabajo)
+export async function rechazarSolicitud(idSolicitud: number): Promise<void> {
+  if (tokenStorage.esDemo()) return rechazarDemo(idSolicitud)
+  await api.patch(`/solicitud-de-servicio/${idSolicitud}/rechazar`, {})
+}
+
+// Profesional: mandar el presupuesto después de la visita (o cambiar el precio a mitad del trabajo)
+export async function presupuestar(idSolicitud: number, costo: number): Promise<void> {
+  if (tokenStorage.esDemo()) return presupuestarDemo(idSolicitud, costo)
+  await api.patch(`/solicitud-de-servicio/${idSolicitud}/presupuestar`, { costo })
 }
 
 // fecha: Date con día y hora local. Se manda sin zona horaria ("2026-10-20T10:00:00"),
