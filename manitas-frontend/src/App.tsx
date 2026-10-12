@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import EnConstruccion from './pages/EnConstruccion'
 import Inicio from './pages/Inicio'
 import MiPerfil from './pages/MiPerfil'
+import AgendaProfesional from './pages/profesional/AgendaProfesional'
 import RegistroCliente from './pages/RegistroCliente'
 import RegistroProfesional from './pages/RegistroProfesional'
 
@@ -27,6 +28,9 @@ export default function App() {
             <Route path="pagos" element={<EnConstruccion titulo="Pagos" />} />
             <Route path="ayuda" element={<EnConstruccion titulo="Información y preguntas frecuentes" />} />
             <Route path="perfil" element={<MiPerfil />} />
+            {/* Pestañas del profesional */}
+            <Route path="agenda" element={<AgendaProfesional />} />
+            <Route path="cobros" element={<EnConstruccion titulo="Cobros" />} />
             {/* Subpantallas */}
             <Route path="profesionales" element={<EnConstruccion titulo="Profesionales" />} />
             <Route path="promociones" element={<EnConstruccion titulo="Promociones bancarias" />} />

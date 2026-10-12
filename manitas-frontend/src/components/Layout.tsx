@@ -12,7 +12,7 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import HandymanIcon from '@mui/icons-material/Handyman'
 import { useAuth } from '../auth/useAuth'
-import { pestañaActiva, pestañas } from '../navegacion'
+import { pestañaActiva, pestañasDe } from '../navegacion'
 import Notificaciones from './Notificaciones'
 
 const ALTO_NAV_INFERIOR = 64
@@ -25,7 +25,8 @@ export default function Layout() {
 
   if (!sesion) return <Navigate to="/login" replace />
 
-  const activa = pestañaActiva(pathname)
+  const pestañas = pestañasDe(sesion.rol)
+  const activa = pestañaActiva(pathname, pestañas)
   const ir = (path: string) => navigate(path ? `/app/${path}` : '/app')
 
   return (
