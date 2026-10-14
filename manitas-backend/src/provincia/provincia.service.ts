@@ -17,7 +17,7 @@ constructor(
   }
 
   async findAll() {
-    return await this.provinciaRepository.find();
+    return await this.provinciaRepository.find({ order: { nombreProvincia: 'ASC' } });
   }
 
   async findOne(id: number) {
