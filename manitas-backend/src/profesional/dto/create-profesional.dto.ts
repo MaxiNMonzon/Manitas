@@ -1,12 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, ArrayMinSize, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, ArrayMinSize, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { MatriculaDto } from './matricula.dto';
 import { CreateUsuarioDto } from '../../usuario/dto/create-usuario.dto';
 
 export class CreateProfesionalDto extends CreateUsuarioDto {
-  @ApiPropertyOptional({ example: 'MAT-4521' })
+  // Sus matriculas, cada una de una de sus especialidades. En el PATCH, si se manda, reemplaza la lista
+  @ApiPropertyOptional({ type: [MatriculaDto] })
   @IsOptional()
-  @IsString()
-  nroMatricula?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MatriculaDto)
+  matriculas?: MatriculaDto[];
 
   @ApiPropertyOptional({ example: 5000 })
   @IsOptional()
@@ -27,4 +32,22 @@ export class CreateProfesionalDto extends CreateUsuarioDto {
   @ArrayMinSize(1)
   @IsInt({ each: true })
   idsEspecialidades!: number[];
+
+  // Habilidades: tipos de servicio que hace. Tienen que ser de alguna de sus especialidades
+  @ApiPropertyOptional({ example: [1, 3] })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  idsTiposDeServicio?: number[];
+
+  @ApiPropertyOptional({ example: 'Plomero matriculado con 10 años de experiencia. Trabajo prolijo y con garantia.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  descripcion?: string;
+
+  @ApiPropertyOptional({ example: '0000003100012345678901', description: 'CBU o CVU: 22 numeros' })
+  @IsOptional()
+  @Matches(/^\d{22}$/, { message: 'El CBU/CVU tiene que tener 22 numeros' })
+  cbu?: string;
 }
