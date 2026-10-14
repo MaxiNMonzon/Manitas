@@ -17,7 +17,7 @@ constructor(
   }
 
   async findAll() {
-    return await this.especialidadRepository.find();
+    return await this.especialidadRepository.find({ order: { nombreEspecialidad: 'ASC' } });
   }
 
   async findOne(id: number) {

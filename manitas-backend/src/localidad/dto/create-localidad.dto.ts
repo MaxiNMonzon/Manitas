@@ -1,9 +1,10 @@
-import { IsInt, IsString } from "class-validator";
+import { IsInt, IsOptional, IsString } from "class-validator";
 
 export class CreateLocalidadDto {
     
+    @IsOptional()
     @IsString()
-    codigoPostal!: string;
+    codigoPostal?: string;
 
     @IsString()
     nombreLocalidad!: string;
