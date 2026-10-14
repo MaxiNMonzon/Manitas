@@ -6,8 +6,18 @@ import { Tarjeta } from '../../tarjeta/entities/tarjeta.entity';
 
 @Entity('clientes')
 export class Cliente extends Usuario {
+  // Direccion separada en partes. Piso y depto son opcionales (una casa no tiene)
   @Column()
-  direccion!: string;
+  calle!: string;
+
+  @Column()
+  altura!: number;
+
+  @Column({ nullable: true })
+  piso?: string;
+
+  @Column({ nullable: true })
+  depto?: string;
 
   @ManyToOne(() => Zona, { nullable: false })
   zonaResidencia!: Zona;
