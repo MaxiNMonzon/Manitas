@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryG
 import { Tarjeta } from "../../tarjeta/entities/tarjeta.entity";
 import { Cliente } from "../../cliente/entities/cliente.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
+import { Especialidad } from "../../especialidad/entities/especialidad.entity";
 import { EstadoSolicitud } from "../../common/enums/estado-solicitud.enum";
 
 @Entity()
@@ -14,6 +15,11 @@ export class SolicitudDeServicio {
 
     @Column()
     descripcionProblema!: string;
+
+    // Urgente: no se elige profesional, la ven todos los de esa especialidad y zona,
+    // el primero que acepta se la queda, vence en 1 hora y solo se cancela si nadie la acepto
+    @Column({ default: false })
+    urgente!: boolean;
 
     @CreateDateColumn({ type: 'datetime' })
     fechaSolicitud!: Date;
@@ -59,8 +65,14 @@ export class SolicitudDeServicio {
     @ManyToOne(() => Cliente, (cliente) => cliente.solicitudes)
     cliente!: Cliente;
 
-    @ManyToOne(() => Profesional, (profesional) => profesional.solicitudes)
+    // En una urgente queda vacio hasta que un profesional la acepta
+    @ManyToOne(() => Profesional, (profesional) => profesional.solicitudes, { nullable: true })
     profesional!: Profesional;
+
+    // La especialidad que eligio el cliente (ej: Plomeria). En la base es opcional
+    // solo por las solicitudes viejas; al crear una nueva siempre se pide
+    @ManyToOne(() => Especialidad, (especialidad) => especialidad.solicitudes, { nullable: true })
+    especialidad!: Especialidad;
 
     @DeleteDateColumn()
     deleteAt!: Date;
