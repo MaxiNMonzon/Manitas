@@ -1,12 +1,30 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsString, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
 import { CreateUsuarioDto } from '../../usuario/dto/create-usuario.dto';
 
 export class CreateClienteDto extends CreateUsuarioDto {
-  @ApiProperty({ example: 'Cordoba 1234' })
+  @ApiProperty({ example: 'Cordoba' })
   @IsString()
-  @MinLength(5)
-  direccion!: string;
+  @IsNotEmpty()
+  calle!: string;
+
+  @ApiProperty({ example: 1234 })
+  @IsInt()
+  @IsPositive()
+  altura!: number;
+
+  // Piso y depto solo si vive en un departamento
+  @ApiPropertyOptional({ example: '3' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  piso?: string;
+
+  @ApiPropertyOptional({ example: 'B' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  depto?: string;
 
   @ApiProperty({ example: 1 })
   @IsInt()
