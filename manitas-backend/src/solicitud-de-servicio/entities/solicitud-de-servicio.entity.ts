@@ -25,7 +25,7 @@ export class SolicitudDeServicio {
     fechaSolicitud!: Date;
 
     // Se actualiza en cada cambio de estado, sirve para contar las 48 hs
-    @Column({ type: 'datetime' })
+    @Column({ type: 'datetime', nullable: true })
     fechaCambioEstado!: Date;
 
     @Column({ type: 'datetime', nullable: true })
