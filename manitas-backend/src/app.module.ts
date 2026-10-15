@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClienteModule } from './cliente/cliente.module';
@@ -14,12 +15,13 @@ import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
 import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-servicio.module';
 import { AuthModule } from './auth/auth.module';
 import { TarjetaModule } from './tarjeta/tarjeta.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ 
       isGlobal: true,
-      envFilePath: '.env', // Asegura la lectura explícita
+      envFilePath: join(__dirname, '..', '.env'),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -46,6 +48,7 @@ import { TarjetaModule } from './tarjeta/tarjeta.module';
     SolicitudDeServicioModule,
     AuthModule,
     TarjetaModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
