@@ -3,7 +3,7 @@ import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { CreateUrgenteDto } from './dto/create-urgente.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { Between, In, IsNull, Not, Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
@@ -15,9 +15,55 @@ import { Profesional } from '../profesional/entities/profesional.entity';
 import { Rol } from '../common/enums/rol.enum';
 import { EstadoSolicitud } from '../common/enums/estado-solicitud.enum';
 import { AgendarDto } from './dto/agendar.dto';
+import { AceptarDto } from './dto/aceptar.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
 import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
+import { AgendaQueryDto } from './dto/agenda-query.dto';
+
+// Si al agendar no se dice cuanto dura, se toma una hora
+const DURACION_POR_DEFECTO_MIN = 60;
+const UN_MINUTO = 60 * 1000;
+
+type TipoEvento = 'visita' | 'trabajo';
+
+// El deposito al profesional se simula: llega a los 3 dias habiles del pago
+const DIAS_HABILES_DEPOSITO = 3;
+
+// Un cobro del profesional: un trabajo, o una visita que el cliente paga al rechazar el presupuesto.
+// pendiente_cobro: el cliente todavia no pago, o pago y falta que se deposite; cobrado: ya depositado
+export interface Cobro {
+  idSolicitud: number;
+  concepto: TipoEvento;
+  estado: 'pendiente_cobro' | 'cobrado';
+  monto: number;
+  fechaPago: Date | null;
+  depositoEstimado: Date | null;
+  // Solo el tipo (ej: "Visa credito Banco Nacion"), nunca los digitos de la tarjeta del cliente
+  medioDePago: string | null;
+  especialidad: string | null;
+  descripcionProblema: string;
+  cliente: { nombre: string; apellido: string };
+  // Cuando fue el trabajo (o la visita): para los que todavia esperan el pago
+  fechaServicio: Date | null;
+}
+
+// Una visita o un trabajo en el calendario
+export interface EventoAgenda {
+  idSolicitud: number;
+  tipo: TipoEvento;
+  inicio: Date;
+  fin: Date;
+  estado: EstadoSolicitud;
+  urgente: boolean;
+  especialidad: string | null;
+  descripcionProblema: string;
+  // La otra persona: al profesional le muestra el cliente y al cliente, el profesional
+  con: { nombre: string; apellido: string; telefono: string } | null;
+  // La direccion solo se le muestra al profesional (es el que tiene que ir)
+  direccion: string | null;
+  zona: string | null;
+}
 
 @Injectable()
 export class SolicitudDeServicioService {
@@ -162,12 +208,13 @@ export class SolicitudDeServicioService {
     if (usuario.rol === Rol.CLIENTE) {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { cliente: { idUsuario: usuario.sub } },
-        relations: { especialidad: true },
+        // Con la otra persona, para poder mostrar "con quien" en las listas del front
+        relations: { especialidad: true, profesional: true },
       });
     } else {
       solicitudes = await this.solicitudDeServicioRepository.find({
         where: { profesional: { idUsuario: usuario.sub } },
-        relations: { especialidad: true },
+        relations: { especialidad: true, cliente: { zonaResidencia: true } },
       });
     }
 
@@ -210,14 +257,14 @@ export class SolicitudDeServicioService {
 
   // ---------- Pasos del profesional ----------
 
-  async aceptar(id: number, usuario: UsuarioActivoInterface) {
+  async aceptar(id: number, aceptarDto: AceptarDto, usuario: UsuarioActivoInterface) {
     // Una urgente que nadie tomo todavia la puede aceptar cualquier profesional de esa especialidad y zona
     const urgente = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id, urgente: true, profesional: IsNull() },
       relations: { especialidad: true, cliente: { zonaResidencia: true } },
     });
     if (urgente) {
-      return await this.tomarUrgente(urgente, usuario);
+      return await this.tomarUrgente(urgente, aceptarDto, usuario);
     }
 
     // Si era urgente y ya la tomo otro, se avisa claro en vez de "no participas"
@@ -234,9 +281,14 @@ export class SolicitudDeServicioService {
     return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
   }
 
-  private async tomarUrgente(solicitud: SolicitudDeServicio, usuario: UsuarioActivoInterface) {
+  // Una urgente no se agenda (es en el dia): al aceptarla, el profesional dice en cuanto llega
+  // y queda agendada directo, con la visita a esa hora
+  private async tomarUrgente(solicitud: SolicitudDeServicio, aceptarDto: AceptarDto, usuario: UsuarioActivoInterface) {
     await this.revisarVencimiento(solicitud);
     this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO]);
+    if (!aceptarDto.minutosLlegada) {
+      throw new BadRequestException('En una urgente tenes que indicar en cuantos minutos llegas (minutosLlegada)');
+    }
 
     const profesional = await this.profesionalRepository.findOne({
       where: { idUsuario: usuario.sub },
@@ -251,15 +303,22 @@ export class SolicitudDeServicioService {
       throw new ForbiddenException('Esta urgente no es de tu especialidad o de tu zona');
     }
 
+    const ahora = new Date();
+    ahora.setMilliseconds(0); // MySQL redondea los milisegundos
+    const llegada = new Date(ahora.getTime() + aceptarDto.minutosLlegada * UN_MINUTO);
+
     // Se asigna solo si sigue sin profesional: si dos aceptan a la vez, gana el primero
     const resultado = await this.solicitudDeServicioRepository
       .createQueryBuilder()
       .update(SolicitudDeServicio)
       .set({
         profesional: { idUsuario: profesional.idUsuario },
-        estadoServicio: EstadoSolicitud.EN_COORDINACION,
-        fechaCambioEstado: new Date(),
+        estadoServicio: EstadoSolicitud.AGENDADO,
+        fechaCambioEstado: ahora,
         costoVisita: profesional.costoVisita,
+        fechaVisita: llegada,
+        duracionEstimada: DURACION_POR_DEFECTO_MIN,
+        fechaFinEstimada: new Date(llegada.getTime() + DURACION_POR_DEFECTO_MIN * UN_MINUTO),
       })
       .where('idSolicitud = :id', { id: solicitud.idSolicitud })
       .andWhere('profesionalIdUsuario IS NULL')
@@ -281,11 +340,21 @@ export class SolicitudDeServicioService {
   async agendar(id: number, agendarDto: AgendarDto, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.EN_COORDINACION]);
+    // La visita de una urgente no se agenda: es en el dia, con el tiempo de llegada que se dio al aceptar
+    // (el trabajo grande que sale despues del presupuesto si se puede agendar)
+    if (solicitud.urgente && solicitud.costoEstimado == null) {
+      throw new BadRequestException('Una urgente no se agenda: la visita es en el dia, con el tiempo de llegada que diste al aceptarla');
+    }
 
     const fecha = new Date(agendarDto.fecha);
     if (fecha <= new Date()) {
       throw new BadRequestException('La fecha tiene que ser en el futuro');
     }
+
+    // Cuanto dura: con eso se arma el calendario y se controla que no se pise con otra
+    const duracion = agendarDto.duracionEstimada ?? DURACION_POR_DEFECTO_MIN;
+    const fin = new Date(fecha.getTime() + duracion * UN_MINUTO);
+    await this.validarQueNoSePise(solicitud, fecha, fin);
 
     // Si todavia no hay presupuesto aceptado es la visita, si ya hay es el trabajo
     if (solicitud.costoEstimado == null) {
@@ -293,6 +362,8 @@ export class SolicitudDeServicioService {
     } else {
       solicitud.fechaInicio = fecha;
     }
+    solicitud.duracionEstimada = duracion;
+    solicitud.fechaFinEstimada = fin;
     return await this.cambiarEstado(solicitud, EstadoSolicitud.AGENDADO);
   }
 
@@ -388,6 +459,8 @@ export class SolicitudDeServicioService {
     const mejorPromocion = mejorPromocionVigente(tarjeta.metodoDePago.promociones);
 
     solicitud.tarjeta = tarjeta;
+    solicitud.fechaPago = new Date();
+    solicitud.fechaPago.setMilliseconds(0); // MySQL redondea los milisegundos
     let guardada: SolicitudDeServicio;
     if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
       solicitud.fechaFinReal = new Date();
@@ -470,6 +543,10 @@ export class SolicitudDeServicioService {
     if (solicitud.estadoServicio === EstadoSolicitud.EN_COORDINACION) {
       return `Acordate de cargar la fecha de la solicitud de ${cliente}. Te quedan ${horasQueQuedan} hs antes de que venza`;
     }
+    const llegada = this.llegadaUrgente(solicitud);
+    if (llegada) {
+      return `URGENTE: tenes que llegar a lo de ${cliente} a las ${llegada.hora}`;
+    }
     const proxima = this.proximaFechaEn24hs(solicitud);
     if (proxima) {
       return `Tenes ${proxima.que} con ${cliente} el ${proxima.cuando}`;
@@ -491,6 +568,12 @@ export class SolicitudDeServicioService {
       return `${profesional} te mando un presupuesto de $${solicitud.costoFinal}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+      const llegada = this.llegadaUrgente(solicitud);
+      if (llegada) {
+        return llegada.minutos > 0
+          ? `${profesional} acepto tu urgencia y va en camino: llega a las ${llegada.hora} (en ${llegada.minutos} minutos)`
+          : `${profesional} acepto tu urgencia y ya deberia estar llegando`;
+      }
       const proxima = this.proximaFechaEn24hs(solicitud);
       if (proxima) {
         return `Tenes ${proxima.que} con ${profesional} el ${proxima.cuando}`;
@@ -508,6 +591,20 @@ export class SolicitudDeServicioService {
     return null;
   }
 
+  // La visita de una urgente aceptada: a que hora llega el profesional y cuanto falta.
+  // Se avisa hasta una hora despues de la hora de llegada
+  private llegadaUrgente(solicitud: SolicitudDeServicio) {
+    if (!solicitud.urgente || solicitud.estadoServicio !== EstadoSolicitud.AGENDADO || solicitud.costoEstimado != null || !solicitud.fechaVisita) {
+      return null;
+    }
+    const minutos = Math.ceil((solicitud.fechaVisita.getTime() - Date.now()) / UN_MINUTO);
+    if (minutos < -60) {
+      return null;
+    }
+    const hora = solicitud.fechaVisita.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    return { hora, minutos: Math.max(0, minutos) };
+  }
+
   // Si esta agendado y la visita (o el trabajo) es dentro de las proximas 24 hs
   private proximaFechaEn24hs(solicitud: SolicitudDeServicio) {
     if (solicitud.estadoServicio !== EstadoSolicitud.AGENDADO) {
@@ -523,11 +620,202 @@ export class SolicitudDeServicioService {
     return { que: esLaVisita ? 'una visita' : 'el trabajo', cuando };
   }
 
+  // ---------- Cobros del profesional ----------
+
+  // Todo lo que cobro o tiene para cobrar: trabajos y visitas pagadas, y lo que el cliente todavia no pago.
+  // Ordenado de lo mas nuevo a lo mas viejo. Tambien los ultimos 4 numeros del CBU/CVU donde se deposita
+  async cobros(usuario: UsuarioActivoInterface) {
+    const profesional = await this.profesionalRepository.findOneBy({ idUsuario: usuario.sub });
+    if (!profesional) {
+      throw new NotFoundException('Profesional no encontrado');
+    }
+    const solicitudes = await this.solicitudDeServicioRepository.find({
+      where: {
+        profesional: { idUsuario: usuario.sub },
+        estadoServicio: In([EstadoSolicitud.AGENDADO, EstadoSolicitud.FINALIZADO, EstadoSolicitud.RECHAZADO]),
+      },
+      relations: { cliente: true, especialidad: true, tarjeta: { metodoDePago: true } },
+    });
+
+    const ahora = new Date();
+    const cobros: Cobro[] = [];
+    for (const solicitud of solicitudes) {
+      const pagada = solicitud.tarjeta != null;
+      // Que se cobra: el trabajo con presupuesto aceptado, o la visita de un presupuesto rechazado
+      const esTrabajo = solicitud.costoEstimado != null && solicitud.estadoServicio !== EstadoSolicitud.RECHAZADO;
+      const esVisita = solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && !!solicitud.costoFinal && !solicitud.fechaInicio;
+      if (!esTrabajo && !esVisita) {
+        continue;
+      }
+      // Pagadas antes de que existiera fechaPago: se usa la fecha en que termino
+      const fechaPago = pagada ? (solicitud.fechaPago ?? solicitud.fechaFinReal ?? solicitud.fechaCambioEstado) : null;
+      const depositoEstimado = fechaPago ? this.sumarDiasHabiles(fechaPago, DIAS_HABILES_DEPOSITO) : null;
+      cobros.push({
+        idSolicitud: solicitud.idSolicitud,
+        concepto: esTrabajo ? 'trabajo' : 'visita',
+        estado: depositoEstimado && depositoEstimado <= ahora ? 'cobrado' : 'pendiente_cobro',
+        monto: Number(solicitud.costoFinal ?? solicitud.costoEstimado ?? 0),
+        fechaPago,
+        depositoEstimado,
+        medioDePago: solicitud.tarjeta?.metodoDePago?.tipo ?? null,
+        especialidad: solicitud.especialidad?.nombreEspecialidad ?? null,
+        descripcionProblema: solicitud.descripcionProblema,
+        // El cliente puede haberse dado de baja
+        cliente: { nombre: solicitud.cliente?.nombre ?? 'Cliente', apellido: solicitud.cliente?.apellido ?? '' },
+        fechaServicio: esTrabajo ? (solicitud.fechaInicio ?? solicitud.fechaVisita) : solicitud.fechaVisita,
+      });
+    }
+
+    const orden = (c: Cobro) => (c.fechaPago ?? c.fechaServicio ?? ahora).getTime();
+    return {
+      cuentaDeposito: profesional.cbu ? profesional.cbu.slice(-4) : null,
+      cobros: cobros.sort((a, b) => orden(b) - orden(a)),
+    };
+  }
+
+  // Suma dias de lunes a viernes (los feriados no se tienen en cuenta)
+  private sumarDiasHabiles(desde: Date, dias: number): Date {
+    const fecha = new Date(desde);
+    let sumados = 0;
+    while (sumados < dias) {
+      fecha.setDate(fecha.getDate() + 1);
+      const diaSemana = fecha.getDay();
+      if (diaSemana !== 0 && diaSemana !== 6) {
+        sumados++;
+      }
+    }
+    return fecha;
+  }
+
+  // ---------- Agenda (calendario) ----------
+
+  // Las visitas y trabajos del profesional o del cliente entre dos dias (incluidos)
+  async agenda(query: AgendaQueryDto, usuario: UsuarioActivoInterface): Promise<EventoAgenda[]> {
+    // En hora local: new Date('2026-10-01') seria medianoche UTC (el dia anterior aca)
+    const desde = this.fechaLocal(query.desde);
+    const hasta = this.fechaLocal(query.hasta);
+    hasta.setDate(hasta.getDate() + 1); // hasta el final del ultimo dia
+    if (hasta <= desde) {
+      throw new BadRequestException('"hasta" no puede ser anterior a "desde"');
+    }
+    if (hasta.getTime() - desde.getTime() > 93 * 24 * 60 * UN_MINUTO) {
+      throw new BadRequestException('Se pueden pedir hasta 3 meses juntos');
+    }
+
+    const esCliente = usuario.rol === Rol.CLIENTE;
+    const mias = esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } };
+    const enElRango = Between(desde, new Date(hasta.getTime() - 1));
+    const solicitudes = await this.solicitudDeServicioRepository.find({
+      where: [
+        { ...mias, fechaVisita: enElRango },
+        { ...mias, fechaInicio: enElRango },
+      ],
+      relations: { cliente: { zonaResidencia: true }, profesional: true, especialidad: true },
+    });
+
+    const eventos: EventoAgenda[] = [];
+    for (const solicitud of solicitudes) {
+      const cliente = solicitud.cliente;
+      const otro = esCliente ? solicitud.profesional : cliente;
+      for (const { tipo, inicio, fin } of this.fechasEnAgenda(solicitud)) {
+        if (inicio < desde || inicio >= hasta) {
+          continue;
+        }
+        eventos.push({
+          idSolicitud: solicitud.idSolicitud,
+          tipo,
+          inicio,
+          fin,
+          estado: solicitud.estadoServicio,
+          urgente: solicitud.urgente,
+          especialidad: solicitud.especialidad?.nombreEspecialidad ?? null,
+          descripcionProblema: solicitud.descripcionProblema,
+          con: otro ? { nombre: otro.nombre, apellido: otro.apellido, telefono: otro.telefono } : null,
+          direccion: esCliente
+            ? null
+            : `${cliente.calle} ${cliente.altura}` + (cliente.piso ? `, piso ${cliente.piso}` : '') + (cliente.depto ? `, depto ${cliente.depto}` : ''),
+          zona: cliente.zonaResidencia?.nombreZona ?? null,
+        });
+      }
+    }
+    return eventos.sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+  }
+
+  // Que fechas de la solicitud van al calendario (puede tener la visita y el trabajo).
+  // No van las canceladas/expiradas, ni la fecha vieja de algo que se esta reprogramando
+  private fechasEnAgenda(solicitud: SolicitudDeServicio): { tipo: TipoEvento; inicio: Date; fin: Date }[] {
+    const estado = solicitud.estadoServicio;
+    if (estado === EstadoSolicitud.CANCELADO || estado === EstadoSolicitud.EXPIRADO) {
+      return [];
+    }
+    const reprogramando = estado === EstadoSolicitud.EN_COORDINACION;
+    const presupuestoAceptado = solicitud.costoEstimado != null;
+    const fechas: { tipo: TipoEvento; inicio: Date; fin: Date }[] = [];
+
+    // La visita: si se reprograma antes del presupuesto, su fecha vieja ya no vale
+    if (solicitud.fechaVisita && !(reprogramando && !presupuestoAceptado)) {
+      // fechaFinEstimada es de lo ultimo que se agendo: es de la visita solo mientras no hay presupuesto
+      const finVisita = presupuestoAceptado ? null : solicitud.fechaFinEstimada;
+      fechas.push({ tipo: 'visita', inicio: solicitud.fechaVisita, fin: this.finDe(solicitud.fechaVisita, finVisita) });
+    }
+    if (solicitud.fechaInicio && !reprogramando) {
+      fechas.push({ tipo: 'trabajo', inicio: solicitud.fechaInicio, fin: this.finDe(solicitud.fechaInicio, solicitud.fechaFinEstimada) });
+    }
+    return fechas;
+  }
+
+  // Si no se sabe cuando termina (solicitudes viejas o trabajo chico hecho en la visita), una hora
+  private finDe(inicio: Date, fechaFinEstimada: Date | null): Date {
+    if (fechaFinEstimada && fechaFinEstimada > inicio) {
+      return fechaFinEstimada;
+    }
+    return new Date(inicio.getTime() + DURACION_POR_DEFECTO_MIN * UN_MINUTO);
+  }
+
+  // Regla: el profesional no puede tener dos visitas o trabajos agendados que se superpongan
+  private async validarQueNoSePise(solicitud: SolicitudDeServicio, inicio: Date, fin: Date) {
+    const otras = await this.solicitudDeServicioRepository.find({
+      where: {
+        profesional: { idUsuario: solicitud.profesional.idUsuario },
+        estadoServicio: EstadoSolicitud.AGENDADO,
+        idSolicitud: Not(solicitud.idSolicitud),
+      },
+      relations: { cliente: true },
+    });
+    const hora = (fecha: Date) =>
+      fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+    for (const otra of otras) {
+      for (const ocupado of this.fechasEnAgenda(otra)) {
+        if (inicio < ocupado.fin && ocupado.inicio < fin) {
+          const que = ocupado.tipo === 'visita' ? 'la visita' : 'el trabajo';
+          throw new BadRequestException(
+            `Se pisa con ${que} de ${otra.cliente.nombre} (${hora(ocupado.inicio)} a ${hora(ocupado.fin)})`,
+          );
+        }
+      }
+    }
+  }
+
+  // "2026-10-01" -> 1/10/2026 a las 00:00 en hora local
+  private fechaLocal(texto: string): Date {
+    const [anio, mes, dia] = texto.split('-').map(Number);
+    const fecha = new Date(anio, mes - 1, dia);
+    if (fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+      throw new BadRequestException(`La fecha ${texto} no existe`);
+    }
+    return fecha;
+  }
+
   // ---------- Pasos de los dos ----------
 
   async reprogramar(id: number, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.AGENDADO]);
+    // La visita de una urgente es en el dia: no se reprograma (no se puede volver a agendar)
+    if (solicitud.urgente && solicitud.costoEstimado == null) {
+      throw new BadRequestException('La visita de una urgente no se reprograma: es en el dia');
+    }
     return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
   }
 
