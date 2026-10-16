@@ -7,6 +7,8 @@ export const tokenStorage = {
   get: () => localStorage.getItem(TOKEN_KEY),
   set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
   clear: () => localStorage.removeItem(TOKEN_KEY),
+  // PROVISORIO: sesión de prueba sin backend (ver loginDemo en AuthContext)
+  esDemo: () => localStorage.getItem(TOKEN_KEY) === 'demo',
 }
 
 export class ApiError extends Error {

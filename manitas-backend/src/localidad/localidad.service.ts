@@ -3,7 +3,7 @@ import { CreateLocalidadDto } from './dto/create-localidad.dto';
 import { UpdateLocalidadDto } from './dto/update-localidad.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Localidad } from './entities/localidad.entity';
-import { FindManyOptions, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Provincia } from '../provincia/entities/provincia.entity';
 
 @Injectable()
@@ -17,7 +17,8 @@ constructor(
 
 ) {}
 
-async create(createLocalidadDto: CreateLocalidadDto) {
+
+  async create(createLocalidadDto: CreateLocalidadDto) {
     const provincia = await this.provinciaRepository.findOneBy({
       idProvincia: createLocalidadDto.idProvincia});
 
@@ -35,6 +36,7 @@ async create(createLocalidadDto: CreateLocalidadDto) {
     return await this.localidadRepository.find({
       where: idProvincia ? { provincia: { idProvincia } } : {},
       relations: { provincia: true },
+      order: { nombreLocalidad: 'ASC' },
     });
   }
 
@@ -58,5 +60,4 @@ async create(createLocalidadDto: CreateLocalidadDto) {
   async remove(id: number) {
     return await this.localidadRepository.softDelete({idLocalidad:id});
   }
-
 }

@@ -1,5 +1,5 @@
 import { Column, DeleteDateColumn, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { TipoDeServicio } from "../../tipo-de-servicio/entities/tipo-de-servicio.entity";
+import { TiposDeServicio } from "../../tipos-de-servicio/entities/tipos-de-servicio.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
 import { SolicitudDeServicio } from "../../solicitud-de-servicio/entities/solicitud-de-servicio.entity";
 
@@ -14,8 +14,8 @@ export class Especialidad {
     @Column()
     descripcionEspecialidad!: string;
     
-    @OneToMany (() => TipoDeServicio, (tipoDeServicio) => tipoDeServicio.especialidad)
-    servicios!: TipoDeServicio[];
+    @OneToMany (() => TiposDeServicio, (tiposDeServicio) => tiposDeServicio.especialidad)
+    servicios!: TiposDeServicio[];
 
     @ManyToMany(() => Profesional, (profesional) => profesional.especialidades)
     profesionales!: Profesional[];

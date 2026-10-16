@@ -25,7 +25,7 @@ export class SolicitudDeServicio {
     fechaSolicitud!: Date;
 
     // Se actualiza en cada cambio de estado, sirve para contar las 48 hs
-    @Column({ type: 'datetime' })
+    @Column({ type: 'datetime', nullable: true })
     fechaCambioEstado!: Date;
 
     @Column({ type: 'datetime', nullable: true })
@@ -42,6 +42,11 @@ export class SolicitudDeServicio {
 
     @Column({ type: 'datetime', nullable: true })
     fechaFinReal!: Date;
+
+    // Cuando pago el cliente (el trabajo, o la visita si rechazo el presupuesto).
+    // Con esto el profesional ve sus cobros por mes y cuando se le deposita
+    @Column({ type: 'datetime', nullable: true })
+    fechaPago!: Date;
 
     @Column({ nullable: true })
     costoVisita!: number;

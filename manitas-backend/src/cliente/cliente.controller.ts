@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ClienteService } from './cliente.service';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
@@ -6,7 +6,6 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { Rol } from '../common/enums/rol.enum';
 import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
 import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
-
 
 @ApiTags('Clientes')
 @Controller('cliente')

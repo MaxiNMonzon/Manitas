@@ -16,8 +16,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-    // Habilita el cierre limpio de conexiones y recursos
-  app.enableShutdownHooks();
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   // Documentacion de la API: queda en http://localhost:3000/api
@@ -52,6 +50,4 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-
-
 

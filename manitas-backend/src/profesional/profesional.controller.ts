@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, //nuevo, para filtrado
+import { Controller, Get, Body, Patch, Param, Delete, ParseIntPipe, Query, //nuevo, para filtrado
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ProfesionalService } from './profesional.service';
@@ -6,15 +6,13 @@ import { UpdateProfesionalDto } from './dto/update-profesional.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { Rol } from '../common/enums/rol.enum';
 import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
-import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface'
-
-
+import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @ApiTags('Profesionales')
 @Controller('profesional')
 export class ProfesionalController {
   constructor(private readonly profesionalService: ProfesionalService) {}
-  
+
   //no es necesario crear el profesional. Lo crea el usuario cuando se registra. El usuario se puede registrar como profesional o como cliente.
   //el usuario se tiene que registrar con una cuenta de correo para profesional y con otra cuenta de correo para cliente.
   //por eso no iría @Post
@@ -44,7 +42,12 @@ export class ProfesionalController {
 
   @Patch(':id')
   @Auth(Rol.PROFESIONAL)
-  @ApiOperation({ summary: 'Editar mi cuenta de profesional', description: 'Si se mandan idsZonasCobertura o idsEspecialidades, reemplazan a las que tenia.' })
+  @ApiOperation({
+    summary: 'Editar mi cuenta de profesional',
+    description:
+      'Si se mandan idsZonasCobertura, idsEspecialidades o matriculas, reemplazan a las que tenia (cada matricula tiene que ser de una de sus especialidades; ' +
+      'si saca una especialidad, se van sus matriculas). El correo se puede cambiar si no lo usa otra cuenta (409).',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProfesionalDto: UpdateProfesionalDto,

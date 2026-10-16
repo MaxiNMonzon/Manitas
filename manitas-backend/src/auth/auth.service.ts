@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { ClienteService } from '../cliente/cliente.service';
 import { ProfesionalService } from '../profesional/profesional.service';
 import { CreateClienteDto } from '../cliente/dto/create-cliente.dto';
 import { CreateProfesionalDto } from '../profesional/dto/create-profesional.dto';
 import { LoginDto } from './dto/login.dto';
+import { CambiarContrasenaDto } from './dto/cambiar-contrasena.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Rol } from '../common/enums/rol.enum';
@@ -84,6 +85,28 @@ export class AuthService {
             return await this.clienteService.findOne(sub);
         }
         return await this.profesionalService.findOne(sub);
+    }
+
+    // Cambiar la contraseña pidiendo la actual (cliente o profesional; la del admin esta en el .env)
+    async cambiarContraseña({ sub, rol }: UsuarioActivoInterface, dto: CambiarContrasenaDto) {
+        if (rol === Rol.ADMIN) {
+            throw new ForbiddenException('La contraseña del admin se cambia en el .env');
+        }
+        const persona = rol === Rol.CLIENTE ? await this.clienteService.findOne(sub) : await this.profesionalService.findOne(sub);
+        const actualValida = await bcrypt.compare(dto.contraseñaActual, persona.contraseña);
+        if (!actualValida) {
+            throw new BadRequestException('La contraseña actual no es correcta');
+        }
+        if (dto.contraseñaActual === dto.contraseñaNueva) {
+            throw new BadRequestException('La contraseña nueva tiene que ser distinta de la actual');
+        }
+        // El update de cada uno ya la guarda hasheada
+        if (rol === Rol.CLIENTE) {
+            await this.clienteService.update(sub, { contraseña: dto.contraseñaNueva }, sub);
+        } else {
+            await this.profesionalService.update(sub, { contraseña: dto.contraseñaNueva }, sub);
+        }
+        return { mensaje: 'Contraseña actualizada' };
     }
 
 }

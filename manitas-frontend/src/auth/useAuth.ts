@@ -9,7 +9,10 @@ export interface Sesion {
 export interface AuthContextValue {
   sesion: Sesion | null
   login: (rol: Rol, datos: LoginRequest) => Promise<void>
+  loginDemo: (rol: Rol) => void // PROVISORIO, ver AuthContext
   logout: () => void
+  // Después de cambiar el email en el perfil (el token sigue sirviendo)
+  actualizarCorreo: (correo: string) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

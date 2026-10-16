@@ -2,7 +2,7 @@ import { Column, DeleteDateColumn, Entity, PrimaryGeneratedColumn, ManyToOne } f
 import { Especialidad } from "../../especialidad/entities/especialidad.entity";
 
 @Entity()
-export class TipoDeServicio {
+export class TiposDeServicio {
     @PrimaryGeneratedColumn()
     idServicio!: number;
     
