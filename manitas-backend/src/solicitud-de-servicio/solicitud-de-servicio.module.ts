@@ -7,10 +7,12 @@ import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
+import { TurnoModule } from '../turno/turno.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SolicitudDeServicio, Cliente, Profesional, Tarjeta, Especialidad]),
+    TurnoModule,
   ],
   controllers: [SolicitudDeServicioController],
   providers: [SolicitudDeServicioService],
