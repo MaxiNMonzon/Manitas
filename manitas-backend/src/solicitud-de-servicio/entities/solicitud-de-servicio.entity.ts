@@ -49,6 +49,10 @@ export class SolicitudDeServicio {
     @Column({ type: 'datetime', nullable: true })
     fechaPago!: Date;
 
+    // Si se pago con Mercado Pago (en vez de una tarjeta guardada): el numero de pago que da Mercado Pago
+    @Column({ type: 'varchar', length: 30, nullable: true })
+    idPagoMercadoPago!: string | null;
+
     // Cuantas horas lleva el trabajo (lo dice el profesional en el presupuesto)
     @Column({ nullable: true })
     horasTrabajo!: number;

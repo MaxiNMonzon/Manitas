@@ -11,6 +11,8 @@ import AgendaProfesional from './pages/profesional/AgendaProfesional'
 import CobrosProfesional from './pages/profesional/CobrosProfesional'
 import RegistroCliente from './pages/RegistroCliente'
 import RegistroProfesional from './pages/RegistroProfesional'
+import Pagos from './pages/Pagos'
+import ResultadoPago from './pages/ResultadoPago'
 
 export default function App() {
   return (
@@ -27,7 +29,8 @@ export default function App() {
             {/* Pestañas */}
             <Route index element={<Inicio />} />
             <Route path="solicitudes" element={<Solicitudes />} />
-            <Route path="pagos" element={<EnConstruccion titulo="Pagos" />} />
+            <Route path="pagos" element={<Pagos />} />
+            <Route path="pagos/resultado" element={<ResultadoPago />} />
             <Route path="ayuda" element={<EnConstruccion titulo="Información y preguntas frecuentes" />} />
             <Route path="perfil" element={<MiPerfil />} />
             {/* Pestañas del profesional */}
