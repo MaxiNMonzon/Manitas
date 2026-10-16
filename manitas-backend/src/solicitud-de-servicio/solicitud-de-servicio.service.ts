@@ -467,11 +467,16 @@ export class SolicitudDeServicioService {
 
   // Paga el trabajo (Contratado -> Finalizado) o solo la visita si rechazo el presupuesto (queda Rechazado).
   // Se cobra siempre el precio completo: el descuento de la promo lo reintegra el banco
-  async pagar(id: number, pagarDto: PagarDto, usuario: UsuarioActivoInterface) {
+  // Lo usan los dos medios de pago (tarjeta guardada y Mercado Pago):
+  // revisa que la solicitud se pueda pagar y devuelve cuanto hay que pagar
+  async montoAPagar(id: number, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
+    if (usuario.rol !== Rol.CLIENTE) {
+      throw new ForbiddenException('Solo el cliente paga');
+    }
     this.validarEstado(solicitud, [EstadoSolicitud.CONTRATADO, EstadoSolicitud.RECHAZADO]);
 
-    if (solicitud.tarjeta) {
+    if (this.estaPagada(solicitud)) {
       throw new BadRequestException('Esta solicitud ya fue pagada');
     }
 
@@ -483,6 +488,34 @@ export class SolicitudDeServicioService {
     if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && (!solicitud.costoFinal || solicitud.fechaInicio)) {
       throw new BadRequestException('No hay nada para pagar');
     }
+
+    return { solicitud, monto: Number(solicitud.costoFinal) };
+  }
+
+  // Ya se pago con alguno de los dos medios
+  private estaPagada(solicitud: SolicitudDeServicio) {
+    return solicitud.tarjeta != null || solicitud.idPagoMercadoPago != null;
+  }
+
+  // Deja la solicitud pagada: el trabajo pasa a finalizado, la visita de un rechazado queda como esta
+  private async marcarPagada(solicitud: SolicitudDeServicio) {
+    solicitud.fechaPago = new Date();
+    solicitud.fechaPago.setMilliseconds(0); // MySQL redondea los milisegundos
+    if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO) {
+      solicitud.fechaFinReal = new Date();
+      return this.cambiarEstado(solicitud, EstadoSolicitud.FINALIZADO);
+    }
+    return this.solicitudDeServicioRepository.save(solicitud);
+  }
+
+  // Lo llama PaymentsService cuando Mercado Pago confirma que el pago se aprobo
+  async registrarPagoMercadoPago(solicitud: SolicitudDeServicio, idPago: string) {
+    solicitud.idPagoMercadoPago = idPago;
+    return this.marcarPagada(solicitud);
+  }
+
+  async pagar(id: number, pagarDto: PagarDto, usuario: UsuarioActivoInterface) {
+    const { solicitud } = await this.montoAPagar(id, usuario);
 
     // La tarjeta tiene que ser del cliente, no estar vencida y su metodo estar activo
     const tarjeta = await this.tarjetaRepository.findOne({
@@ -506,15 +539,7 @@ export class SolicitudDeServicioService {
     const mejorPromocion = mejorPromocionVigente(tarjeta.metodoDePago.promociones);
 
     solicitud.tarjeta = tarjeta;
-    solicitud.fechaPago = new Date();
-    solicitud.fechaPago.setMilliseconds(0); // MySQL redondea los milisegundos
-    let guardada: SolicitudDeServicio;
-    if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO) {
-      solicitud.fechaFinReal = new Date();
-      guardada = await this.cambiarEstado(solicitud, EstadoSolicitud.FINALIZADO);
-    } else {
-      guardada = await this.solicitudDeServicioRepository.save(solicitud);
-    }
+    const guardada = await this.marcarPagada(solicitud);
 
     // Solo se informa: el reintegro (y su tope, que esta en la descripcion de la promo) lo hace el banco
     let reintegro: object | null = null;
@@ -756,7 +781,7 @@ export class SolicitudDeServicioService {
     if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO && solicitud.fechaInicio <= new Date()) {
       return `Cuando ${profesional} termine el trabajo, ya podes pagar $${solicitud.costoFinal}`;
     }
-    if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && solicitud.costoFinal && !solicitud.fechaInicio && !solicitud.tarjeta) {
+    if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && solicitud.costoFinal && !solicitud.fechaInicio && !this.estaPagada(solicitud)) {
       return `Tenes que pagar la visita de ${profesional}: $${solicitud.costoFinal}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.FINALIZADO && solicitud.calificacionServicio == null) {
@@ -834,7 +859,7 @@ export class SolicitudDeServicioService {
     const ahora = new Date();
     const cobros: Cobro[] = [];
     for (const solicitud of solicitudes) {
-      const pagada = solicitud.tarjeta != null;
+      const pagada = this.estaPagada(solicitud);
       // Que se cobra: el trabajo con presupuesto aceptado, o la visita de un presupuesto rechazado
       const esTrabajo = solicitud.costoEstimado != null && solicitud.estadoServicio !== EstadoSolicitud.RECHAZADO;
       const esVisita = solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && !!solicitud.costoFinal && !solicitud.fechaInicio;
@@ -851,7 +876,7 @@ export class SolicitudDeServicioService {
         monto: Number(solicitud.costoFinal ?? solicitud.costoEstimado ?? 0),
         fechaPago,
         depositoEstimado,
-        medioDePago: solicitud.tarjeta?.metodoDePago?.tipo ?? null,
+        medioDePago: solicitud.tarjeta?.metodoDePago?.tipo ?? (solicitud.idPagoMercadoPago ? 'Mercado Pago' : null),
         especialidad: solicitud.especialidad?.nombreEspecialidad ?? null,
         descripcionProblema: solicitud.descripcionProblema,
         // El cliente puede haberse dado de baja
