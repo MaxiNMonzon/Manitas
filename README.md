@@ -24,7 +24,7 @@ Ofrece servicios urgentes con geolocalización y trabajos programados con compar
 Cada profesional define sus tarifas y recibe calificaciones.
 Los clientes pueden pagar con tarjeta, billeteras virtuales o efectivo.
 Incluye promociones según método de pago.
-Apunta a brindar rapidez, confianza y variedad de opciones.}
+Apunta a brindar rapidez, confianza y variedad de opciones.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 MODELO
@@ -46,13 +46,13 @@ Regularidad:
 | **CRUD simple** | 1. CRUD Usuario <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago|
 | **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Profesional {depende de} CRUD Especialidad|
 | **Listado + detalle** | 1. Servicio por Tipo de Servicio <br>2. Profesional por Especialidad|
-| **CUU/Epic** | 1. Solicitar presupuesto<br>2. Calificar Profesional<br>3. Informar promociones bancarias del mes<br>4. Notificar próximas visitas|
+| **CUU/Epic** | 1. Informar promociones bancarias del mes<br>2. Notificar próximas visitas<br>3. Solicitar servicio<br>4. Calificar Profesional|
 
 Adicionales para Aprobación
 | Req | Detalle |
 | :--- | :--- |
 | **CRUD** | 1. CRUD Usuario  <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago <br>5. CRUD Zona|
-| **CUU/Epic** | 1. Solicitar presupuesto<br>2. Coordinar visita<br>3. Confirmar servicio<br>4. Abonar servicio<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas|
+| **CUU/Epic** | 1. Solicitar servicio<br>2. Confirmar servicio<br>3. Coordinar visita<br>4. Abonar servicio<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas<br>8. Solicitar presupuesto|
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
