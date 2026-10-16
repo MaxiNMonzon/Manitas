@@ -16,5 +16,6 @@ import { TurnoModule } from '../turno/turno.module';
   ],
   controllers: [SolicitudDeServicioController],
   providers: [SolicitudDeServicioService],
+  exports: [SolicitudDeServicioService],
 })
 export class SolicitudDeServicioModule {}
