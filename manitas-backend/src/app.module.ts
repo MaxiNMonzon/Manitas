@@ -14,6 +14,7 @@ import { ClienteModule } from './cliente/cliente.module';
 import { ProfesionalModule } from './profesional/profesional.module';
 import { AuthModule } from './auth/auth.module';
 import { TarjetaModule } from './tarjeta/tarjeta.module';
+import { TurnoModule } from './turno/turno.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { TarjetaModule } from './tarjeta/tarjeta.module';
     ProfesionalModule,
     AuthModule,
     TarjetaModule,
+    TurnoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
