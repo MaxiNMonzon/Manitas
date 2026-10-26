@@ -3,7 +3,7 @@ import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
 import { CreateUrgenteDto } from './dto/create-urgente.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, IsNull, Not, Repository } from 'typeorm';
+import { Between, In, IsNull, Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
 import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
@@ -14,16 +14,26 @@ import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
 import { Rol } from '../common/enums/rol.enum';
 import { EstadoSolicitud } from '../common/enums/estado-solicitud.enum';
-import { AgendarDto } from './dto/agendar.dto';
 import { AceptarDto } from './dto/aceptar.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
+import { ReprogramarDto } from './dto/reprogramar.dto';
 import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 import { AgendaQueryDto } from './dto/agenda-query.dto';
+import { Franja, TurnoService } from '../turno/turno.service';
+import { Turno } from '../turno/entities/turno.entity';
 
-// Si al agendar no se dice cuanto dura, se toma una hora
-const DURACION_POR_DEFECTO_MIN = 60;
+// Los turnos son de una hora
+const DURACION_TURNO_MIN = 60;
 const UN_MINUTO = 60 * 1000;
+const UNA_HORA = 60 * UN_MINUTO;
+
+// Plazos (en horas)
+const HORAS_PARA_RESPONDER = 48; // el profesional, a una solicitud nueva
+const HORAS_URGENTE = 1; // para que alguien tome una urgente
+const HORAS_PROPUESTA = 24; // para contestar una reprogramacion
+const HORAS_MINIMAS_PARA_REPROGRAMAR = 12; // antes del turno; despues solo se puede cancelar
+const HORAS_ARREPENTIMIENTO = 6; // el cliente, para cancelar un trabajo ya contratado
 
 type TipoEvento = 'visita' | 'trabajo';
 
@@ -82,7 +92,11 @@ export class SolicitudDeServicioService {
 
     @InjectRepository(Especialidad)
     private readonly especialidadRepository: Repository<Especialidad>,
+
+    private readonly turnoService: TurnoService,
   ) {}
+
+  // ---------- Solicitar presupuesto (el cliente elige el turno de la visita) ----------
 
   async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
     const cliente = await this.clienteRepository.findOneBy({
@@ -116,22 +130,37 @@ export class SolicitudDeServicioService {
       throw new BadRequestException('Ese profesional no hace esa especialidad');
     }
 
-    // El estado y las fechas los pone el sistema, no el cliente.
-    // El costo de visita se copia para que no cambie si el profesional sube su tarifa despues
-    return await this.solicitudDeServicioRepository.save({
-      ...createSolicitudDeServicioDto,
-      estadoServicio: EstadoSolicitud.SOLICITADO,
-      fechaCambioEstado: new Date(),
-      costoVisita: profesional.costoVisita,
-      cliente,
-      profesional,
-      especialidad,
+    // El turno tiene que ser uno libre del profesional
+    const turno = await this.turnoService.validarLibre(profesional.idUsuario, createSolicitudDeServicioDto.inicioTurno);
+
+    // La solicitud y la reserva del turno van juntas: si el turno lo toma otro justo antes, no se crea nada
+    const { inicioTurno, ...datos } = createSolicitudDeServicioDto;
+    const idSolicitud = await this.solicitudDeServicioRepository.manager.transaction(async (manager) => {
+      // El estado y las fechas los pone el sistema, no el cliente.
+      // El costo de visita se copia para que no cambie si el profesional sube su tarifa despues
+      const nueva = await manager.save(SolicitudDeServicio, {
+        ...datos,
+        estadoServicio: EstadoSolicitud.SOLICITADO,
+        fechaCambioEstado: new Date(),
+        costoVisita: profesional.costoVisita,
+        fechaVisita: turno.inicio,
+        duracionEstimada: DURACION_TURNO_MIN,
+        cliente,
+        profesional,
+        especialidad,
+      });
+      await this.turnoService.reservar(manager, nueva.idSolicitud, profesional.idUsuario, [turno], 'visita', 'reservado');
+      return nueva.idSolicitud;
+    });
+    return await this.solicitudDeServicioRepository.findOne({
+      where: { idSolicitud },
+      relations: { profesional: true, especialidad: true },
     });
   }
 
   // ---------- Servicio urgente ----------
 
-  // El cliente no elige profesional: se la muestra a todos los de esa especialidad en su zona
+  // El cliente no elige profesional ni turno: se la muestra a todos los de esa especialidad en su zona
   async crearUrgente(createUrgenteDto: CreateUrgenteDto, idCliente: number) {
     const cliente = await this.clienteRepository.findOneBy({ idUsuario: idCliente });
     if (!cliente) {
@@ -243,6 +272,17 @@ export class SolicitudDeServicioService {
     return solicitudDeServicio;
   }
 
+  // El detalle para mostrar: la solicitud con sus turnos tomados y, si hay una reprogramacion,
+  // los propuestos. (Los turnos se agregan aparte para no guardarlos de nuevo al cambiar la solicitud)
+  async detalle(id: number, usuario: UsuarioActivoInterface) {
+    const solicitud = await this.findOne(id, usuario);
+    return {
+      ...solicitud,
+      turnosReservados: await this.turnoService.turnosDe(id, 'reservado'),
+      turnosPropuestos: await this.turnoService.turnosDe(id, 'propuesto'),
+    };
+  }
+
   async update(id: number, updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.findOne(id, usuario);
     if (usuario.rol !== Rol.CLIENTE) {
@@ -257,6 +297,7 @@ export class SolicitudDeServicioService {
 
   // ---------- Pasos del profesional ----------
 
+  // Acepta la solicitud: la visita queda confirmada en el turno que eligio el cliente
   async aceptar(id: number, aceptarDto: AceptarDto, usuario: UsuarioActivoInterface) {
     // Una urgente que nadie tomo todavia la puede aceptar cualquier profesional de esa especialidad y zona
     const urgente = await this.solicitudDeServicioRepository.findOne({
@@ -278,10 +319,10 @@ export class SolicitudDeServicioService {
 
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO]);
-    return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
+    return await this.cambiarEstado(solicitud, EstadoSolicitud.AGENDADO);
   }
 
-  // Una urgente no se agenda (es en el dia): al aceptarla, el profesional dice en cuanto llega
+  // Una urgente no usa turnos (es para ahora): al aceptarla, el profesional dice en cuanto llega
   // y queda agendada directo, con la visita a esa hora
   private async tomarUrgente(solicitud: SolicitudDeServicio, aceptarDto: AceptarDto, usuario: UsuarioActivoInterface) {
     await this.revisarVencimiento(solicitud);
@@ -317,8 +358,7 @@ export class SolicitudDeServicioService {
         fechaCambioEstado: ahora,
         costoVisita: profesional.costoVisita,
         fechaVisita: llegada,
-        duracionEstimada: DURACION_POR_DEFECTO_MIN,
-        fechaFinEstimada: new Date(llegada.getTime() + DURACION_POR_DEFECTO_MIN * UN_MINUTO),
+        duracionEstimada: DURACION_TURNO_MIN,
       })
       .where('idSolicitud = :id', { id: solicitud.idSolicitud })
       .andWhere('profesionalIdUsuario IS NULL')
@@ -331,75 +371,86 @@ export class SolicitudDeServicioService {
     return await this.findOne(solicitud.idSolicitud, usuario);
   }
 
+  // No toma la solicitud: se libera el turno
   async rechazar(id: number, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO]);
-    return await this.cambiarEstado(solicitud, EstadoSolicitud.RECHAZADO);
+    return await this.cambiarEstadoLiberando(solicitud, EstadoSolicitud.RECHAZADO);
   }
 
-  async agendar(id: number, agendarDto: AgendarDto, usuario: UsuarioActivoInterface) {
-    const solicitud = await this.findOne(id, usuario);
-    this.validarEstado(solicitud, [EstadoSolicitud.EN_COORDINACION]);
-    // La visita de una urgente no se agenda: es en el dia, con el tiempo de llegada que se dio al aceptar
-    // (el trabajo grande que sale despues del presupuesto si se puede agendar)
-    if (solicitud.urgente && solicitud.costoEstimado == null) {
-      throw new BadRequestException('Una urgente no se agenda: la visita es en el dia, con el tiempo de llegada que diste al aceptarla');
-    }
-
-    const fecha = new Date(agendarDto.fecha);
-    if (fecha <= new Date()) {
-      throw new BadRequestException('La fecha tiene que ser en el futuro');
-    }
-
-    // Cuanto dura: con eso se arma el calendario y se controla que no se pise con otra
-    const duracion = agendarDto.duracionEstimada ?? DURACION_POR_DEFECTO_MIN;
-    const fin = new Date(fecha.getTime() + duracion * UN_MINUTO);
-    await this.validarQueNoSePise(solicitud, fecha, fin);
-
-    // Si todavia no hay presupuesto aceptado es la visita, si ya hay es el trabajo
-    if (solicitud.costoEstimado == null) {
-      solicitud.fechaVisita = fecha;
-    } else {
-      solicitud.fechaInicio = fecha;
-    }
-    solicitud.duracionEstimada = duracion;
-    solicitud.fechaFinEstimada = fin;
-    return await this.cambiarEstado(solicitud, EstadoSolicitud.AGENDADO);
-  }
-
+  // Despues de la visita: el precio y cuantas horas lleva el trabajo.
+  // Si ya estaba contratado, es un cambio de precio a mitad del trabajo (el cliente lo vuelve a aceptar)
   async presupuestar(id: number, presupuestarDto: PresupuestarDto, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
-    this.validarEstado(solicitud, [EstadoSolicitud.AGENDADO]);
+    this.validarEstado(solicitud, [EstadoSolicitud.AGENDADO, EstadoSolicitud.CONTRATADO]);
 
-    // La primera vez es el presupuesto. Si ya habia uno, es un cambio de precio
-    // a mitad del trabajo: el costoEstimado queda como estaba y cambia el costoFinal
-    if (solicitud.costoEstimado == null) {
+    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+      if (solicitud.fechaVisita > new Date()) {
+        throw new BadRequestException('Todavia no fue la visita: el presupuesto se pasa despues de ver el problema');
+      }
+      if (!presupuestarDto.horasTrabajo) {
+        throw new BadRequestException('Indica cuantas horas lleva el trabajo (horasTrabajo)');
+      }
       solicitud.costoEstimado = presupuestarDto.costo;
+      solicitud.horasTrabajo = presupuestarDto.horasTrabajo;
     }
+    // La primera vez el costoEstimado queda de registro; en un cambio de precio solo cambia el costoFinal
     solicitud.costoFinal = presupuestarDto.costo;
     return await this.cambiarEstado(solicitud, EstadoSolicitud.PRESUPUESTADO);
   }
 
   // ---------- Pasos del cliente ----------
 
+  // Confirmar servicio: acepta el presupuesto y elige desde cuando arranca el trabajo
+  // (o se hace en el momento, si entra en la hora de la visita)
   async aceptarPresupuesto(id: number, aceptarPresupuestoDto: AceptarPresupuestoDto, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     this.validarEstado(solicitud, [EstadoSolicitud.PRESUPUESTADO]);
 
-    // Si el trabajo ya habia arrancado (cambio de precio) vuelve a agendado
+    // Si el trabajo ya tenia horario (cambio de precio), vuelve a contratado con el mismo horario
     if (solicitud.fechaInicio) {
-      return await this.cambiarEstado(solicitud, EstadoSolicitud.AGENDADO);
+      return await this.cambiarEstado(solicitud, EstadoSolicitud.CONTRATADO);
     }
+
+    const ahora = new Date();
+    ahora.setMilliseconds(0); // MySQL redondea los milisegundos
+
     // Trabajo chico: se hace ahora, en la visita
     if (aceptarPresupuestoDto.enElMomento) {
-      // Sin milisegundos: MySQL los redondea y podia quedar un segundo en el futuro
-      const ahora = new Date();
-      ahora.setMilliseconds(0);
+      if (solicitud.horasTrabajo > 1) {
+        throw new BadRequestException(
+          `El trabajo lleva ${solicitud.horasTrabajo} horas: no entra en la visita, elegi desde cuando arranca (inicioTrabajo)`,
+        );
+      }
       solicitud.fechaInicio = ahora;
-      return await this.cambiarEstado(solicitud, EstadoSolicitud.AGENDADO);
+      solicitud.fechaFinEstimada = new Date(ahora.getTime() + UNA_HORA);
+      solicitud.duracionEstimada = DURACION_TURNO_MIN;
+      solicitud.fechaAceptacion = ahora;
+      return await this.cambiarEstado(solicitud, EstadoSolicitud.CONTRATADO);
     }
-    // Trabajo grande: hay que coordinar la fecha del trabajo
-    return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
+
+    if (!aceptarPresupuestoDto.inicioTrabajo) {
+      throw new BadRequestException('Elegi desde cuando arranca el trabajo (inicioTrabajo) o si se hace en el momento (enElMomento)');
+    }
+
+    // Las horas del trabajo, seguidas, dentro del horario del profesional
+    const franjas = await this.turnoService.horasSeguidas(
+      solicitud.profesional.idUsuario,
+      aceptarPresupuestoDto.inicioTrabajo,
+      solicitud.horasTrabajo,
+    );
+    solicitud.fechaInicio = franjas[0].inicio;
+    solicitud.fechaFinEstimada = franjas[franjas.length - 1].fin;
+    solicitud.duracionEstimada = solicitud.horasTrabajo * DURACION_TURNO_MIN;
+    solicitud.fechaAceptacion = ahora;
+    solicitud.estadoServicio = EstadoSolicitud.CONTRATADO;
+    solicitud.fechaCambioEstado = new Date();
+
+    await this.solicitudDeServicioRepository.manager.transaction(async (manager) => {
+      await this.turnoService.reservar(manager, solicitud.idSolicitud, solicitud.profesional.idUsuario, franjas, 'trabajo', 'reservado');
+      await manager.save(solicitud);
+    });
+    return solicitud;
   }
 
   async rechazarPresupuesto(id: number, usuario: UsuarioActivoInterface) {
@@ -410,32 +461,61 @@ export class SolicitudDeServicioService {
     if (!solicitud.fechaInicio) {
       solicitud.costoFinal = solicitud.costoVisita;
     }
-    return await this.cambiarEstado(solicitud, EstadoSolicitud.RECHAZADO);
+    // Si era un cambio de precio a mitad del trabajo, las horas que quedaban se liberan
+    return await this.cambiarEstadoLiberando(solicitud, EstadoSolicitud.RECHAZADO, { tipo: 'trabajo' });
   }
 
-  // Paga el trabajo (Agendado -> Finalizado) o solo la visita si rechazo el presupuesto (queda Rechazado).
+  // Paga el trabajo (Contratado -> Finalizado) o solo la visita si rechazo el presupuesto (queda Rechazado).
   // Se cobra siempre el precio completo: el descuento de la promo lo reintegra el banco
-  async pagar(id: number, pagarDto: PagarDto, usuario: UsuarioActivoInterface) {
+  // Lo usan los dos medios de pago (tarjeta guardada y Mercado Pago):
+  // revisa que la solicitud se pueda pagar y devuelve cuanto hay que pagar
+  async montoAPagar(id: number, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
-    this.validarEstado(solicitud, [EstadoSolicitud.AGENDADO, EstadoSolicitud.RECHAZADO]);
+    if (usuario.rol !== Rol.CLIENTE) {
+      throw new ForbiddenException('Solo el cliente paga');
+    }
+    this.validarEstado(solicitud, [EstadoSolicitud.CONTRATADO, EstadoSolicitud.RECHAZADO]);
 
-    if (solicitud.tarjeta) {
+    if (this.estaPagada(solicitud)) {
       throw new BadRequestException('Esta solicitud ya fue pagada');
     }
 
-    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
-      if (solicitud.costoEstimado == null) {
-        throw new BadRequestException('Todavia no hay un presupuesto aceptado para pagar');
-      }
-      if (solicitud.fechaInicio > new Date()) {
-        throw new BadRequestException('Todavia no llego la fecha del trabajo');
-      }
+    if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO && solicitud.fechaInicio > new Date()) {
+      throw new BadRequestException('Todavia no llego la fecha del trabajo');
     }
 
     // En Rechazado solo se paga la visita (si el profesional la cobra)
     if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && (!solicitud.costoFinal || solicitud.fechaInicio)) {
       throw new BadRequestException('No hay nada para pagar');
     }
+
+    return { solicitud, monto: Number(solicitud.costoFinal) };
+  }
+
+  // Ya se pago con alguno de los dos medios
+  private estaPagada(solicitud: SolicitudDeServicio) {
+    return solicitud.tarjeta != null || solicitud.idPagoMercadoPago != null;
+  }
+
+  // Deja la solicitud pagada: el trabajo pasa a finalizado, la visita de un rechazado queda como esta
+  private async marcarPagada(solicitud: SolicitudDeServicio) {
+    solicitud.fechaPago = new Date();
+    solicitud.fechaPago.setMilliseconds(0); // MySQL redondea los milisegundos
+    if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO) {
+      solicitud.fechaFinReal = new Date();
+      return this.cambiarEstado(solicitud, EstadoSolicitud.FINALIZADO);
+    }
+    return this.solicitudDeServicioRepository.save(solicitud);
+  }
+
+  // Lo llama PaymentsService cuando Mercado Pago confirma que el pago se aprobo
+  async registrarPagoMercadoPago(solicitud: SolicitudDeServicio, idPago: string) {
+    solicitud.idPagoMercadoPago = idPago;
+    return this.marcarPagada(solicitud);
+  }
+
+  async pagar(id: number, pagarDto: PagarDto, usuario: UsuarioActivoInterface) {
+    const { solicitud } = await this.montoAPagar(id, usuario);
 
     // La tarjeta tiene que ser del cliente, no estar vencida y su metodo estar activo
     const tarjeta = await this.tarjetaRepository.findOne({
@@ -459,15 +539,7 @@ export class SolicitudDeServicioService {
     const mejorPromocion = mejorPromocionVigente(tarjeta.metodoDePago.promociones);
 
     solicitud.tarjeta = tarjeta;
-    solicitud.fechaPago = new Date();
-    solicitud.fechaPago.setMilliseconds(0); // MySQL redondea los milisegundos
-    let guardada: SolicitudDeServicio;
-    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
-      solicitud.fechaFinReal = new Date();
-      guardada = await this.cambiarEstado(solicitud, EstadoSolicitud.FINALIZADO);
-    } else {
-      guardada = await this.solicitudDeServicioRepository.save(solicitud);
-    }
+    const guardada = await this.marcarPagada(solicitud);
 
     // Solo se informa: el reintegro (y su tope, que esta en la descripcion de la promo) lo hace el banco
     let reintegro: object | null = null;
@@ -501,6 +573,130 @@ export class SolicitudDeServicioService {
     return await this.solicitudDeServicioRepository.save(solicitud);
   }
 
+  // ---------- Reprogramacion (los dos) ----------
+
+  // Propone otro horario (uno de los turnos libres del profesional). El turno nuevo queda bloqueado
+  // y el original sigue reservado hasta que el otro acepte. Tambien sirve para contestar una
+  // propuesta con otra (contrapropuesta): ida y vuelta hasta que alguno acepte
+  async reprogramar(id: number, reprogramarDto: ReprogramarDto, usuario: UsuarioActivoInterface) {
+    const solicitud = await this.findOne(id, usuario);
+    const quien = this.quienSoy(usuario);
+
+    if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
+      // Contrapropuesta: solo la puede hacer el que tenia que contestar
+      if (solicitud.propuestaDe === quien) {
+        throw new BadRequestException('Ya propusiste un horario: tenes que esperar que el otro conteste');
+      }
+    } else {
+      this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO, EstadoSolicitud.AGENDADO, EstadoSolicitud.CONTRATADO]);
+      // A una solicitud nueva, el profesional puede contestarle con otro horario (el cliente, si quiere otro, cancela y pide de nuevo)
+      if (solicitud.estadoServicio === EstadoSolicitud.SOLICITADO && quien !== 'profesional') {
+        throw new BadRequestException('Mientras el profesional no responde, si queres otro horario cancela y pedi de nuevo');
+      }
+      // La visita de una urgente es para ahora: no se reprograma
+      if (solicitud.urgente && solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+        throw new BadRequestException('La visita de una urgente no se reprograma: es para ahora');
+      }
+      // Hasta 12 hs antes del turno; despues solo se puede cancelar
+      if (solicitud.estadoServicio !== EstadoSolicitud.SOLICITADO) {
+        const actual = solicitud.estadoServicio === EstadoSolicitud.CONTRATADO ? solicitud.fechaInicio : solicitud.fechaVisita;
+        if (actual.getTime() - Date.now() < HORAS_MINIMAS_PARA_REPROGRAMAR * UNA_HORA) {
+          throw new BadRequestException(`Solo se puede reprogramar hasta ${HORAS_MINIMAS_PARA_REPROGRAMAR} hs antes; ahora solo se puede cancelar`);
+        }
+      }
+    }
+
+    const estadoBase = solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION ? solicitud.estadoAnterior! : solicitud.estadoServicio;
+    const tipo: TipoEvento = estadoBase === EstadoSolicitud.CONTRATADO ? 'trabajo' : 'visita';
+    const franjas = await this.franjasNuevas(solicitud, tipo, reprogramarDto.inicio);
+
+    await this.solicitudDeServicioRepository.manager.transaction(async (manager) => {
+      // Si habia una propuesta anterior, se reemplaza (su turno se libera)
+      await this.turnoService.liberar(manager, solicitud.idSolicitud, { estado: 'propuesto' });
+      await this.turnoService.reservar(manager, solicitud.idSolicitud, solicitud.profesional.idUsuario, franjas, tipo, 'propuesto');
+      solicitud.estadoAnterior = estadoBase;
+      solicitud.propuestaDe = quien;
+      solicitud.estadoServicio = EstadoSolicitud.REPROGRAMACION;
+      solicitud.fechaCambioEstado = new Date();
+      await manager.save(solicitud);
+    });
+    return await this.detalle(id, usuario);
+  }
+
+  // Acepta el horario propuesto: queda el nuevo y se libera el viejo
+  async aceptarReprogramacion(id: number, usuario: UsuarioActivoInterface) {
+    const solicitud = await this.findOne(id, usuario);
+    this.validarQueLeTocaContestar(solicitud, usuario);
+
+    const propuestos = await this.turnoService.turnosDe(id, 'propuesto');
+    const tipo = propuestos[0].tipo;
+    if (tipo === 'visita') {
+      solicitud.fechaVisita = propuestos[0].inicio;
+    } else {
+      solicitud.fechaInicio = propuestos[0].inicio;
+      solicitud.fechaFinEstimada = propuestos[propuestos.length - 1].fin;
+    }
+    // Si era una solicitud nueva, al ponerse de acuerdo en el horario la visita queda confirmada
+    const nuevoEstado = solicitud.estadoAnterior === EstadoSolicitud.SOLICITADO ? EstadoSolicitud.AGENDADO : solicitud.estadoAnterior!;
+    solicitud.estadoServicio = nuevoEstado;
+    solicitud.estadoAnterior = null;
+    solicitud.propuestaDe = null;
+    solicitud.fechaCambioEstado = new Date();
+
+    await this.solicitudDeServicioRepository.manager.transaction(async (manager) => {
+      await this.turnoService.liberar(manager, id, { tipo, estado: 'reservado' });
+      await this.turnoService.confirmarPropuestos(manager, id);
+      await manager.save(solicitud);
+    });
+    return await this.detalle(id, usuario);
+  }
+
+  // Rechaza el horario propuesto: queda el original, como si no se hubiera propuesto nada
+  async rechazarReprogramacion(id: number, usuario: UsuarioActivoInterface) {
+    const solicitud = await this.findOne(id, usuario);
+    this.validarQueLeTocaContestar(solicitud, usuario);
+    await this.volverAlHorarioOriginal(solicitud);
+    return await this.detalle(id, usuario);
+  }
+
+  // ---------- Cancelar (los dos) ----------
+
+  // Solicitado: el cliente. Agendado (la visita): los dos, en cualquier momento (emergencias).
+  // Contratado: el profesional siempre; el cliente solo dentro de las 6 hs de aceptar y antes de que arranque.
+  // Presupuestado no: el que no quiere, rechaza. Una urgente solo mientras nadie la tomo
+  async cancelar(id: number, usuario: UsuarioActivoInterface) {
+    const solicitud = await this.findOne(id, usuario);
+    const quien = this.quienSoy(usuario);
+    // En una reprogramacion valen las reglas del estado en el que estaba
+    const estado = solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION ? solicitud.estadoAnterior! : solicitud.estadoServicio;
+
+    if (![EstadoSolicitud.SOLICITADO, EstadoSolicitud.AGENDADO, EstadoSolicitud.CONTRATADO].includes(estado)) {
+      throw new BadRequestException(`No se puede cancelar con la solicitud en estado ${solicitud.estadoServicio}`);
+    }
+
+    if (solicitud.urgente && estado !== EstadoSolicitud.SOLICITADO) {
+      throw new BadRequestException('Una urgente solo se puede cancelar mientras nadie la haya aceptado');
+    }
+
+    if (estado === EstadoSolicitud.SOLICITADO && quien === 'profesional') {
+      throw new BadRequestException('Si no podes tomarla, rechazala (o propone otro horario)');
+    }
+
+    if (estado === EstadoSolicitud.CONTRATADO && quien === 'cliente') {
+      const yaArranco = solicitud.fechaInicio <= new Date();
+      const pasoElPlazo = Date.now() - solicitud.fechaAceptacion.getTime() > HORAS_ARREPENTIMIENTO * UNA_HORA;
+      if (yaArranco || pasoElPlazo) {
+        throw new BadRequestException(
+          `El trabajo ya esta contratado: solo se podia cancelar dentro de las ${HORAS_ARREPENTIMIENTO} hs de aceptar el presupuesto y antes de que arranque`,
+        );
+      }
+    }
+
+    solicitud.estadoAnterior = null;
+    solicitud.propuestaDe = null;
+    return await this.cambiarEstadoLiberando(solicitud, EstadoSolicitud.CANCELADO);
+  }
+
   // ---------- Avisos dentro de la app ----------
   // No se guardan en ningun lado: se arman en el momento mirando las solicitudes
 
@@ -525,7 +721,7 @@ export class SolicitudDeServicioService {
 
     for (const solicitud of solicitudes) {
       await this.revisarVencimiento(solicitud);
-      const mensaje = esCliente ? this.avisoParaCliente(solicitud) : this.avisoParaProfesional(solicitud);
+      const mensaje = esCliente ? await this.avisoParaCliente(solicitud) : await this.avisoParaProfesional(solicitud);
       if (mensaje) {
         avisos.push({ idSolicitud: solicitud.idSolicitud, mensaje });
       }
@@ -533,15 +729,15 @@ export class SolicitudDeServicioService {
     return avisos;
   }
 
-  private avisoParaProfesional(solicitud: SolicitudDeServicio) {
+  private async avisoParaProfesional(solicitud: SolicitudDeServicio) {
     const cliente = solicitud.cliente.nombre;
-    const horasQueQuedan = Math.floor(48 - (Date.now() - solicitud.fechaCambioEstado.getTime()) / (1000 * 60 * 60));
 
     if (solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
-      return `Tenes una solicitud nueva de ${cliente}. Te quedan ${horasQueQuedan} hs para responder`;
+      const horasQueQuedan = Math.max(0, Math.floor(HORAS_PARA_RESPONDER - (Date.now() - solicitud.fechaCambioEstado.getTime()) / UNA_HORA));
+      return `Tenes una solicitud nueva de ${cliente} para el ${this.texto(solicitud.fechaVisita)}. Te quedan ${horasQueQuedan} hs para responder`;
     }
-    if (solicitud.estadoServicio === EstadoSolicitud.EN_COORDINACION) {
-      return `Acordate de cargar la fecha de la solicitud de ${cliente}. Te quedan ${horasQueQuedan} hs antes de que venza`;
+    if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
+      return await this.avisoReprogramacion(solicitud, 'profesional', cliente);
     }
     const llegada = this.llegadaUrgente(solicitud);
     if (llegada) {
@@ -554,7 +750,7 @@ export class SolicitudDeServicioService {
     return null;
   }
 
-  private avisoParaCliente(solicitud: SolicitudDeServicio) {
+  private async avisoParaCliente(solicitud: SolicitudDeServicio) {
     // Urgente que todavia nadie acepto
     if (!solicitud.profesional) {
       if (solicitud.urgente && solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
@@ -564,6 +760,9 @@ export class SolicitudDeServicioService {
     }
     const profesional = solicitud.profesional.nombre;
 
+    if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
+      return await this.avisoReprogramacion(solicitud, 'cliente', profesional);
+    }
     if (solicitud.estadoServicio === EstadoSolicitud.PRESUPUESTADO) {
       return `${profesional} te mando un presupuesto de $${solicitud.costoFinal}`;
     }
@@ -574,15 +773,15 @@ export class SolicitudDeServicioService {
           ? `${profesional} acepto tu urgencia y va en camino: llega a las ${llegada.hora} (en ${llegada.minutos} minutos)`
           : `${profesional} acepto tu urgencia y ya deberia estar llegando`;
       }
-      const proxima = this.proximaFechaEn24hs(solicitud);
-      if (proxima) {
-        return `Tenes ${proxima.que} con ${profesional} el ${proxima.cuando}`;
-      }
-      if (solicitud.costoEstimado != null && solicitud.fechaInicio <= new Date()) {
-        return `Cuando ${profesional} termine el trabajo, ya podes pagar $${solicitud.costoFinal}`;
-      }
     }
-    if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && solicitud.costoFinal && !solicitud.fechaInicio && !solicitud.tarjeta) {
+    const proxima = this.proximaFechaEn24hs(solicitud);
+    if (proxima) {
+      return `Tenes ${proxima.que} con ${profesional} el ${proxima.cuando}`;
+    }
+    if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO && solicitud.fechaInicio <= new Date()) {
+      return `Cuando ${profesional} termine el trabajo, ya podes pagar $${solicitud.costoFinal}`;
+    }
+    if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && solicitud.costoFinal && !solicitud.fechaInicio && !this.estaPagada(solicitud)) {
       return `Tenes que pagar la visita de ${profesional}: $${solicitud.costoFinal}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.FINALIZADO && solicitud.calificacionServicio == null) {
@@ -591,10 +790,24 @@ export class SolicitudDeServicioService {
     return null;
   }
 
+  // Al que le toca contestar: "X te propone cambiar al ...". Al que propuso: que espera la respuesta
+  private async avisoReprogramacion(solicitud: SolicitudDeServicio, yo: 'cliente' | 'profesional', otro: string) {
+    const propuestos = await this.turnoService.turnosDe(solicitud.idSolicitud, 'propuesto');
+    if (propuestos.length === 0) {
+      return null;
+    }
+    const que = propuestos[0].tipo === 'visita' ? 'la visita' : 'el trabajo';
+    const cuando = this.texto(propuestos[0].inicio);
+    if (solicitud.propuestaDe === yo) {
+      return `Le propusiste a ${otro} pasar ${que} al ${cuando}: esperando su respuesta`;
+    }
+    return `${otro} te propone pasar ${que} al ${cuando}. Acepta, propone otro horario o rechaza`;
+  }
+
   // La visita de una urgente aceptada: a que hora llega el profesional y cuanto falta.
   // Se avisa hasta una hora despues de la hora de llegada
   private llegadaUrgente(solicitud: SolicitudDeServicio) {
-    if (!solicitud.urgente || solicitud.estadoServicio !== EstadoSolicitud.AGENDADO || solicitud.costoEstimado != null || !solicitud.fechaVisita) {
+    if (!solicitud.urgente || solicitud.estadoServicio !== EstadoSolicitud.AGENDADO || !solicitud.fechaVisita) {
       return null;
     }
     const minutos = Math.ceil((solicitud.fechaVisita.getTime() - Date.now()) / UN_MINUTO);
@@ -605,19 +818,25 @@ export class SolicitudDeServicioService {
     return { hora, minutos: Math.max(0, minutos) };
   }
 
-  // Si esta agendado y la visita (o el trabajo) es dentro de las proximas 24 hs
+  // La visita (Agendado) o el trabajo (Contratado), si es dentro de las proximas 24 hs
   private proximaFechaEn24hs(solicitud: SolicitudDeServicio) {
-    if (solicitud.estadoServicio !== EstadoSolicitud.AGENDADO) {
+    let fecha: Date | null = null;
+    let que = '';
+    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
+      fecha = solicitud.fechaVisita;
+      que = 'una visita';
+    } else if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO) {
+      fecha = solicitud.fechaInicio;
+      que = 'el trabajo';
+    }
+    if (!fecha) {
       return null;
     }
-    const esLaVisita = solicitud.costoEstimado == null;
-    const fecha = esLaVisita ? solicitud.fechaVisita : solicitud.fechaInicio;
-    const horasQueFaltan = (fecha.getTime() - Date.now()) / (1000 * 60 * 60);
+    const horasQueFaltan = (fecha.getTime() - Date.now()) / UNA_HORA;
     if (horasQueFaltan < 0 || horasQueFaltan > 24) {
       return null;
     }
-    const cuando = fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    return { que: esLaVisita ? 'una visita' : 'el trabajo', cuando };
+    return { que, cuando: this.texto(fecha) };
   }
 
   // ---------- Cobros del profesional ----------
@@ -632,7 +851,7 @@ export class SolicitudDeServicioService {
     const solicitudes = await this.solicitudDeServicioRepository.find({
       where: {
         profesional: { idUsuario: usuario.sub },
-        estadoServicio: In([EstadoSolicitud.AGENDADO, EstadoSolicitud.FINALIZADO, EstadoSolicitud.RECHAZADO]),
+        estadoServicio: In([EstadoSolicitud.CONTRATADO, EstadoSolicitud.FINALIZADO, EstadoSolicitud.RECHAZADO]),
       },
       relations: { cliente: true, especialidad: true, tarjeta: { metodoDePago: true } },
     });
@@ -640,7 +859,7 @@ export class SolicitudDeServicioService {
     const ahora = new Date();
     const cobros: Cobro[] = [];
     for (const solicitud of solicitudes) {
-      const pagada = solicitud.tarjeta != null;
+      const pagada = this.estaPagada(solicitud);
       // Que se cobra: el trabajo con presupuesto aceptado, o la visita de un presupuesto rechazado
       const esTrabajo = solicitud.costoEstimado != null && solicitud.estadoServicio !== EstadoSolicitud.RECHAZADO;
       const esVisita = solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && !!solicitud.costoFinal && !solicitud.fechaInicio;
@@ -657,7 +876,7 @@ export class SolicitudDeServicioService {
         monto: Number(solicitud.costoFinal ?? solicitud.costoEstimado ?? 0),
         fechaPago,
         depositoEstimado,
-        medioDePago: solicitud.tarjeta?.metodoDePago?.tipo ?? null,
+        medioDePago: solicitud.tarjeta?.metodoDePago?.tipo ?? (solicitud.idPagoMercadoPago ? 'Mercado Pago' : null),
         especialidad: solicitud.especialidad?.nombreEspecialidad ?? null,
         descripcionProblema: solicitud.descripcionProblema,
         // El cliente puede haberse dado de baja
@@ -698,17 +917,17 @@ export class SolicitudDeServicioService {
     if (hasta <= desde) {
       throw new BadRequestException('"hasta" no puede ser anterior a "desde"');
     }
-    if (hasta.getTime() - desde.getTime() > 93 * 24 * 60 * UN_MINUTO) {
+    if (hasta.getTime() - desde.getTime() > 93 * 24 * UNA_HORA) {
       throw new BadRequestException('Se pueden pedir hasta 3 meses juntos');
     }
 
     const esCliente = usuario.rol === Rol.CLIENTE;
     const mias = esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } };
-    const enElRango = Between(desde, new Date(hasta.getTime() - 1));
+    // Se traen las que tienen visita en el rango, o un trabajo que se cruza con el rango
     const solicitudes = await this.solicitudDeServicioRepository.find({
       where: [
-        { ...mias, fechaVisita: enElRango },
-        { ...mias, fechaInicio: enElRango },
+        { ...mias, fechaVisita: Between(desde, new Date(hasta.getTime() - 1)) },
+        { ...mias, fechaInicio: Between(new Date(desde.getTime() - 120 * 24 * UNA_HORA), new Date(hasta.getTime() - 1)) },
       ],
       relations: { cliente: { zonaResidencia: true }, profesional: true, especialidad: true },
     });
@@ -717,7 +936,7 @@ export class SolicitudDeServicioService {
     for (const solicitud of solicitudes) {
       const cliente = solicitud.cliente;
       const otro = esCliente ? solicitud.profesional : cliente;
-      for (const { tipo, inicio, fin } of this.fechasEnAgenda(solicitud)) {
+      for (const { tipo, inicio, fin } of await this.fechasEnAgenda(solicitud)) {
         if (inicio < desde || inicio >= hasta) {
           continue;
         }
@@ -741,60 +960,45 @@ export class SolicitudDeServicioService {
     return eventos.sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
   }
 
-  // Que fechas de la solicitud van al calendario (puede tener la visita y el trabajo).
-  // No van las canceladas/expiradas, ni la fecha vieja de algo que se esta reprogramando
-  private fechasEnAgenda(solicitud: SolicitudDeServicio): { tipo: TipoEvento; inicio: Date; fin: Date }[] {
+  // Que va al calendario: la visita (una hora) y el trabajo. Un trabajo de varios dias se muestra
+  // como un bloque por cada tramo seguido de turnos (ej: lunes 15 a 18 y martes 9 a 12).
+  // En una reprogramacion se sigue mostrando el horario original (vale hasta que acepten el nuevo)
+  private async fechasEnAgenda(solicitud: SolicitudDeServicio): Promise<{ tipo: TipoEvento; inicio: Date; fin: Date }[]> {
     const estado = solicitud.estadoServicio;
     if (estado === EstadoSolicitud.CANCELADO || estado === EstadoSolicitud.EXPIRADO) {
       return [];
     }
-    const reprogramando = estado === EstadoSolicitud.EN_COORDINACION;
-    const presupuestoAceptado = solicitud.costoEstimado != null;
     const fechas: { tipo: TipoEvento; inicio: Date; fin: Date }[] = [];
-
-    // La visita: si se reprograma antes del presupuesto, su fecha vieja ya no vale
-    if (solicitud.fechaVisita && !(reprogramando && !presupuestoAceptado)) {
-      // fechaFinEstimada es de lo ultimo que se agendo: es de la visita solo mientras no hay presupuesto
-      const finVisita = presupuestoAceptado ? null : solicitud.fechaFinEstimada;
-      fechas.push({ tipo: 'visita', inicio: solicitud.fechaVisita, fin: this.finDe(solicitud.fechaVisita, finVisita) });
+    if (solicitud.fechaVisita) {
+      fechas.push({ tipo: 'visita', inicio: solicitud.fechaVisita, fin: new Date(solicitud.fechaVisita.getTime() + UNA_HORA) });
     }
-    if (solicitud.fechaInicio && !reprogramando) {
-      fechas.push({ tipo: 'trabajo', inicio: solicitud.fechaInicio, fin: this.finDe(solicitud.fechaInicio, solicitud.fechaFinEstimada) });
+    if (solicitud.fechaInicio) {
+      const turnosTrabajo = (await this.turnoService.turnosDe(solicitud.idSolicitud, 'reservado')).filter((t) => t.tipo === 'trabajo');
+      if (turnosTrabajo.length === 0) {
+        // Trabajo hecho en el momento de la visita (no usa turnos)
+        const fin = solicitud.fechaFinEstimada ?? new Date(solicitud.fechaInicio.getTime() + UNA_HORA);
+        fechas.push({ tipo: 'trabajo', inicio: solicitud.fechaInicio, fin });
+      } else {
+        for (const tramo of this.juntarSeguidos(turnosTrabajo)) {
+          fechas.push({ tipo: 'trabajo', inicio: tramo.inicio, fin: tramo.fin });
+        }
+      }
     }
     return fechas;
   }
 
-  // Si no se sabe cuando termina (solicitudes viejas o trabajo chico hecho en la visita), una hora
-  private finDe(inicio: Date, fechaFinEstimada: Date | null): Date {
-    if (fechaFinEstimada && fechaFinEstimada > inicio) {
-      return fechaFinEstimada;
-    }
-    return new Date(inicio.getTime() + DURACION_POR_DEFECTO_MIN * UN_MINUTO);
-  }
-
-  // Regla: el profesional no puede tener dos visitas o trabajos agendados que se superpongan
-  private async validarQueNoSePise(solicitud: SolicitudDeServicio, inicio: Date, fin: Date) {
-    const otras = await this.solicitudDeServicioRepository.find({
-      where: {
-        profesional: { idUsuario: solicitud.profesional.idUsuario },
-        estadoServicio: EstadoSolicitud.AGENDADO,
-        idSolicitud: Not(solicitud.idSolicitud),
-      },
-      relations: { cliente: true },
-    });
-    const hora = (fecha: Date) =>
-      fecha.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-
-    for (const otra of otras) {
-      for (const ocupado of this.fechasEnAgenda(otra)) {
-        if (inicio < ocupado.fin && ocupado.inicio < fin) {
-          const que = ocupado.tipo === 'visita' ? 'la visita' : 'el trabajo';
-          throw new BadRequestException(
-            `Se pisa con ${que} de ${otra.cliente.nombre} (${hora(ocupado.inicio)} a ${hora(ocupado.fin)})`,
-          );
-        }
+  // Junta turnos que van uno atras del otro (9-10, 10-11 -> 9-11)
+  private juntarSeguidos(turnos: Turno[]): Franja[] {
+    const tramos: Franja[] = [];
+    for (const turno of turnos) {
+      const ultimo = tramos[tramos.length - 1];
+      if (ultimo && ultimo.fin.getTime() === turno.inicio.getTime()) {
+        ultimo.fin = turno.fin;
+      } else {
+        tramos.push({ inicio: turno.inicio, fin: turno.fin });
       }
     }
+    return tramos;
   }
 
   // "2026-10-01" -> 1/10/2026 a las 00:00 en hora local
@@ -807,46 +1011,31 @@ export class SolicitudDeServicioService {
     return fecha;
   }
 
-  // ---------- Pasos de los dos ----------
-
-  async reprogramar(id: number, usuario: UsuarioActivoInterface) {
-    const solicitud = await this.findOne(id, usuario);
-    this.validarEstado(solicitud, [EstadoSolicitud.AGENDADO]);
-    // La visita de una urgente es en el dia: no se reprograma (no se puede volver a agendar)
-    if (solicitud.urgente && solicitud.costoEstimado == null) {
-      throw new BadRequestException('La visita de una urgente no se reprograma: es en el dia');
-    }
-    return await this.cambiarEstado(solicitud, EstadoSolicitud.EN_COORDINACION);
-  }
-
-  async cancelar(id: number, usuario: UsuarioActivoInterface) {
-    const solicitud = await this.findOne(id, usuario);
-    this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO, EstadoSolicitud.EN_COORDINACION, EstadoSolicitud.AGENDADO]);
-
-    // Una urgente solo se cancela si nadie la acepto: despues el profesional ya va en camino
-    if (solicitud.urgente && solicitud.estadoServicio !== EstadoSolicitud.SOLICITADO) {
-      throw new BadRequestException('Una urgente solo se puede cancelar mientras nadie la haya aceptado');
-    }
-
-    if (solicitud.costoEstimado != null) {
-      throw new BadRequestException('No se puede cancelar porque el presupuesto ya fue aceptado');
-    }
-
-    if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
-      const horasQueFaltan = (solicitud.fechaVisita.getTime() - Date.now()) / (1000 * 60 * 60);
-      if (horasQueFaltan < 12) {
-        throw new BadRequestException('Solo se puede cancelar hasta 12 hs antes de la visita');
-      }
-    }
-    return await this.cambiarEstado(solicitud, EstadoSolicitud.CANCELADO);
-  }
-
   // ---------- Ayudas ----------
+
+  private quienSoy(usuario: UsuarioActivoInterface): 'cliente' | 'profesional' {
+    return usuario.rol === Rol.CLIENTE ? 'cliente' : 'profesional';
+  }
 
   private validarEstado(solicitud: SolicitudDeServicio, estadosPermitidos: EstadoSolicitud[]) {
     if (!estadosPermitidos.includes(solicitud.estadoServicio)) {
       throw new BadRequestException(`No se puede hacer esto con la solicitud en estado ${solicitud.estadoServicio}`);
     }
+  }
+
+  private validarQueLeTocaContestar(solicitud: SolicitudDeServicio, usuario: UsuarioActivoInterface) {
+    this.validarEstado(solicitud, [EstadoSolicitud.REPROGRAMACION]);
+    if (solicitud.propuestaDe === this.quienSoy(usuario)) {
+      throw new BadRequestException('Este horario lo propusiste vos: tenes que esperar que el otro conteste');
+    }
+  }
+
+  // Los turnos del horario nuevo: uno para la visita, o las horas seguidas del trabajo
+  private async franjasNuevas(solicitud: SolicitudDeServicio, tipo: TipoEvento, inicio: string): Promise<Franja[]> {
+    if (tipo === 'visita') {
+      return [await this.turnoService.validarLibre(solicitud.profesional.idUsuario, inicio)];
+    }
+    return await this.turnoService.horasSeguidas(solicitud.profesional.idUsuario, inicio, solicitud.horasTrabajo);
   }
 
   private async cambiarEstado(solicitud: SolicitudDeServicio, nuevoEstado: EstadoSolicitud) {
@@ -855,20 +1044,64 @@ export class SolicitudDeServicioService {
     return await this.solicitudDeServicioRepository.save(solicitud);
   }
 
-  // Si pasaron 48 hs sin respuesta (Solicitado) o sin fecha cargada (EnCoordinacion), vence.
-  // Una urgente que nadie acepto vence en 1 hora
+  // Cambia de estado y libera turnos (todos, o los que diga el filtro), todo junto
+  private async cambiarEstadoLiberando(
+    solicitud: SolicitudDeServicio,
+    nuevoEstado: EstadoSolicitud,
+    filtro: { tipo?: TipoEvento } = {},
+  ) {
+    solicitud.estadoServicio = nuevoEstado;
+    solicitud.fechaCambioEstado = new Date();
+    return await this.solicitudDeServicioRepository.manager.transaction(async (manager) => {
+      await this.turnoService.liberar(manager, solicitud.idSolicitud, filtro);
+      return await manager.save(solicitud);
+    });
+  }
+
+  // Se descarta la propuesta: vuelve al estado y al horario que tenia
+  private async volverAlHorarioOriginal(solicitud: SolicitudDeServicio) {
+    solicitud.estadoServicio = solicitud.estadoAnterior!;
+    solicitud.estadoAnterior = null;
+    solicitud.propuestaDe = null;
+    solicitud.fechaCambioEstado = new Date();
+    await this.solicitudDeServicioRepository.manager.transaction(async (manager) => {
+      await this.turnoService.liberar(manager, solicitud.idSolicitud, { estado: 'propuesto' });
+      await manager.save(solicitud);
+    });
+  }
+
+  // Los vencimientos se revisan cada vez que alguien mira la solicitud (no hay un proceso aparte):
+  // - una propuesta de horario sin contestar en 24 hs (o que ya llego) se da por rechazada
+  // - una solicitud nueva sin respuesta en 48 hs, o cuando ya llego el turno elegido, vence
+  // - una urgente que nadie tomo en 1 hora, vence
   private async revisarVencimiento(solicitud: SolicitudDeServicio) {
-    const puedeVencer = solicitud.estadoServicio === EstadoSolicitud.SOLICITADO || solicitud.estadoServicio === EstadoSolicitud.EN_COORDINACION;
-    const horasPasadas = (Date.now() - solicitud.fechaCambioEstado.getTime()) / (1000 * 60 * 60);
-    const limite = solicitud.urgente && solicitud.estadoServicio === EstadoSolicitud.SOLICITADO ? 1 : 48;
-    if (puedeVencer && horasPasadas >= limite) {
-      solicitud.estadoServicio = EstadoSolicitud.EXPIRADO;
-      await this.solicitudDeServicioRepository.save(solicitud);
+    if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
+      const propuestos = await this.turnoService.turnosDe(solicitud.idSolicitud, 'propuesto');
+      const pasoElPlazo = Date.now() - solicitud.fechaCambioEstado.getTime() >= HORAS_PROPUESTA * UNA_HORA;
+      const yaLlego = propuestos.length === 0 || propuestos[0].inicio <= new Date();
+      if (pasoElPlazo || yaLlego) {
+        await this.volverAlHorarioOriginal(solicitud);
+      }
+    }
+
+    if (solicitud.estadoServicio !== EstadoSolicitud.SOLICITADO) {
+      return;
+    }
+    const horasPasadas = (Date.now() - solicitud.fechaCambioEstado.getTime()) / UNA_HORA;
+    const vencio = solicitud.urgente
+      ? horasPasadas >= HORAS_URGENTE
+      : horasPasadas >= HORAS_PARA_RESPONDER || (solicitud.fechaVisita != null && solicitud.fechaVisita <= new Date());
+    if (vencio) {
+      await this.cambiarEstadoLiberando(solicitud, EstadoSolicitud.EXPIRADO);
     }
   }
 
   // Cuantos minutos le quedan a una urgente para que alguien la acepte
   private minutosQueQuedan(solicitud: SolicitudDeServicio) {
-    return Math.max(0, Math.floor(60 - (Date.now() - solicitud.fechaCambioEstado.getTime()) / (1000 * 60)));
+    return Math.max(0, Math.floor(HORAS_URGENTE * 60 - (Date.now() - solicitud.fechaCambioEstado.getTime()) / UN_MINUTO));
+  }
+
+  private texto(fecha: Date) {
+    return fecha.toLocaleString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   }
 }

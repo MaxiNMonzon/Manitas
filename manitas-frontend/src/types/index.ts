@@ -93,6 +93,8 @@ export type EstadoSolicitud =
   | 'en_coordinacion'
   | 'presupuestado'
   | 'agendado'
+  | 'contratado'
+  | 'reprogramacion'
   | 'finalizado'
   | 'rechazado'
   | 'cancelado'
@@ -128,6 +130,7 @@ export interface SolicitudResumen {
   costoEstimado: number | null // presupuesto aceptado
   costoFinal: number | null // lo que se cobra
   fechaFinReal: string | null // cuándo se terminó (al pagar)
+  fechaPago?: string | null // cuándo pagó el cliente (con tarjeta o con Mercado Pago)
   especialidad: { nombreEspecialidad: string } | null
   cliente?: ClienteDeSolicitud // viene cuando pregunta el profesional
   profesional?: PersonaResumen | null // viene cuando pregunta el cliente

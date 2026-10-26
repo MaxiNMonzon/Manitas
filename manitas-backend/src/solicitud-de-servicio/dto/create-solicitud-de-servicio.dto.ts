@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsPositive, IsString } from "class-validator";
+import { IsDateString, IsInt, IsNotEmpty, IsPositive, IsString } from "class-validator";
 
 export class CreateSolicitudDeServicioDto {
 
@@ -18,4 +18,9 @@ export class CreateSolicitudDeServicioDto {
     @IsInt()
     @IsPositive()
     idEspecialidad!: number;
+
+    // El turno que elige el cliente para la visita (uno de los libres del profesional, en punto)
+    @ApiProperty({ example: '2026-10-20T10:00:00', description: 'Inicio del turno de la visita (uno de los turnos libres del profesional)' })
+    @IsDateString()
+    inicioTurno!: string;
 }
