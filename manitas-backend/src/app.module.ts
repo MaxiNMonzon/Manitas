@@ -19,6 +19,7 @@ import { TurnoModule } from './turno/turno.module';
 import { PaymentsModule } from './payments/payments.module';
 
 
+
 @Module({
 
   imports: [
@@ -32,11 +33,11 @@ import { PaymentsModule } from './payments/payments.module';
          inject: [ConfigService],
           useFactory: (config: ConfigService) => ({
             type: 'mysql',
-            host: config.get('DB_HOST'),
-            port: config.get('DB_PORT'),
-            username: config.get('DB_USERNAME'),
-            password: config.get('DB_PASSWORD'),
-            database: config.get('DB_NAME'),
+            host: config.get<string>('DB_HOST'),
+            port: config.get<number>('DB_PORT'),
+            username: config.get<string>('DB_USERNAME'),
+            password: config.get<string>('DB_PASSWORD'),
+            database: config.get<string>('DB_NAME'),
             entities: [__dirname + '/**/*.entity{.ts,.js}'], //también hubiera sido válido autoLoadEntities: true,
           //En la línea 71 las entidades se generan automáticamente.
             synchronize: true, //En esta línea las entidades se sincronizan con los controladores y servicios.

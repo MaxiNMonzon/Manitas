@@ -93,6 +93,8 @@ export type EstadoSolicitud =
   | 'en_coordinacion'
   | 'presupuestado'
   | 'agendado'
+  | 'contratado'
+  | 'reprogramacion'
   | 'finalizado'
   | 'rechazado'
   | 'cancelado'

@@ -15,12 +15,10 @@ import type { SolicitudResumen } from '../types'
 
 // Lo que el cliente tiene para pagar: el trabajo contratado que ya empezó,
 // o la visita de un presupuesto que rechazó (si el profesional la cobra).
-// ('contratado' es un estado nuevo del back: falta sumarlo al tipo EstadoSolicitud del front)
 function paraPagar(s: SolicitudResumen) {
   if (s.fechaPago) return false
-  const estado = s.estadoServicio as string
-  if (estado === 'contratado') return !!s.fechaInicio && new Date(s.fechaInicio) <= new Date()
-  if (estado === 'rechazado') return !!s.costoFinal && !s.fechaInicio
+  if (s.estadoServicio === 'contratado') return !!s.fechaInicio && new Date(s.fechaInicio) <= new Date()
+  if (s.estadoServicio === 'rechazado') return !!s.costoFinal && !s.fechaInicio
   return false
 }
 
