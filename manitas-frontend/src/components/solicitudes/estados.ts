@@ -11,6 +11,8 @@ export const estados: Record<EstadoSolicitud, { label: string; plural: string; c
   en_coordinacion: { label: 'A coordinar', plural: 'A coordinar', color: 'info' },
   agendado: { label: 'Agendada', plural: 'Agendadas', color: 'primary' },
   presupuestado: { label: 'Presupuestada', plural: 'Presupuestadas', color: 'secondary' },
+  contratado: { label: 'Contratada', plural: 'Contratadas', color: 'info' },
+  reprogramacion: { label: 'A reprogramar', plural: 'A reprogramar', color: 'warning' },
   finalizado: { label: 'Finalizada', plural: 'Finalizadas', color: 'success' },
   rechazado: { label: 'Rechazada', plural: 'Rechazadas', color: 'default' },
   cancelado: { label: 'Cancelada', plural: 'Canceladas', color: 'default' },
@@ -21,7 +23,15 @@ export type Grupo = 'nuevas' | 'en_curso' | 'historial'
 
 export function grupoDe(estado: EstadoSolicitud): Grupo {
   if (estado === 'solicitado') return 'nuevas'
-  if (estado === 'en_coordinacion' || estado === 'agendado' || estado === 'presupuestado') return 'en_curso'
+  if (
+    estado === 'en_coordinacion' ||
+    estado === 'agendado' ||
+    estado === 'presupuestado' ||
+    estado === 'contratado' ||
+    estado === 'reprogramacion'
+  ) {
+    return 'en_curso'
+  }
   return 'historial'
 }
 
@@ -64,6 +74,10 @@ export function proximoPaso(s: SolicitudResumen): string {
         : `A cobrar cuando termines: ${formatoPesos(s.costoFinal)}`
     case 'presupuestado':
       return `Esperando que el cliente acepte el presupuesto de ${formatoPesos(s.costoFinal)}`
+    case 'contratado':
+      return `Trabajo en curso: ${formatoPesos(s.costoFinal)}`
+    case 'reprogramacion':
+      return 'Esperando respuesta a la propuesta de reprogramación'
     case 'finalizado':
       return `Cobrado: ${formatoPesos(s.costoFinal)}`
     case 'rechazado':
