@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiForbiddenResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiForbiddenResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { SolicitudDeServicioService } from './solicitud-de-servicio.service';
 import { CreateSolicitudDeServicioDto } from './dto/create-solicitud-de-servicio.dto';
 import { UpdateSolicitudDeServicioDto } from './dto/update-solicitud-de-servicio.dto';
-import { AgendarDto } from './dto/agendar.dto';
+import { ReprogramarDto } from './dto/reprogramar.dto';
 import { AceptarDto } from './dto/aceptar.dto';
 import { AgendaQueryDto } from './dto/agenda-query.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
@@ -28,7 +28,7 @@ export class SolicitudDeServicioController {
   @Auth(Rol.CLIENTE)
   @ApiOperation({
     summary: 'Solicitar presupuesto',
-    description: 'El cliente le pide un trabajo a un profesional, eligiendo la especialidad que necesita (el profesional tiene que hacerla) y contando el problema. Queda en estado "solicitado". El estado, las fechas y el costo de visita los pone el sistema.',
+    description: 'El cliente le pide un trabajo a un profesional: la especialidad que necesita (el profesional tiene que hacerla), el problema y el turno de la visita (uno de los libres del profesional, ver GET /turnos/libres). El turno queda bloqueado. Queda en estado "solicitado"; el profesional tiene 48 hs (o hasta el turno) para responder.',
   })
   create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.create(createSolicitudDeServicioDto, usuario.sub);
@@ -40,7 +40,7 @@ export class SolicitudDeServicioController {
     summary: 'Pedir un servicio urgente',
     description:
       'Sin elegir profesional: le aparece a todos los que hacen esa especialidad en la zona del cliente. ' +
-      'El primero que acepta se la queda (pasa a en_coordinacion). Si nadie acepta en 1 hora, vence.',
+      'No usa turnos (es para ahora). El primero que acepta se la queda y dice en cuantos minutos llega (pasa a agendado). Si nadie acepta en 1 hora, vence.',
   })
   crearUrgente(@Body() createUrgenteDto: CreateUrgenteDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.crearUrgente(createUrgenteDto, usuario.sub);
@@ -118,11 +118,14 @@ export class SolicitudDeServicioController {
   @Get(':id')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Ver una solicitud', description: 'Con el cliente, el profesional y la tarjeta con la que se pago. Solo para quienes participan.' })
+  @ApiOperation({
+    summary: 'Ver una solicitud',
+    description: 'Con el cliente, el profesional, la tarjeta con la que se pago, sus turnos reservados y, si hay una reprogramacion, los propuestos. Solo para quienes participan.',
+  })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
   findOne(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.findOne(id, usuario);
+    return this.solicitudDeServicioService.detalle(id, usuario);
   }
 
   @Patch(':id')
@@ -143,9 +146,10 @@ export class SolicitudDeServicioController {
   @ApiOperation({
     summary: 'Aceptar la solicitud',
     description:
-      'solicitado → en_coordinacion. Despues coordinan la visita por WhatsApp. ' +
+      'solicitado → agendado: la visita queda confirmada en el turno que eligio el cliente. ' +
+      '(Si no puede en ese horario, puede proponer otro con "reprogramar".) ' +
       'Si es una urgente sin profesional, la puede aceptar cualquiera de esa especialidad y zona: el primero se la queda. ' +
-      'Una urgente no se agenda (es en el dia): hay que mandar minutosLlegada y pasa directo a agendado, con la visita a esa hora; al cliente le llega el aviso de cuando llega.',
+      'Una urgente no usa turnos (es para ahora): hay que mandar minutosLlegada y la visita queda a esa hora; al cliente le llega el aviso de cuando llega.',
   })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, otro profesional ya tomo la urgente, o falta minutosLlegada en una urgente` })
   aceptar(@Param('id', ParseIntPipe) id: number, @Body() aceptarDto: AceptarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
@@ -160,29 +164,15 @@ export class SolicitudDeServicioController {
     return this.solicitudDeServicioService.rechazar(id, usuario);
   }
 
-  @Patch(':id/agendar')
-  @Auth(Rol.PROFESIONAL)
-  @ApiOperation({
-    summary: 'Coordinar visita (cargar fecha y hora)',
-    description:
-      'en_coordinacion → agendado. Si todavia no hay presupuesto aceptado es la fecha de la visita; si ya hay, es la del trabajo. ' +
-      'La fecha tiene que ser futura. Se puede mandar cuanto dura (duracionEstimada, en minutos; si no, 1 hora): ' +
-      'no se puede superponer con otra visita o trabajo agendado del mismo profesional.',
-  })
-  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, la fecha ya paso, o se pisa con otra visita/trabajo` })
-  agendar(@Param('id', ParseIntPipe) id: number, @Body() agendarDto: AgendarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.agendar(id, agendarDto, usuario);
-  }
-
   @Patch(':id/presupuestar')
   @Auth(Rol.PROFESIONAL)
   @ApiOperation({
     summary: 'Enviar presupuesto',
     description:
-      'agendado → presupuestado. La primera vez guarda el presupuesto (costoEstimado). ' +
-      'Si se usa de nuevo a mitad del trabajo es un cambio de precio: solo cambia costoFinal y el cliente lo tiene que volver a aceptar.',
+      'agendado → presupuestado, despues de la visita: el precio (costo) y cuantas horas lleva el trabajo (horasTrabajo, obligatorio). ' +
+      'En contratado es un cambio de precio a mitad del trabajo: solo cambia costoFinal y el cliente lo tiene que volver a aceptar.',
   })
-  @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
+  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, todavia no fue la visita, o falta horasTrabajo` })
   presupuestar(@Param('id', ParseIntPipe) id: number, @Body() presupuestarDto: PresupuestarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.presupuestar(id, presupuestarDto, usuario);
   }
@@ -194,10 +184,12 @@ export class SolicitudDeServicioController {
   @ApiOperation({
     summary: 'Confirmar servicio (aceptar el presupuesto)',
     description:
-      'presupuestado → agendado (trabajo chico, se hace en el momento, o cambio de precio a mitad del trabajo) ' +
-      'o → en_coordinacion (trabajo grande, hay que coordinar la fecha del trabajo).',
+      'presupuestado → contratado. Con inicioTrabajo (un turno libre del profesional) el sistema reserva las horas seguidas del trabajo ' +
+      '(si no entran en un dia, sigue el proximo que trabaja). Con enElMomento: true se hace ahora en la visita (si lleva hasta 1 hora). ' +
+      'Si era un cambio de precio a mitad del trabajo, vuelve a contratado con el mismo horario.',
   })
-  @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
+  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o falta elegir inicioTrabajo` })
+  @ApiConflictResponse({ description: 'No entran las horas seguidas desde ese horario (dice cual es el proximo inicio posible)' })
   aceptarPresupuesto(@Param('id', ParseIntPipe) id: number, @Body() aceptarPresupuestoDto: AceptarPresupuestoDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.aceptarPresupuesto(id, aceptarPresupuestoDto, usuario);
   }
@@ -218,7 +210,7 @@ export class SolicitudDeServicioController {
   @ApiOperation({
     summary: 'Abonar servicio',
     description:
-      'Con una tarjeta guardada del cliente. En "agendado" (trabajo ya empezado) pasa a finalizado; en "rechazado" paga solo la visita. ' +
+      'Con una tarjeta guardada del cliente. En "contratado" (trabajo ya empezado) pasa a finalizado; en "rechazado" paga solo la visita. ' +
       'Se cobra el precio completo: si la tarjeta tiene una promo vigente, la respuesta informa el reintegro que devuelve el banco.',
   })
   @ApiBadRequestResponse({ description: 'No hay nada para pagar, ya se pago, o la tarjeta no es valida (vencida, ajena o metodo inactivo)' })
@@ -239,12 +231,48 @@ export class SolicitudDeServicioController {
   @Patch(':id/reprogramar')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Reprogramar', description: 'agendado → en_coordinacion, para cargar otra fecha. Cliente o profesional.' })
+  @ApiOperation({
+    summary: 'Proponer otro horario (reprogramar)',
+    description:
+      'Se elige un turno libre del profesional (si es el trabajo, desde cuando arranca: se reservan las mismas horas seguidas). ' +
+      '→ reprogramacion: el turno nuevo queda bloqueado, el original sigue reservado y le toca contestar al otro. ' +
+      'Lo pueden hacer los dos en agendado o contratado, hasta 12 hs antes del turno; el profesional tambien en solicitado ' +
+      '(para ofrecerle otro horario al cliente). En reprogramacion, el que tenia que contestar la usa para proponer otro (contrapropuesta).',
+  })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
-  @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
-  reprogramar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.reprogramar(id, usuario);
+  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, faltan menos de 12 hs, o el horario no sirve` })
+  @ApiConflictResponse({ description: 'El horario esta tomado o no entran las horas seguidas' })
+  reprogramar(@Param('id', ParseIntPipe) id: number, @Body() reprogramarDto: ReprogramarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.reprogramar(id, reprogramarDto, usuario);
+  }
+
+  @Patch(':id/aceptar-reprogramacion')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Aceptar el horario propuesto',
+    description: 'reprogramacion → agendado o contratado (vuelve a donde estaba), con el horario nuevo. Se libera el viejo. Solo el que no lo propuso.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
+  @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
+  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o el horario lo propusiste vos` })
+  aceptarReprogramacion(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.aceptarReprogramacion(id, usuario);
+  }
+
+  @Patch(':id/rechazar-reprogramacion')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Rechazar el horario propuesto',
+    description: 'reprogramacion → vuelve al estado y al horario que tenia, como si no se hubiera propuesto nada. Solo el que no lo propuso.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
+  @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
+  @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o el horario lo propusiste vos` })
+  rechazarReprogramacion(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return this.solicitudDeServicioService.rechazarReprogramacion(id, usuario);
   }
 
   @Patch(':id/cancelar')
@@ -253,12 +281,13 @@ export class SolicitudDeServicioController {
   @ApiOperation({
     summary: 'Cancelar',
     description:
-      'Cliente o profesional, en solicitado, en_coordinacion o agendado, mientras no haya un presupuesto aceptado. ' +
-      'Si ya esta agendada la visita, hasta 12 hs antes. Una urgente solo se cancela mientras nadie la acepto.',
+      'Libera todos los turnos. Solicitado: el cliente (el profesional rechaza). Agendado: los dos, en cualquier momento. ' +
+      'Contratado: el profesional siempre; el cliente solo dentro de las 6 hs de aceptar el presupuesto y antes de que arranque. ' +
+      'Presupuestado no (el que no quiere, rechaza). Una urgente solo mientras nadie la acepto.',
   })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
-  @ApiBadRequestResponse({ description: 'Ya no se puede cancelar (presupuesto aceptado, faltan menos de 12 hs o estado incorrecto)' })
+  @ApiBadRequestResponse({ description: 'Ya no se puede cancelar (paso el plazo, estado incorrecto o le corresponde rechazar)' })
   cancelar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.cancelar(id, usuario);
   }

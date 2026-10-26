@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PaymentsService } from './payments.service';
+import { SolicitudDeServicioService } from '../solicitud-de-servicio/solicitud-de-servicio.service';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
@@ -15,6 +16,7 @@ describe('PaymentsService', () => {
             key === 'MERCADOPAGO_ACCESS_TOKEN' ? 'test-access-token' : defaultValue,
           ) },
         },
+        { provide: SolicitudDeServicioService, useValue: {} },
       ],
     }).compile();
 

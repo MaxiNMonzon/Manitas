@@ -5,6 +5,7 @@ import { Especialidad } from '../../especialidad/entities/especialidad.entity';
 import { TiposDeServicio } from '../../tipos-de-servicio/entities/tipos-de-servicio.entity';
 import { SolicitudDeServicio } from '../../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
 import { Matricula } from './matricula.entity';
+import { HorarioLaboral } from '../../turno/entities/horario-laboral.entity';
 
 @Entity('profesionales')
 export class Profesional extends Usuario {
@@ -54,4 +55,8 @@ export class Profesional extends Usuario {
 
   @OneToMany(() => SolicitudDeServicio, (solicitud) => solicitud.profesional)
   solicitudes!: SolicitudDeServicio[];
+
+  // Su horario fijo semanal (con esto se arman sus turnos de una hora)
+  @OneToMany(() => HorarioLaboral, (horario) => horario.profesional)
+  horarios!: HorarioLaboral[];
 }

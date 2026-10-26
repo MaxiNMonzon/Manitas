@@ -15,6 +15,7 @@ import { MetodoDePagoModule } from './metodo-de-pago/metodo-de-pago.module';
 import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-servicio.module';
 import { AuthModule } from './auth/auth.module';
 import { TarjetaModule } from './tarjeta/tarjeta.module';
+import { TurnoModule } from './turno/turno.module';
 import { PaymentsModule } from './payments/payments.module';
 
 @Module({
@@ -48,6 +49,7 @@ import { PaymentsModule } from './payments/payments.module';
     SolicitudDeServicioModule,
     AuthModule,
     TarjetaModule,
+    TurnoModule,
     PaymentsModule,
   ],
   controllers: [AppController],

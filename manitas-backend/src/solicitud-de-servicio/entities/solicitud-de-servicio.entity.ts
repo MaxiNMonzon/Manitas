@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Turno } from "../../turno/entities/turno.entity";
 import { Tarjeta } from "../../tarjeta/entities/tarjeta.entity";
 import { Cliente } from "../../cliente/entities/cliente.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
@@ -48,6 +49,26 @@ export class SolicitudDeServicio {
     @Column({ type: 'datetime', nullable: true })
     fechaPago!: Date;
 
+    // Si se pago con Mercado Pago (en vez de una tarjeta guardada): el numero de pago que da Mercado Pago
+    @Column({ type: 'varchar', length: 30, nullable: true })
+    idPagoMercadoPago!: string | null;
+
+    // Cuantas horas lleva el trabajo (lo dice el profesional en el presupuesto)
+    @Column({ nullable: true })
+    horasTrabajo!: number;
+
+    // Cuando el cliente acepto el presupuesto: tiene 6 hs para echarse atras
+    @Column({ type: 'datetime', nullable: true })
+    fechaAceptacion!: Date;
+
+    // Mientras hay una reprogramacion: a que estado vuelve y quien la propuso
+    // (le toca contestar al otro)
+    @Column({ type: 'enum', enum: EstadoSolicitud, nullable: true })
+    estadoAnterior!: EstadoSolicitud | null;
+
+    @Column({ type: 'varchar', length: 15, nullable: true })
+    propuestaDe!: 'cliente' | 'profesional' | null;
+
     @Column({ nullable: true })
     costoVisita!: number;
 
@@ -78,6 +99,10 @@ export class SolicitudDeServicio {
     // solo por las solicitudes viejas; al crear una nueva siempre se pide
     @ManyToOne(() => Especialidad, (especialidad) => especialidad.solicitudes, { nullable: true })
     especialidad!: Especialidad;
+
+    // Los turnos que tiene tomados (la visita y las horas del trabajo) y los propuestos
+    @OneToMany(() => Turno, (turno) => turno.solicitud)
+    turnos!: Turno[];
 
     @DeleteDateColumn()
     deleteAt!: Date;
