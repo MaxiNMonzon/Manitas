@@ -11,18 +11,18 @@ import Skeleton from '@mui/material/Skeleton'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { alpha } from '@mui/material/styles'
 import AssignmentIcon from '@mui/icons-material/Assignment'
+import HelpCenterIcon from '@mui/icons-material/HelpCenter'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
 import StarIcon from '@mui/icons-material/Star'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import dayjs from 'dayjs'
 import { aceptarSolicitud, traerAgenda, traerMiCalificacion, traerMisSolicitudes, traerUrgentes } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
 // MEDIDOR DE CARGA (desactivado, archivo local sin subir; ver NOTAS-SESION.md punto 23):
 // import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
 // import MedidorCarga from '../../components/MedidorCarga'
+import UrgenciasCerca from '../../components/solicitudes/UrgenciasCerca'
 import AgendarDialog from '../../components/agenda/AgendarDialog'
 import MedidorCalificacion from '../../components/profesional/MedidorCalificacion'
 import ListaDeEventos from '../../components/agenda/ListaDeEventos'
@@ -42,9 +42,11 @@ function horasQueQuedan(s: SolicitudResumen): number {
 
 // Números del resumen, calculados con las solicitudes del profesional
 function resumen(solicitudes: SolicitudResumen[]) {
-  const enCurso = solicitudes.filter((s) => ['en_coordinacion', 'agendado', 'presupuestado'].includes(s.estadoServicio))
+  const enCurso = solicitudes.filter((s) =>
+    ['en_coordinacion', 'agendado', 'presupuestado', 'contratado', 'reprogramacion'].includes(s.estadoServicio),
+  )
   // Por cobrar: trabajos con presupuesto aceptado que todavía no se pagaron
-  const porCobrar = solicitudes.filter((s) => s.estadoServicio === 'agendado' && s.costoEstimado != null)
+  const porCobrar = solicitudes.filter((s) => (s.estadoServicio === 'contratado' || s.estadoServicio === 'agendado') && s.costoEstimado != null && !s.fechaPago)
   return {
     activas: enCurso.length,
     porCobrar: porCobrar.reduce((total, s) => total + (s.costoFinal ?? 0), 0),
@@ -171,7 +173,7 @@ export default function InicioProfesional() {
                 icono={<AssignmentIcon />}
                 titulo="Solicitudes activas"
                 valor={String(datos.activas)}
-                detalle="En coordinación, agendadas o presupuestadas"
+                detalle="Agendadas, presupuestadas o contratadas"
                 color="primary"
                 onClick={() => navigate('/app/solicitudes')}
               />
@@ -204,47 +206,10 @@ export default function InicioProfesional() {
       </Grid>
 
       {/* Urgencias: solo si hay */}
-      {urgentes.datos && urgentes.datos.length > 0 && (
-        <Paper
-          variant="outlined"
-          sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'error.main', bgcolor: (t) => alpha(t.palette.error.main, 0.06) }}
-        >
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'error.main', mb: 2 }}>
-            <WarningAmberIcon />
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Urgencias cerca tuyo
-            </Typography>
-            <Chip size="small" color="error" label={urgentes.datos.length} />
-          </Stack>
-          <Stack spacing={1.5}>
-            {urgentes.datos.map((u) => (
-              <Paper key={u.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'error.main' }}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                    <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                      <Typography sx={{ fontWeight: 600 }}>
-                        {u.especialidad} · {u.zona}
-                      </Typography>
-                      <Chip size="small" color="error" variant="outlined" label={`Quedan ${u.minutosQueQuedan} min`} />
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      {u.cliente}: {u.descripcionProblema}
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => setATomar({ idSolicitud: u.idSolicitud, cliente: u.cliente, descripcionProblema: u.descripcionProblema })}
-                    sx={{ flexShrink: 0 }}
-                  >
-                    Aceptar
-                  </Button>
-                </Stack>
-              </Paper>
-            ))}
-          </Stack>
-        </Paper>
-      )}
+      <UrgenciasCerca
+        urgentes={urgentes.datos ?? []}
+        onTomar={(u) => setATomar({ idSolicitud: u.idSolicitud, cliente: u.cliente, descripcionProblema: u.descripcionProblema })}
+      />
 
       <Grid container spacing={2}>
         {/* Pendientes de fecha */}
@@ -315,6 +280,13 @@ export default function InicioProfesional() {
           </SeccionTarjeta>
         </Grid>
       </Grid>
+
+      {/* El profesional no tiene pestaña de Ayuda: el link va al pie de su inicio */}
+      <Box sx={{ textAlign: 'center', mt: 3 }}>
+        <Button startIcon={<HelpCenterIcon />} onClick={() => navigate('/app/ayuda')}>
+          Ayuda y preguntas frecuentes
+        </Button>
+      </Box>
 
       <TiempoLlegadaDialog urgente={aTomar} cargando={aceptando} onClose={() => setATomar(null)} onConfirmar={aceptarUrgente} />
 

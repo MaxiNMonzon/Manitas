@@ -17,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
 import { TarjetaModule } from './tarjeta/tarjeta.module';
 import { TurnoModule } from './turno/turno.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ConsultaModule } from './consulta/consulta.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { PaymentsModule } from './payments/payments.module';
     TarjetaModule,
     TurnoModule,
     PaymentsModule,
+    ConsultaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
