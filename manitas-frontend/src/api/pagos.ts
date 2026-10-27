@@ -1,4 +1,5 @@
-// Pagar con Mercado Pago (modo prueba / sandbox). Es la otra opción, además de la tarjeta guardada.
+// Pagar con Mercado Pago (Checkout Pro en modo prueba / sandbox). Es la otra opción, además de la tarjeta guardada.
+// Siempre pasa por Mercado Pago: con la sesión demo (sin back) no se puede pagar.
 import { api } from './client'
 import type { SolicitudResumen } from '../types'
 
@@ -9,7 +10,8 @@ export async function irAPagarConMercadoPago(idSolicitud: number): Promise<strin
   return data.init_point
 }
 
-// Paso 2: al volver de Mercado Pago, el back verifica el pago y marca la solicitud como pagada
+// Paso 2: al volver de Mercado Pago ("Volver al sitio"), el back le pregunta a Mercado Pago
+// si el pago se aprobó y recién ahí marca la solicitud como pagada
 export async function confirmarPagoMercadoPago(paymentId: string): Promise<SolicitudResumen> {
   const { solicitud } = await api.post<{ solicitud: SolicitudResumen }>('/payments/confirmar', { paymentId })
   return solicitud
