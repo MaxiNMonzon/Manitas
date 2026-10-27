@@ -15,10 +15,13 @@ export interface ProfesionalResumen {
   apellido: string
   fotoUrl: string | null
   especialidades: string[]
+  // Las mismas, con su id (para pedir presupuesto de una de ellas)
+  oficios: { idEspecialidad: number; nombre: string }[]
   zona: string
   calificacion: number // promedio de 0 a 5
   cantidadCalificaciones: number
   descripcion: string
+  costoVisita: number | null
 }
 
 export interface PromoBancaria {
@@ -42,7 +45,7 @@ export const categorias: Categoria[] = [
   { idEspecialidad: 10, nombre: 'Jardinería' },
 ]
 
-export const profesionalesCercanos: ProfesionalResumen[] = [
+const profesionalesBase: Omit<ProfesionalResumen, 'oficios' | 'costoVisita'>[] = [
   {
     idUsuario: 1,
     nombre: 'Oscar',
@@ -99,6 +102,13 @@ export const profesionalesCercanos: ProfesionalResumen[] = [
     descripcion: 'Muebles a medida, placares y arreglos de aberturas.',
   },
 ]
+
+// Con el id de cada especialidad (sale de las categorías) y un costo de visita de ejemplo
+export const profesionalesCercanos: ProfesionalResumen[] = profesionalesBase.map((p) => ({
+  ...p,
+  oficios: p.especialidades.map((nombre) => ({ idEspecialidad: categorias.find((c) => c.nombre === nombre)?.idEspecialidad ?? 0, nombre })),
+  costoVisita: 5000,
+}))
 
 export const promocionesDelMes: PromoBancaria[] = [
   {

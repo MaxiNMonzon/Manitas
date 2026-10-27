@@ -22,6 +22,7 @@ import LockIcon from '@mui/icons-material/Lock'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'
 import KeyIcon from '@mui/icons-material/Key'
+import HelpCenterIcon from '@mui/icons-material/HelpCenter'
 import dayjs from 'dayjs'
 import { useAuth } from '../../auth/useAuth'
 import { guardarPerfilProfesional, traerPerfilProfesional } from '../../api/perfil'
@@ -530,6 +531,9 @@ export default function PerfilProfesional() {
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <Button variant="outlined" startIcon={<KeyIcon />} onClick={() => setContraseñaAbierta(true)}>
                 Cambiar contraseña
+              </Button>
+              <Button variant="outlined" startIcon={<HelpCenterIcon />} onClick={() => navigate('/app/ayuda')}>
+                Ayuda
               </Button>
               <Button
                 variant="outlined"
