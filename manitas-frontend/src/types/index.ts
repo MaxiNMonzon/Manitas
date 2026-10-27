@@ -129,11 +129,60 @@ export interface SolicitudResumen {
   costoVisita?: number | null
   costoEstimado: number | null // presupuesto aceptado
   costoFinal: number | null // lo que se cobra
+  horasTrabajo?: number | null // cuántas horas lleva el trabajo (viene con el presupuesto)
   fechaFinReal: string | null // cuándo se terminó (al pagar)
   fechaPago?: string | null // cuándo pagó el cliente (con tarjeta o con Mercado Pago)
   especialidad: { nombreEspecialidad: string } | null
+  fechaAceptacion?: string | null // cuándo el cliente aceptó el presupuesto (tiene 6 h para echarse atrás)
+  propuestaDe?: 'cliente' | 'profesional' | null // en una reprogramación: quién propuso el horario nuevo
+  estadoAnterior?: EstadoSolicitud | null // en una reprogramación: a qué estado vuelve
+  calificacionServicio?: number | null // estrellas que puso el cliente (1 a 5)
+  reseñaServicio?: string | null
   cliente?: ClienteDeSolicitud // viene cuando pregunta el profesional
-  profesional?: PersonaResumen | null // viene cuando pregunta el cliente
+  profesional?: ProfesionalDeSolicitud | null // viene cuando pregunta el cliente (vacío en una urgente sin tomar)
+}
+
+// El profesional tal como viene en las solicitudes del cliente
+export interface ProfesionalDeSolicitud extends PersonaResumen {
+  idUsuario: number
+}
+
+// GET /turnos/libres/:idProfesional?desde=&hasta= (fechas en texto ISO). Franjas de una hora
+export interface TurnoLibre {
+  inicio: string
+  fin: string
+}
+
+// GET /profesional?especialidad=&zona= (solo los campos que usa el front)
+export interface ProfesionalApi {
+  idUsuario: number
+  nombre: string
+  apellido: string
+  costoVisita?: number | null
+  descripcion?: string | null
+  especialidades: { idEspecialidad: number; nombreEspecialidad: string }[]
+  zonasDeCobertura: { idZona: number; nombreZona: string }[]
+}
+
+// GET /profesional/:id/calificaciones (con las reseñas)
+export interface CalificacionesDetalle extends Calificaciones {
+  reseñas: { calificacion: number; reseña: string | null; fecha: string | null; cliente: string }[]
+}
+
+// POST /solicitud-de-servicio (el cliente pide presupuesto eligiendo el turno de la visita)
+export interface NuevaSolicitud {
+  idProfesional: number
+  idEspecialidad: number
+  descripcionProblema: string
+  inicioTurno: Date
+}
+
+// GET / PUT /turnos/mi-horario: el horario fijo del profesional (0 = domingo ... 6 = sábado).
+// Ej: lunes de 9 a 18 = { diaSemana: 1, horaDesde: 9, horaHasta: 18 } → turnos de 9 a 17
+export interface RangoHorario {
+  diaSemana: number
+  horaDesde: number
+  horaHasta: number
 }
 
 // GET /solicitud-de-servicio/agenda?desde=&hasta= (las fechas ya convertidas a Date)
@@ -228,4 +277,45 @@ export interface CambiosPerfilProfesional {
   idsEspecialidades: number[]
   idsTiposDeServicio: number[]
   idsZonasCobertura: number[]
+}
+
+// GET /auth/perfil del cliente (sin la contraseña)
+export interface PerfilCliente {
+  idUsuario: number
+  dni: number
+  nombre: string
+  apellido: string
+  fechaNacimiento: string // 'AAAA-MM-DD'
+  correo: string
+  telefono: string
+  calle: string
+  altura: number
+  piso?: string | null
+  depto?: string | null
+  zonaResidencia: {
+    idZona: number
+    nombreZona: string
+    localidad: {
+      idLocalidad: number
+      codigoPostal: string | null
+      nombreLocalidad: string
+      provincia: {
+        idProvincia: number
+        nombreProvincia: string
+      }
+    }
+  }
+}
+
+// PATCH /cliente/:id (null = borrar el dato opcional)
+export interface CambiosPerfilCliente {
+  nombre: string
+  apellido: string
+  correo: string
+  telefono: string
+  calle: string
+  altura: number
+  piso: string | null
+  depto: string | null
+  idZonaResidencia: number
 }

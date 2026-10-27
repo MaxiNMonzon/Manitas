@@ -2,6 +2,7 @@
 // Las fechas se arman a partir de hoy para que siempre haya algo que ver.
 // Con sesión real se usan GET /solicitud-de-servicio, /agenda y /urgentes.
 import type { ClienteDeSolicitud, EventoAgenda, SolicitudResumen, UrgenteDisponible } from '../types'
+import { clienteDemo, espejoDemo, profesionalDemo, propuestasDemo, sinPersonas } from './espejoDemo'
 
 function dia(desdeHoy: number, hora: number, minutos = 0): Date {
   const d = new Date()
@@ -46,13 +47,16 @@ export let solicitudesDemo: SolicitudResumen[] = [
   // Para aceptar o rechazar
   solicitud({ idSolicitud: 301, estadoServicio: 'solicitado', descripcionProblema: 'Reparación de cañería', cliente: juan }),
   solicitud({ idSolicitud: 302, estadoServicio: 'solicitado', descripcionProblema: 'Instalar una canilla nueva', cliente: ana, fechaCambioEstado: haceHoras(30) }),
-  // Pendientes de fecha
-  solicitud({ idSolicitud: 201, estadoServicio: 'en_coordinacion', descripcionProblema: 'Destapar la pileta del lavadero.', cliente: laura, fechaCambioEstado: haceHoras(5) }),
-  solicitud({ idSolicitud: 202, estadoServicio: 'en_coordinacion', descripcionProblema: 'Arreglar el calefón (presupuesto ya aceptado).', cliente: sofia, especialidad: gas, costoEstimado: 35000, costoFinal: 35000, fechaCambioEstado: haceHoras(40) }),
+  // Ya fue la visita: falta mandar el presupuesto
+  solicitud({ idSolicitud: 201, estadoServicio: 'agendado', descripcionProblema: 'Destapar la pileta del lavadero.', cliente: laura, fechaVisita: dia(-1, 10).toISOString(), fechaFinEstimada: dia(-1, 11).toISOString(), fechaCambioEstado: haceHoras(30) }),
+  // El cliente propuso otro horario para la visita: le toca contestar al profesional
+  solicitud({ idSolicitud: 110, estadoServicio: 'reprogramacion', estadoAnterior: 'agendado', propuestaDe: 'cliente', descripcionProblema: 'Cambiar el sifón de la bacha.', cliente: carlos, fechaVisita: dia(2, 10).toISOString() }),
   // Agendadas (las de la agenda)
   solicitud({ idSolicitud: 102, estadoServicio: 'agendado', descripcionProblema: 'Pierde agua la canilla de la cocina.', cliente: sofia, fechaVisita: dia(0, 9).toISOString(), fechaFinEstimada: dia(0, 10).toISOString(), costoVisita: 5000 }),
-  solicitud({ idSolicitud: 103, estadoServicio: 'agendado', descripcionProblema: 'Instalación de termotanque.', cliente: ana, costoEstimado: 40000, costoFinal: 40000, fechaVisita: dia(-3, 10).toISOString(), fechaInicio: dia(0, 15).toISOString(), fechaFinEstimada: dia(0, 17, 30).toISOString() }),
-  solicitud({ idSolicitud: 105, estadoServicio: 'agendado', descripcionProblema: 'Revisión de la instalación de gas.', cliente: carlos, especialidad: gas, costoEstimado: 35000, costoFinal: 35000, fechaVisita: dia(-1, 11).toISOString(), fechaInicio: dia(3, 9).toISOString(), fechaFinEstimada: dia(3, 13).toISOString() }),
+  // Contratadas: presupuesto aceptado y trabajo con horario
+  solicitud({ idSolicitud: 202, estadoServicio: 'contratado', descripcionProblema: 'Arreglar el calefón.', cliente: sofia, especialidad: gas, costoEstimado: 35000, costoFinal: 35000, fechaVisita: dia(-2, 9).toISOString(), fechaInicio: dia(5, 9).toISOString(), fechaFinEstimada: dia(5, 11).toISOString(), fechaCambioEstado: haceHoras(40) }),
+  solicitud({ idSolicitud: 103, estadoServicio: 'contratado', descripcionProblema: 'Instalación de termotanque.', cliente: ana, costoEstimado: 40000, costoFinal: 40000, fechaVisita: dia(-3, 10).toISOString(), fechaInicio: dia(0, 15).toISOString(), fechaFinEstimada: dia(0, 17, 30).toISOString() }),
+  solicitud({ idSolicitud: 105, estadoServicio: 'contratado', descripcionProblema: 'Revisión de la instalación de gas.', cliente: carlos, especialidad: gas, costoEstimado: 35000, costoFinal: 35000, fechaVisita: dia(-1, 11).toISOString(), fechaInicio: dia(3, 9).toISOString(), fechaFinEstimada: dia(3, 13).toISOString() }),
   // Esperando que el cliente acepte el presupuesto
   solicitud({ idSolicitud: 106, estadoServicio: 'presupuestado', descripcionProblema: 'Cambiar el flotante del tanque.', cliente: laura, costoFinal: 18000, fechaVisita: dia(-1, 16).toISOString() }),
   // Historial
@@ -166,8 +170,9 @@ export function agendarDemo(idSolicitud: number, inicio: Date, duracionMinutos: 
 // La urgente pasa directo a agendada, con la visita a la hora de llegada
 export function aceptarDemo(idSolicitud: number, minutosLlegada?: number): void {
   const nueva = solicitudesDemo.find((s) => s.idSolicitud === idSolicitud && s.estadoServicio === 'solicitado')
+  // Como en el back: la visita queda confirmada en el turno que eligió el cliente
   if (nueva && !nueva.urgente) {
-    cambiarEstadoDemo(idSolicitud, { estadoServicio: 'en_coordinacion' })
+    cambiarEstadoDemo(idSolicitud, { estadoServicio: 'agendado' })
     return
   }
   const urgente = urgentesDemo.find((u) => u.idSolicitud === idSolicitud)
@@ -177,7 +182,18 @@ export function aceptarDemo(idSolicitud: number, minutosLlegada?: number): void 
 
   const llegada = masMinutos(new Date(), minutosLlegada)
   const fin = masMinutos(llegada, 60)
-  const cliente: ClienteDeSolicitud = { nombre: urgente.cliente, apellido: '', telefono: '3410000000', calle: 'Entre Ríos', altura: 900, zonaResidencia: { nombreZona: urgente.zona } }
+  // Si la pidió el cliente demo, se ven sus datos; si no, unos de ejemplo
+  const delClienteDemo = urgente.cliente === clienteDemo.nombre
+  const cliente: ClienteDeSolicitud = delClienteDemo
+    ? clienteDemo
+    : { nombre: urgente.cliente, apellido: '', telefono: '3410000000', calle: 'Entre Ríos', altura: 900, zonaResidencia: { nombreZona: urgente.zona } }
+  // El cliente ve que alguien la tomó y a qué hora llega
+  espejoDemo.alCliente(idSolicitud, {
+    estadoServicio: 'agendado',
+    fechaVisita: llegada.toISOString(),
+    fechaFinEstimada: fin.toISOString(),
+    profesional: profesionalDemo,
+  })
   solicitudesDemo = [
     ...solicitudesDemo,
     solicitud({
@@ -216,12 +232,87 @@ export function rechazarDemo(idSolicitud: number): void {
 }
 
 // Simula PATCH /:id/presupuestar (después de la visita)
-export function presupuestarDemo(idSolicitud: number, costo: number): void {
-  cambiarEstadoDemo(idSolicitud, { estadoServicio: 'presupuestado', costoFinal: costo })
+export function presupuestarDemo(idSolicitud: number, costo: number, horasTrabajo?: number): void {
+  cambiarEstadoDemo(idSolicitud, { estadoServicio: 'presupuestado', costoFinal: costo, ...(horasTrabajo ? { horasTrabajo } : {}) })
 }
 
-function cambiarEstadoDemo(idSolicitud: number, cambios: Partial<SolicitudResumen>): void {
+// Simula PATCH /:id/reprogramar del profesional: propone otro horario y le toca contestar al cliente
+export function reprogramarProfesionalDemo(idSolicitud: number, inicio: Date): void {
+  const s = solicitudesDemo.find((x) => x.idSolicitud === idSolicitud)
+  if (!s) return
+  propuestasDemo.set(idSolicitud, inicio)
+  cambiarEstadoDemo(idSolicitud, {
+    estadoServicio: 'reprogramacion',
+    estadoAnterior: s.estadoServicio === 'reprogramacion' ? s.estadoAnterior : s.estadoServicio,
+    propuestaDe: 'profesional',
+  })
+}
+
+// Simula aceptar / rechazar el horario que propuso el cliente
+export function responderReprogramacionProfesionalDemo(idSolicitud: number, acepta: boolean): void {
+  const s = solicitudesDemo.find((x) => x.idSolicitud === idSolicitud)
+  if (!s) return
+  const anterior = s.estadoAnterior ?? 'agendado'
+  const nuevo = propuestasDemo.get(idSolicitud)
+  const esTrabajo = anterior === 'contratado'
+  cambiarEstadoDemo(idSolicitud, {
+    estadoServicio: acepta && anterior === 'solicitado' ? 'agendado' : anterior,
+    estadoAnterior: null,
+    propuestaDe: null,
+    ...(acepta && nuevo ? (esTrabajo ? { fechaInicio: nuevo.toISOString() } : { fechaVisita: nuevo.toISOString() }) : {}),
+  })
+  propuestasDemo.delete(idSolicitud)
+}
+
+// El horario propuesto en cada reprogramación de la demo (compartido con el cliente)
+propuestasDemo.set(110, dia(4, 11))
+export const propuestaProfesionalDemo = (idSolicitud: number): Date | null => propuestasDemo.get(idSolicitud) ?? null
+
+// Cambia una solicitud de este lado (sin avisar al otro)
+function aplicarDemo(idSolicitud: number, cambios: Partial<SolicitudResumen>): void {
   solicitudesDemo = solicitudesDemo.map((s) =>
     s.idSolicitud === idSolicitud ? { ...s, ...cambios, fechaCambioEstado: new Date().toISOString() } : s,
   )
+}
+
+// Lo que hace el profesional también lo ve el cliente (si la pidió el cliente demo)
+function cambiarEstadoDemo(idSolicitud: number, cambios: Partial<SolicitudResumen>): void {
+  aplicarDemo(idSolicitud, cambios)
+  espejoDemo.alCliente(idSolicitud, sinPersonas(cambios))
+}
+
+// ---- Lo que llega del cliente demo (ver espejoDemo) ----
+
+espejoDemo.alProfesional = aplicarDemo
+
+espejoDemo.nuevaParaProfesional = (s) => {
+  solicitudesDemo = [s, ...solicitudesDemo]
+  // La visita pedida ya ocupa el turno en la agenda
+  if (s.fechaVisita) {
+    const inicio = new Date(s.fechaVisita)
+    eventosDemo = [
+      ...eventosDemo,
+      {
+        idSolicitud: s.idSolicitud,
+        tipo: 'visita',
+        inicio,
+        fin: masMinutos(inicio, 60),
+        estado: 'solicitado',
+        urgente: false,
+        especialidad: s.especialidad?.nombreEspecialidad ?? null,
+        descripcionProblema: s.descripcionProblema,
+        con: s.cliente ?? null,
+        direccion: `${clienteDemo.calle} ${clienteDemo.altura}`,
+        zona: clienteDemo.zonaResidencia.nombreZona,
+      },
+    ]
+  }
+}
+
+espejoDemo.nuevaUrgente = (u) => {
+  urgentesDemo = [u, ...urgentesDemo]
+}
+
+espejoDemo.quitarUrgente = (idSolicitud) => {
+  urgentesDemo = urgentesDemo.filter((u) => u.idSolicitud !== idSolicitud)
 }

@@ -13,6 +13,7 @@ import { useCarga } from '../../hooks/useCarga'
 import CalendarioMensual from '../../components/agenda/CalendarioMensual'
 import ListaDeEventos from '../../components/agenda/ListaDeEventos'
 import SeccionTarjeta from '../../components/SeccionTarjeta'
+import HorarioTrabajo from '../../components/agenda/HorarioTrabajo'
 
 function Referencia({ color, texto }: { color: string; texto: string }) {
   return (
@@ -80,6 +81,12 @@ export default function AgendaProfesional() {
           </Grid>
         </Grid>
       </SeccionTarjeta>
+
+      <Box id="horario" sx={{ mt: 3 }}>
+        <SeccionTarjeta titulo="Mi horario de trabajo">
+          <HorarioTrabajo />
+        </SeccionTarjeta>
+      </Box>
     </>
   )
 }

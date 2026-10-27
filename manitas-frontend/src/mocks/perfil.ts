@@ -1,6 +1,6 @@
 // DATOS MOCK del perfil del profesional, solo para la sesión demo (datos del boceto "Mi perfil").
 // Con sesión real se usan GET /auth/perfil y PATCH /profesional/:id.
-import type { CambiosPerfilProfesional, PerfilProfesional } from '../types'
+import type { CambiosPerfilCliente, CambiosPerfilProfesional, PerfilCliente, PerfilProfesional } from '../types'
 
 const plomeria = { idEspecialidad: 1, nombreEspecialidad: 'Plomería' }
 const gas = { idEspecialidad: 2, nombreEspecialidad: 'Gas' }
@@ -49,4 +49,34 @@ export function guardarPerfilDemo(cambios: CambiosPerfilProfesional, nombres: { 
     tiposDeServicio: nombres.tiposDeServicio.filter((t) => idsTiposDeServicio.includes(t.idServicio)),
     zonasDeCobertura: nombres.zonasDeCobertura.filter((z) => idsZonasCobertura.includes(z.idZona)),
   }
+}
+
+// ---------- Cliente (sesión demo) ----------
+// Con sesión real se usan GET /auth/perfil y PATCH /cliente/:id
+
+const zonaCentro: PerfilCliente['zonaResidencia'] = {
+  idZona: 1,
+  nombreZona: 'Centro',
+  localidad: { idLocalidad: 1, codigoPostal: '2000', nombreLocalidad: 'Rosario', provincia: { idProvincia: 1, nombreProvincia: 'Santa Fe' } },
+}
+
+export let perfilClienteDemo: PerfilCliente = {
+  idUsuario: 1,
+  dni: 30111222,
+  nombre: 'Laura',
+  apellido: 'Méndez',
+  fechaNacimiento: '1990-05-10',
+  correo: 'demo.cliente@manitas.com',
+  telefono: '3415551001',
+  calle: 'Zeballos',
+  altura: 1451,
+  piso: '3',
+  depto: 'B',
+  zonaResidencia: zonaCentro,
+}
+
+// Simula el PATCH. La zona viene completa (con localidad y provincia) desde el formulario
+export function guardarPerfilClienteDemo(cambios: CambiosPerfilCliente, zona: PerfilCliente['zonaResidencia']): void {
+  const { idZonaResidencia: _id, ...simples } = cambios
+  perfilClienteDemo = { ...perfilClienteDemo, ...simples, zonaResidencia: zona }
 }

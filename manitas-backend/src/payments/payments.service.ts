@@ -36,8 +36,9 @@ export class PaymentsService {
     // Las mismas reglas que pagar con tarjeta (es del cliente, se puede pagar, no esta pagada)
     const { solicitud, monto } = await this.solicitudService.montoAPagar(idSolicitud, usuario);
 
-    // Al terminar, Mercado Pago vuelve a esta pantalla del front con ?payment_id=...&status=...
-    const vuelta = this.config.get<string>('MERCADOPAGO_VUELTA_URL', 'http://localhost:5173/app/pagos/resultado');
+    // Al tocar "Volver al sitio", Mercado Pago vuelve a "Mis solicitudes" del front con
+    // ?payment_id=...&status=...&external_reference=<idSolicitud>, y ahi se confirma el pago (POST /payments/confirmar)
+    const vuelta = this.config.get<string>('MERCADOPAGO_VUELTA_URL', 'http://localhost:5173/app/solicitudes');
     const backUrls = {
       success: this.config.get<string>('MERCADOPAGO_SUCCESS_URL', vuelta),
       failure: this.config.get<string>('MERCADOPAGO_FAILURE_URL', vuelta),
@@ -61,9 +62,9 @@ export class PaymentsService {
           ],
           // Con esto, al confirmar se sabe de que solicitud es el pago
           external_reference: String(solicitud.idSolicitud),
+          // Sin auto_return: despues de pagar, el cliente toca "Volver al sitio" en Mercado Pago
+          // y recien ahi vuelve a la app, que confirma el pago
           back_urls: backUrls,
-          // Mercado Pago solo vuelve solo a la app si la direccion es https
-          ...(backUrls.success.startsWith('https://') && { auto_return: 'approved' as const }),
         },
       });
 
