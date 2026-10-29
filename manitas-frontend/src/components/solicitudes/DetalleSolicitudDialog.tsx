@@ -38,9 +38,11 @@ interface Props {
   onClose: () => void
   // Botones al pie (ej: Aceptar / Rechazar en una solicitud nueva)
   acciones?: ReactNode
+  // En una reprogramación: el horario que se propuso
+  horarioPropuesto?: Date | null
 }
 
-export default function DetalleSolicitudDialog({ solicitud: s, onClose, acciones }: Props) {
+export default function DetalleSolicitudDialog({ solicitud: s, onClose, acciones, horarioPropuesto }: Props) {
   const theme = useTheme()
   const pantallaChica = useMediaQuery(theme.breakpoints.down('sm'))
 
@@ -73,6 +75,12 @@ export default function DetalleSolicitudDialog({ solicitud: s, onClose, acciones
             <Alert severity="info" icon={false} sx={{ mb: 2 }}>
               {proximoPaso(s)}
             </Alert>
+
+            {s.estadoServicio === 'reprogramacion' && horarioPropuesto && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Horario propuesto: <strong>{formatoFecha(horarioPropuesto.toISOString())}</strong>
+              </Alert>
+            )}
 
             <Typography variant="subtitle2" gutterBottom>
               {s.especialidad?.nombreEspecialidad ?? 'Problema'}
@@ -118,6 +126,8 @@ export default function DetalleSolicitudDialog({ solicitud: s, onClose, acciones
               {s.fechaVisita && <Dato titulo="Visita">{formatoFecha(s.fechaVisita)}</Dato>}
               {s.fechaInicio && <Dato titulo="Trabajo">{formatoFecha(s.fechaInicio)}</Dato>}
               {s.fechaFinReal && <Dato titulo="Terminado">{formatoFecha(s.fechaFinReal)}</Dato>}
+              {s.horasTrabajo != null && <Dato titulo="Horas de trabajo">{`${s.horasTrabajo} h`}</Dato>}
+              {s.fechaPago && <Dato titulo="Pagado">{formatoFecha(s.fechaPago)}</Dato>}
               {s.costoVisita != null && <Dato titulo="Costo de visita">{formatoPesos(s.costoVisita)}</Dato>}
               {s.costoEstimado != null && <Dato titulo="Presupuesto aceptado">{formatoPesos(s.costoEstimado)}</Dato>}
               {s.costoFinal != null && <Dato titulo="A cobrar / cobrado">{formatoPesos(s.costoFinal)}</Dato>}
