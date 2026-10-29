@@ -11,6 +11,8 @@ export const estados: Record<EstadoSolicitud, { label: string; plural: string; c
   en_coordinacion: { label: 'A coordinar', plural: 'A coordinar', color: 'info' },
   agendado: { label: 'Agendada', plural: 'Agendadas', color: 'primary' },
   presupuestado: { label: 'Presupuestada', plural: 'Presupuestadas', color: 'secondary' },
+  contratado: { label: 'Contratada', plural: 'Contratadas', color: 'info' },
+  reprogramacion: { label: 'A reprogramar', plural: 'A reprogramar', color: 'warning' },
   finalizado: { label: 'Finalizada', plural: 'Finalizadas', color: 'success' },
   rechazado: { label: 'Rechazada', plural: 'Rechazadas', color: 'default' },
   cancelado: { label: 'Cancelada', plural: 'Canceladas', color: 'default' },
@@ -21,7 +23,15 @@ export type Grupo = 'nuevas' | 'en_curso' | 'historial'
 
 export function grupoDe(estado: EstadoSolicitud): Grupo {
   if (estado === 'solicitado') return 'nuevas'
-  if (estado === 'en_coordinacion' || estado === 'agendado' || estado === 'presupuestado') return 'en_curso'
+  if (
+    estado === 'en_coordinacion' ||
+    estado === 'agendado' ||
+    estado === 'presupuestado' ||
+    estado === 'contratado' ||
+    estado === 'reprogramacion'
+  ) {
+    return 'en_curso'
+  }
   return 'historial'
 }
 
@@ -45,11 +55,16 @@ export function fechaPrincipal(s: SolicitudResumen): { que: 'Visita' | 'Trabajo'
   return null
 }
 
+// El presupuesto se manda después de ver el problema (el back no lo deja antes de la hora de la visita)
+export const yaFueLaVisita = (s: SolicitudResumen) => !!s.fechaVisita && new Date(s.fechaVisita) <= new Date()
+
 // Qué le toca hacer al profesional (o qué está esperando)
 export function proximoPaso(s: SolicitudResumen): string {
   switch (s.estadoServicio) {
     case 'solicitado':
-      return `Respondé antes de que venza: quedan ${tiempoQueQueda(s)}`
+      return s.fechaVisita
+        ? `Pidió la visita para el ${formatoFecha(s.fechaVisita)}. Aceptá, proponé otro horario o rechazá (quedan ${tiempoQueQueda(s)})`
+        : `Respondé antes de que venza: quedan ${tiempoQueQueda(s)}`
     case 'en_coordinacion':
       return s.costoEstimado == null
         ? `Coordiná la visita y cargá la fecha (vence en ${tiempoQueQueda(s)})`
@@ -59,11 +74,17 @@ export function proximoPaso(s: SolicitudResumen): string {
       if (s.urgente && s.costoEstimado == null && s.fechaVisita) {
         return `Urgente: llegá a las ${dayjs(s.fechaVisita).format('HH:mm')} y después mandá el presupuesto`
       }
-      return s.costoEstimado == null
-        ? 'Después de la visita, mandá el presupuesto'
-        : `A cobrar cuando termines: ${formatoPesos(s.costoFinal)}`
+      if (s.costoEstimado != null) return `A cobrar cuando termines: ${formatoPesos(s.costoFinal)}`
+      return yaFueLaVisita(s) ? 'Ya fue la visita: mandá el presupuesto' : 'Visita confirmada. Después de verlo, mandá el presupuesto'
     case 'presupuestado':
       return `Esperando que el cliente acepte el presupuesto de ${formatoPesos(s.costoFinal)}`
+    case 'contratado':
+      if (s.fechaInicio && new Date(s.fechaInicio) > new Date()) return `Trabajo contratado: ${formatoPesos(s.costoFinal)}`
+      return s.fechaPago ? `Pagado: ${formatoPesos(s.costoFinal)}` : `Trabajo en curso. El cliente paga ${formatoPesos(s.costoFinal)} por la app`
+    case 'reprogramacion':
+      return s.propuestaDe === 'cliente'
+        ? 'El cliente propuso otro horario: aceptalo o rechazalo'
+        : 'Esperando que el cliente responda tu cambio de horario'
     case 'finalizado':
       return `Cobrado: ${formatoPesos(s.costoFinal)}`
     case 'rechazado':
@@ -85,4 +106,17 @@ export function direccionDe(cliente: ClienteDeSolicitud | undefined, estado: Est
   if (cliente.depto) partes.push(`depto ${cliente.depto}`)
   if (zona) partes.push(zona)
   return partes.join(', ')
+}
+
+// ¿Se puede proponer otro horario? Mismas reglas que el back (PATCH /:id/reprogramar): hasta 12 h antes
+// del turno. Una nueva solo la reprograma el profesional (el cliente cancela y pide de nuevo); en una
+// reprogramación, contrapropone el que tenía que contestar
+const HORAS_MINIMAS_REPROGRAMAR = 12
+export function puedeReprogramar(s: SolicitudResumen, quien: 'cliente' | 'profesional'): boolean {
+  if (s.estadoServicio === 'reprogramacion') return s.propuestaDe !== quien
+  if (s.estadoServicio === 'solicitado') return quien === 'profesional' && !s.urgente
+  if (s.estadoServicio !== 'agendado' && s.estadoServicio !== 'contratado') return false
+  if (s.urgente && s.estadoServicio === 'agendado') return false
+  const actual = s.estadoServicio === 'contratado' ? s.fechaInicio : s.fechaVisita
+  return !!actual && dayjs(actual).diff(dayjs(), 'hour', true) >= HORAS_MINIMAS_REPROGRAMAR
 }

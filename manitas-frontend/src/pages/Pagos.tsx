@@ -6,34 +6,25 @@ import Typography from '@mui/material/Typography'
 import PaymentIcon from '@mui/icons-material/Payment'
 import { useAuth } from '../auth/useAuth'
 import { tokenStorage } from '../api/client'
-import { traerMisSolicitudes } from '../api/solicitudes'
+import { traerSolicitudesCliente } from '../api/solicitudes'
 import { useCarga } from '../hooks/useCarga'
 import CheckoutButton from '../components/pagos/CheckoutButton'
-import { formatoPesos } from '../components/cobros/estadosCobro'
+import { formatoPesos } from '../components/solicitudes/estados'
+import { debePagar } from '../components/solicitudes/estadosCliente'
 import EnConstruccion from './EnConstruccion'
-import type { SolicitudResumen } from '../types'
 
-// Lo que el cliente tiene para pagar: el trabajo contratado que ya empezó,
-// o la visita de un presupuesto que rechazó (si el profesional la cobra).
-// ('contratado' es un estado nuevo del back: falta sumarlo al tipo EstadoSolicitud del front)
-function paraPagar(s: SolicitudResumen) {
-  if (s.fechaPago) return false
-  const estado = s.estadoServicio as string
-  if (estado === 'contratado') return !!s.fechaInicio && new Date(s.fechaInicio) <= new Date()
-  if (estado === 'rechazado') return !!s.costoFinal && !s.fechaInicio
-  return false
-}
-
-// Pestaña "Pagos" del cliente. Por ahora solo con Mercado Pago (modo prueba);
-// pagar con una tarjeta guardada ya está en el back (PATCH /solicitud-de-servicio/:id/pagar)
+// Pestaña "Pagos" del cliente: lo que tiene para pagar (el trabajo contratado que ya empezó,
+// o la visita de un presupuesto que rechazó). Por ahora solo con Mercado Pago (modo prueba);
+// pagar con una tarjeta guardada ya está en el back (PATCH /solicitud-de-servicio/:id/pagar).
+// También se puede pagar desde el detalle de cada solicitud, en "Mis solicitudes"
 export default function Pagos() {
   const { sesion } = useAuth()
-  const esCliente = sesion?.rol === 'cliente' && !tokenStorage.esDemo()
-  const { datos, error, cargando } = useCarga('pagos', () => (esCliente ? traerMisSolicitudes() : Promise.resolve([])))
+  const esCliente = sesion?.rol === 'cliente'
+  const { datos, error, cargando } = useCarga('pagos', () => (esCliente ? traerSolicitudesCliente() : Promise.resolve([])))
 
-  if (sesion?.rol !== 'cliente') return <EnConstruccion titulo="Pagos" />
+  if (!esCliente) return <EnConstruccion titulo="Pagos" />
 
-  const pendientes = (datos ?? []).filter(paraPagar)
+  const pendientes = (datos ?? []).filter(debePagar)
 
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
@@ -42,12 +33,14 @@ export default function Pagos() {
         <Typography variant="h5">Pagos</Typography>
       </Stack>
 
-      {tokenStorage.esDemo() && <Alert severity="info">Con la sesión de prueba no se puede pagar: iniciá sesión con una cuenta real.</Alert>}
-      {error && <Alert severity="error">{error}</Alert>}
-      {cargando && esCliente && <CircularProgress />}
-      {!cargando && esCliente && pendientes.length === 0 && (
-        <Typography color="text.secondary">No tenés nada para pagar.</Typography>
+      {tokenStorage.esDemo() && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Con la sesión de prueba no se puede pagar: el pago pasa por Mercado Pago y necesita una cuenta real.
+        </Alert>
       )}
+      {error && <Alert severity="error">{error}</Alert>}
+      {cargando && <CircularProgress />}
+      {!cargando && pendientes.length === 0 && <Typography color="text.secondary">No tenés nada para pagar.</Typography>}
 
       <Stack spacing={2}>
         {pendientes.map((s) => (

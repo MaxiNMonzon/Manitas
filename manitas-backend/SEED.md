@@ -44,3 +44,33 @@ Con `synchronize: true`, TypeORM aplica estos cambios solo al levantar el back o
 
 - `provincia.idGeoref` y `localidad.idGeoref`: nuevas columnas (únicas, opcionales).
 - `localidad.codigoPostal`: pasa a ser opcional (`NULL`).
+
+---
+
+# Seed de datos de prueba (`seed:demo`)
+
+Carga datos para probar el sistema de punta a punta. El script está en `src/seeds/demo.seed.ts`.
+
+```bash
+pnpm run seed:demo   # o: npm run seed:demo
+```
+
+- **Se puede correr varias veces**: busca por nombre/correo y no duplica. No modifica ni borra nada que ya exista.
+- Agrega lo que falte de: los **10 oficios** (Electricidad, Plomería, Gas, Pintura, Albañilería, Carpintería,
+  Cerrajería, Climatización, Limpieza, Jardinería) con algunas habilidades cada uno, y las **zonas de Rosario**
+  (Centro, Echesortu, Norte, Sur, Oeste, Fisherton). Si no existen Santa Fe / Rosario, las crea.
+- Crea **5 clientes y 9 profesionales** (con horario de trabajo, zonas, oficios y CBU).
+- Crea una vez **solicitudes de ejemplo en todos los estados** (finalizadas con reseñas, presupuesto para aceptar,
+  trabajo para pagar, visita para presupuestar, nuevas para aceptar, cambio de horario...).
+
+**Contraseña de todas las cuentas: `Manitas123`.** En el login (modo desarrollo) hay botones para entrar directo.
+
+| Rol | Correo | Para probar |
+| --- | --- | --- |
+| Cliente | laura.cliente@manitas.test | Una solicitud en cada estado: aceptar presupuesto, pagar con Mercado Pago, responder un cambio de horario, calificar |
+| Cliente | martin.cliente@manitas.test | Visita hecha, esperando el presupuesto de Jorge |
+| Cliente | sofia.cliente@manitas.test / diego.cliente@manitas.test / carla.cliente@manitas.test | Nuevas pendientes, historial |
+| Profesional | jorge.plomero@manitas.test | Plomería y Gas: nuevas para aceptar y una visita para presupuestar |
+| Profesional | oscar.electricista@manitas.test | Una nueva y un trabajo por cobrar |
+| Profesional | marta.pintora@manitas.test, nicolas.clima@manitas.test, julian.gasista@manitas.test | Visita confirmada / propuso otro horario / presupuesto enviado |
+| Profesional | lucia.carpintera@, ramon.cerrajero@, ana.limpieza@, pablo.jardinero@ (manitas.test) | Un profesional por oficio |
