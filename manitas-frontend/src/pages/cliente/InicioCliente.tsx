@@ -21,14 +21,18 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import IconoEspecialidad from '../../components/IconoEspecialidad'
 import TarjetaProfesional from '../../components/profesional/TarjetaProfesional'
 import PerfilProfesionalDialog from '../../components/profesional/PerfilProfesionalDialog'
-import {
-  categorias,
-  profesionalesCercanos,
-  promocionesDelMes,
-  type ProfesionalResumen,
-} from '../../mocks/inicioCliente'
+import Button from '@mui/material/Button'
+import Skeleton from '@mui/material/Skeleton'
+import BoltIcon from '@mui/icons-material/Bolt'
+import SolicitarPresupuestoDialog from '../../components/solicitudes/SolicitarPresupuestoDialog'
+import UrgenteDialog from '../../components/solicitudes/UrgenteDialog'
+import { buscarProfesionales, traerEspecialidades } from '../../api/profesionales'
+import { traerUbicacionCliente } from '../../api/perfil'
+import { useCarga } from '../../hooks/useCarga'
+import { promocionesDelMes, type ProfesionalResumen } from '../../mocks/inicioCliente'
 
 const CATEGORIAS_VISIBLES = 6
+const PROFESIONALES_VISIBLES = 10
 
 // Título de cada sección, con un link o acciones a la derecha
 function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactNode; children: ReactNode }) {
@@ -45,12 +49,29 @@ function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactN
   )
 }
 
-// Pantalla principal del cliente (con datos mock por ahora, ver src/mocks/inicioCliente.ts)
+// Pantalla principal del cliente. Categorías y profesionales salen del back
+// (las promos siguen siendo mock, ver src/mocks/inicioCliente.ts)
 export default function InicioCliente() {
   const navigate = useNavigate()
   const [busqueda, setBusqueda] = useState('')
   const [verTodasCategorias, setVerTodasCategorias] = useState(false)
   const [perfilAbierto, setPerfilAbierto] = useState<ProfesionalResumen | null>(null)
+  const [aSolicitar, setASolicitar] = useState<ProfesionalResumen | null>(null)
+  const [urgenteAbierto, setUrgenteAbierto] = useState(false)
+
+  const especialidades = useCarga('especialidades', traerEspecialidades)
+  const categorias = especialidades.datos ?? []
+  // Los que trabajan en la zona del cliente, los mejor calificados primero (si no hay ninguno, todos)
+  const ubicacion = useCarga('ubicacion-cliente', traerUbicacionCliente)
+  const idZona = ubicacion.datos?.idZona ?? null
+  const cercanos = useCarga(`cercanos-${idZona}-${ubicacion.cargando}`, async () => {
+    if (ubicacion.cargando) return []
+    const enMiZona = await buscarProfesionales({ idZona })
+    const lista = enMiZona.length > 0 || !idZona ? enMiZona : await buscarProfesionales({})
+    return lista.sort((a, b) => b.calificacion - a.calificacion).slice(0, PROFESIONALES_VISIBLES)
+  })
+  const profesionalesCercanos = cercanos.datos ?? []
+  const irASolicitudes = (mensaje: string) => navigate('/app/solicitudes', { state: { mensaje } })
   const carrusel = useRef<HTMLDivElement>(null)
 
   const buscar = (e: FormEvent) => {
@@ -78,9 +99,14 @@ export default function InicioCliente() {
           background: (t) => `linear-gradient(135deg, ${t.palette.primary.dark}, ${t.palette.primary.main})`,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-          ¿Qué necesitás arreglar hoy?
-        </Typography>
+        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            ¿Qué necesitás arreglar hoy?
+          </Typography>
+          <Button variant="contained" color="error" startIcon={<BoltIcon />} onClick={() => setUrgenteAbierto(true)}>
+            Es urgente
+          </Button>
+        </Stack>
         <Box component="form" onSubmit={buscar}>
           <TextField
             fullWidth
@@ -182,6 +208,10 @@ export default function InicioCliente() {
             '& > *': { scrollSnapAlign: 'start' },
           }}
         >
+          {cercanos.cargando && [0, 1, 2].map((i) => <Skeleton key={i} variant="rounded" height={170} />)}
+          {!cercanos.cargando && profesionalesCercanos.length === 0 && (
+            <Typography color="text.secondary">Todavía no hay profesionales cargados.</Typography>
+          )}
           {profesionalesCercanos.map((p) => (
             <TarjetaProfesional key={p.idUsuario} profesional={p} onVerPerfil={() => setPerfilAbierto(p)} />
           ))}
@@ -226,7 +256,22 @@ export default function InicioCliente() {
         </Box>
       </Seccion>
 
-      <PerfilProfesionalDialog profesional={perfilAbierto} onClose={() => setPerfilAbierto(null)} />
+      <PerfilProfesionalDialog
+        profesional={perfilAbierto}
+        onClose={() => setPerfilAbierto(null)}
+        onSolicitar={(p) => {
+          setPerfilAbierto(null)
+          setASolicitar(p)
+        }}
+      />
+      <SolicitarPresupuestoDialog profesional={aSolicitar} onClose={() => setASolicitar(null)} onCreada={irASolicitudes} />
+      <UrgenteDialog
+        key={String(urgenteAbierto)}
+        abierto={urgenteAbierto}
+        especialidades={categorias}
+        onClose={() => setUrgenteAbierto(false)}
+        onCreada={irASolicitudes}
+      />
     </>
   )
 }

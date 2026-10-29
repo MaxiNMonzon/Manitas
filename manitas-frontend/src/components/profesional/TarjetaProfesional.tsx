@@ -40,7 +40,9 @@ export default function TarjetaProfesional({
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1.5 }}>
           <Rating value={profesional.calificacion} precision={0.5} readOnly size="small" />
           <Typography variant="body2" color="text.secondary">
-            {profesional.calificacion.toFixed(1)} ({profesional.cantidadCalificaciones})
+            {profesional.cantidadCalificaciones > 0
+              ? `${profesional.calificacion.toFixed(1)} (${profesional.cantidadCalificaciones})`
+              : 'Nuevo'}
           </Typography>
         </Stack>
       </CardContent>

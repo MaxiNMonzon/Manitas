@@ -16,7 +16,19 @@ import Typography from '@mui/material/Typography'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
-import { aceptarSolicitud, rechazarSolicitud, traerMisSolicitudes } from '../../api/solicitudes'
+import EventRepeatIcon from '@mui/icons-material/EventRepeat'
+import {
+  aceptarSolicitud,
+  rechazarSolicitud,
+  reprogramarComoProfesional,
+  responderReprogramacionProfesional,
+  traerHorarioPropuestoProfesional,
+  traerMiIdProfesional,
+  traerMisSolicitudes,
+  traerUrgentes,
+} from '../../api/solicitudes'
+import ReprogramarDialog from '../../components/solicitudes/ReprogramarDialog'
+import UrgenciasCerca from '../../components/solicitudes/UrgenciasCerca'
 import { useCarga } from '../../hooks/useCarga'
 // MEDIDOR DE CARGA (desactivado, archivo local sin subir; ver NOTAS-SESION.md punto 23):
 // import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
@@ -25,7 +37,16 @@ import AgendarDialog from '../../components/agenda/AgendarDialog'
 import TarjetaSolicitud from '../../components/solicitudes/TarjetaSolicitud'
 import DetalleSolicitudDialog from '../../components/solicitudes/DetalleSolicitudDialog'
 import PresupuestarDialog from '../../components/solicitudes/PresupuestarDialog'
-import { estados, fechaPrincipal, grupoDe, type ColorChip, type Grupo } from '../../components/solicitudes/estados'
+import {
+  estados,
+  fechaPrincipal,
+  formatoFecha,
+  grupoDe,
+  puedeReprogramar,
+  yaFueLaVisita,
+  type ColorChip,
+  type Grupo,
+} from '../../components/solicitudes/estados'
 import GrupoCarpeta from '../../components/solicitudes/GrupoCarpeta'
 import TiempoLlegadaDialog from '../../components/solicitudes/TiempoLlegadaDialog'
 import type { SolicitudResumen } from '../../types'
@@ -55,7 +76,7 @@ function ordenar(grupo: Grupo, lista: SolicitudResumen[]): SolicitudResumen[] {
   }
   if (grupo === 'en_curso') {
     // Las urgentes; después las que hay que coordinar, las agendadas por fecha y al final las presupuestadas
-    const prioridad = { en_coordinacion: 0, agendado: 1, presupuestado: 2 } as Record<string, number>
+    const prioridad = { reprogramacion: 0, en_coordinacion: 0, agendado: 1, contratado: 2, presupuestado: 3 } as Record<string, number>
     return copia.sort(
       (a, b) =>
         urgentesPrimero(a, b) ||
@@ -106,10 +127,22 @@ export default function SolicitudesProfesional() {
   const [aRechazar, setARechazar] = useState<SolicitudResumen | null>(null)
   const [aceptando, setAceptando] = useState(false)
   // Urgente a aceptar: antes se elige en cuánto llega
-  const [aTomar, setATomar] = useState<SolicitudResumen | null>(null)
+  const [aTomar, setATomar] = useState<{ idSolicitud: number; cliente: string; descripcionProblema: string } | null>(null)
+  // Urgencias cerca que nadie tomó (se revisan cada minuto): la primera que acepta se la queda
+  const urgentes = useCarga('urgentes', traerUrgentes, 60 * 1000)
+  const tomarUrgente = (s: { idSolicitud: number; cliente: string; descripcionProblema: string }) => setATomar(s)
   const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
 
+  const [aReprogramar, setAReprogramar] = useState<SolicitudResumen | null>(null)
+
   const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
+  // Para proponer otro horario hacen falta sus turnos libres (y el token no trae su id)
+  const miId = useCarga('mi-id-profesional', traerMiIdProfesional)
+  // En una reprogramación, el horario nuevo sale del detalle de la solicitud
+  const enReprogramacion = detalle?.estadoServicio === 'reprogramacion' ? detalle.idSolicitud : null
+  const propuesta = useCarga(`propuesta-${enReprogramacion}`, () =>
+    enReprogramacion ? traerHorarioPropuestoProfesional(enReprogramacion) : Promise.resolve(null),
+  )
   const todas = solicitudes.datos ?? []
   const delGrupo = (g: Grupo) => todas.filter((s) => grupoDe(s.estadoServicio) === g)
   const lista = ordenar(grupo, delGrupo(grupo))
@@ -141,14 +174,97 @@ export default function SolicitudesProfesional() {
         </Button>
       )
     }
-    if (s.estadoServicio === 'agendado' && s.costoEstimado == null) {
+    // El back no deja presupuestar antes de la hora de la visita
+    if (s.estadoServicio === 'agendado' && s.costoEstimado == null && yaFueLaVisita(s)) {
       return (
         <Button size="small" variant="contained" color="secondary" startIcon={<RequestQuoteIcon />} onClick={() => setAPresupuestar(s)}>
           Enviar presupuesto
         </Button>
       )
     }
+    if (s.estadoServicio === 'reprogramacion' && s.propuestaDe === 'cliente') {
+      return (
+        <Button size="small" variant="contained" color="warning" startIcon={<EventRepeatIcon />} onClick={() => setDetalle(s)}>
+          Responder horario
+        </Button>
+      )
+    }
     return null
+  }
+
+  // Botones del detalle según el estado
+  const accionesDetalle = (s: SolicitudResumen) => {
+    const botones = []
+    if (puedeReprogramar(s, 'profesional')) {
+      botones.push(
+        <Button key="reprogramar" startIcon={<EventRepeatIcon />} disabled={aceptando} onClick={() => setAReprogramar(s)} sx={{ mr: 'auto' }}>
+          {s.estadoServicio === 'reprogramacion' ? 'Proponer otro' : 'Proponer otro horario'}
+        </Button>,
+      )
+    }
+    if (s.estadoServicio === 'solicitado') {
+      botones.push(
+        <Button key="rechazar" variant="outlined" color="error" onClick={() => setARechazar(s)} disabled={aceptando}>
+          Rechazar
+        </Button>,
+        <Button
+          key="aceptar"
+          variant="contained"
+          color="success"
+          loading={aceptando}
+          onClick={() =>
+            // Una urgente es en el día: primero se elige en cuánto llega
+            s.urgente
+              ? tomarUrgente({ idSolicitud: s.idSolicitud, cliente: s.cliente?.nombre ?? 'Cliente', descripcionProblema: s.descripcionProblema })
+              : responder(
+                  () => aceptarSolicitud(s.idSolicitud),
+                  s.fechaVisita
+                    ? `Aceptada. La visita quedó confirmada para el ${formatoFecha(s.fechaVisita)}.`
+                    : 'Aceptada. La visita quedó confirmada.',
+                )
+          }
+        >
+          Aceptar
+        </Button>,
+      )
+    }
+    if (s.estadoServicio === 'reprogramacion' && s.propuestaDe === 'cliente') {
+      botones.push(
+        <Button
+          key="rechazar-horario"
+          variant="outlined"
+          disabled={aceptando}
+          onClick={() => responder(() => responderReprogramacionProfesional(s.idSolicitud, false), 'Sigue el horario que tenían.')}
+        >
+          Mantener el mío
+        </Button>,
+        <Button
+          key="aceptar-horario"
+          variant="contained"
+          color="success"
+          loading={aceptando}
+          onClick={() => responder(() => responderReprogramacionProfesional(s.idSolicitud, true), 'Horario nuevo confirmado.')}
+        >
+          Aceptar horario
+        </Button>,
+      )
+    }
+    if (s.estadoServicio === 'agendado' && s.costoEstimado == null && yaFueLaVisita(s)) {
+      botones.push(
+        <Button key="presupuestar" variant="contained" color="secondary" startIcon={<RequestQuoteIcon />} onClick={() => setAPresupuestar(s)}>
+          Enviar presupuesto
+        </Button>,
+      )
+    }
+    // A mitad del trabajo, si cambia lo que hay que hacer (el cliente lo vuelve a aceptar)
+    if (s.estadoServicio === 'contratado' && !s.fechaPago) {
+      botones.push(
+        <Button key="precio" variant="outlined" startIcon={<RequestQuoteIcon />} onClick={() => setAPresupuestar(s)}>
+          Cambiar precio
+        </Button>,
+      )
+    }
+    return botones.length ? botones : null
   }
 
   // (Desactivado) Al entrar y al actualizar: el velocímetro de carga (5 s)
@@ -198,6 +314,15 @@ export default function SolicitudesProfesional() {
           })}
         </Tabs>
       </Paper>
+
+      {/* En "Nuevas", arriba de todo, las urgencias cerca que puede tomar */}
+      {grupo === 'nuevas' && (
+        <UrgenciasCerca
+          urgentes={urgentes.datos ?? []}
+          onTomar={(u) => tomarUrgente({ idSolicitud: u.idSolicitud, cliente: u.cliente, descripcionProblema: u.descripcionProblema })}
+          sx={{ mb: 2 }}
+        />
+      )}
 
       {solicitudes.cargando ? (
         <Stack spacing={1.5}>
@@ -256,49 +381,32 @@ export default function SolicitudesProfesional() {
       <DetalleSolicitudDialog
         solicitud={detalle}
         onClose={() => setDetalle(null)}
-        acciones={
-          detalle?.estadoServicio === 'solicitado' && (
-            <>
-              <Button variant="outlined" color="error" onClick={() => setARechazar(detalle)} disabled={aceptando}>
-                Rechazar
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                loading={aceptando}
-                onClick={() =>
-                  // Una urgente es en el día: primero se elige en cuánto llega
-                  detalle.urgente
-                    ? setATomar(detalle)
-                    : responder(
-                        () => aceptarSolicitud(detalle.idSolicitud),
-                        'Aceptada. Coordiná la visita con el cliente y cargá la fecha.',
-                      )
-                }
-              >
-                Aceptar
-              </Button>
-            </>
-          )
-        }
+        horarioPropuesto={propuesta.datos}
+        acciones={detalle && accionesDetalle(detalle)}
+      />
+      <ReprogramarDialog
+        solicitud={aReprogramar}
+        idProfesional={miId.datos}
+        conQuien={aReprogramar?.cliente?.nombre ?? 'el cliente'}
+        onClose={() => setAReprogramar(null)}
+        enviar={(inicio) => reprogramarComoProfesional(aReprogramar!.idSolicitud, inicio)}
+        onEnviado={() => {
+          setMensaje({ texto: 'Horario propuesto. Te avisamos cuando el cliente conteste.', tipo: 'success' })
+          setDetalle(null)
+          solicitudes.recargar()
+        }}
       />
       <TiempoLlegadaDialog
-        urgente={
-          aTomar && {
-            idSolicitud: aTomar.idSolicitud,
-            cliente: aTomar.cliente?.nombre ?? 'Cliente',
-            descripcionProblema: aTomar.descripcionProblema,
-          }
-        }
+        urgente={aTomar}
         cargando={aceptando}
         onClose={() => setATomar(null)}
         onConfirmar={(minutos) => {
-          const s = aTomar!
+          const u = aTomar!
           setATomar(null)
           responder(
-            () => aceptarSolicitud(s.idSolicitud, minutos),
-            `Aceptada. Le avisamos a ${s.cliente?.nombre ?? 'el cliente'} que llegás a las ${dayjs().add(minutos, 'minute').format('HH:mm')}.`,
-          )
+            () => aceptarSolicitud(u.idSolicitud, minutos),
+            `¡La tomaste! Le avisamos a ${u.cliente} que llegás a las ${dayjs().add(minutos, 'minute').format('HH:mm')}.`,
+          ).then(urgentes.recargar)
         }}
       />
       <AgendarDialog solicitud={aAgendar} onClose={() => setAAgendar(null)} onAgendado={solicitudes.recargar} />

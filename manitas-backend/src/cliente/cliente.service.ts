@@ -89,6 +89,15 @@ export class ClienteService {
 
     const { idZonaResidencia, ...resto } = updateClienteDto;
 
+    // Si cambia el correo, no puede ser el de otra cuenta (igual que al registrarse)
+    if (resto.correo !== undefined && resto.correo !== cliente.correo) {
+      const otroCliente = await this.clienteRepository.findOne({ where: { correo: resto.correo }, withDeleted: true });
+      const otroProfesional = await this.profesionalRepository.findOne({ where: { correo: resto.correo }, withDeleted: true });
+      if (otroCliente || otroProfesional) {
+        throw new ConflictException('Ese correo ya está registrado en otra cuenta');
+      }
+    }
+
     if (idZonaResidencia !== undefined) {
       const zonaResidencia = await this.zonaRepository.findOneBy({ idZona: idZonaResidencia });
       if (!zonaResidencia) {
