@@ -118,7 +118,7 @@ pnpm run seed:georef      # todas las provincias y localidades de Argentina (API
 pnpm run seed:demo        # oficios, zonas de Rosario, clientes, profesionales y solicitudes en todos los estados
 ```
 
-Todas las cuentas de prueba tienen la contraseña `Manitas123` (ej: `laura.cliente@manitas.test`, `jorge.plomero@manitas.test`). Mas detalle en [SEED.md](manitas-backend/SEED.md).
+Las cuentas que crea tienen la contraseña `Manitas123` (ej: `valeriagodoy.ros@gmail.com`, `raulbustos.plomeria@gmail.com`). Mas detalle en [SEED.md](manitas-backend/SEED.md).
 
 **3. Front** (en otra terminal, con el back levantado):
 
@@ -128,7 +128,6 @@ npm install
 npm run dev               # http://localhost:5173
 ```
 
-En el login hay botones para entrar directo con las cuentas de prueba (solo en desarrollo).
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 DOCUMENTACION DE LA API
