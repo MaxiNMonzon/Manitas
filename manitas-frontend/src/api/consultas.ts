@@ -6,8 +6,7 @@ export interface NuevaConsulta {
   correo: string // a dónde contestarle
   tema: string
   mensaje: string
-  rol: 'cliente' | 'profesional' | 'visitante'
-  correoCuenta?: string // el de su cuenta, si tiene sesión
+  // Quién la manda (rol y correo de la cuenta) lo saca el back del token
 }
 
 export async function enviarConsulta(consulta: NuevaConsulta): Promise<void> {

@@ -191,6 +191,6 @@ Catalogo (lo maneja el admin)
 
 | Método | Ruta | Acceso | Descripción |
 | --- | --- | --- | --- |
-| `POST` | `/consulta` | público | Enviar una consulta |
+| `POST` | `/consulta` | con sesión | Enviar una consulta (cliente o profesional) |
 | `GET` | `/consulta` | admin | Ver las consultas |
 | `PATCH` | `/consulta/{id}/respondida` | admin | Marcar una consulta como respondida |
