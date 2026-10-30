@@ -31,7 +31,7 @@ describe('TarjetaSolicitudCliente', () => {
     expect(screen.getByText('Zeballos 1451, Centro')).toBeInTheDocument()
     expect(screen.getByText('Presupuesto recibido')).toBeInTheDocument()
     // Le toca responder al cliente: se lo dice con el monto
-    expect(screen.getByText(/Te mandó un presupuesto de/)).toBeInTheDocument()
+    expect(screen.getByText(/Presupuesto recibido: .* esperando tu respuesta/)).toBeInTheDocument()
   })
 
   it('avisa al tocar "Ver detalles" (output del componente)', async () => {
