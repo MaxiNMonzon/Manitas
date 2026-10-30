@@ -1,12 +1,15 @@
 # Deploy
 
-> **Estado:** pendiente. Completar los links y credenciales cuando esté publicado.
+> **Estado:** publicado (30/10/2026).
 
 | Qué | Link |
 | --- | --- |
-| Frontend | _(completar)_ |
-| Backend (API) | _(completar)_ |
-| Documentación de la API (Swagger) | _(completar)_/api |
+| Frontend (la página) | https://manitas-sigma.vercel.app |
+| Backend (API) | https://manitas-api-hv16.onrender.com |
+| Documentación de la API (Swagger) | https://manitas-api-hv16.onrender.com/api |
+
+> El back está en el plan gratis de Render: si nadie lo usa por un rato se apaga, y la primera consulta
+> después tarda alrededor de un minuto en responder. Conviene abrir la página un minuto antes de probarla.
 
 ### Credenciales para probar la app publicada
 
@@ -14,9 +17,21 @@
 | --- | --- | --- |
 | Cliente | laura.cliente@manitas.test | Manitas123 |
 | Profesional | jorge.plomero@manitas.test | Manitas123 |
-| Administrador | _(el ADMIN_CORREO del servidor)_ | _(el ADMIN_CONTRASENA del servidor)_ |
+| Administrador | admin@manitas.com | tuhogarenbuenasmanos |
 
-(Las cuentas de cliente y profesional las crea `pnpm run seed:demo` contra la base publicada.)
+Hay más cuentas de prueba (todas con la contraseña `Manitas123`): clientes `martin`, `sofia`, `diego` y `carla`
+(`<nombre>.cliente@manitas.test`) y profesionales `oscar.electricista`, `marta.pintora`, `lucia.carpintera`,
+`julian.gasista`, `ramon.cerrajero`, `ana.limpieza`, `pablo.jardinero` y `nicolas.clima` (`@manitas.test`).
+Para pagar con Mercado Pago (modo prueba) se usa un usuario comprador de prueba de Mercado Pago.
+
+## Qué usamos
+
+| Parte | Servicio | Detalle |
+| --- | --- | --- |
+| Base de datos | [Aiven](https://aiven.io) (MySQL 8.4, plan Free) | Servicio externo en la nube, con conexión segura (SSL verificando el certificado de Aiven) |
+| Backend | [Render](https://render.com) (Web Service, plan Free) | Rama `maxi`, carpeta `manitas-backend`. Se vuelve a publicar solo con cada `git push` |
+| Frontend | [Vercel](https://vercel.com) (plan Hobby) | Rama `maxi`, carpeta `manitas-frontend`. Se vuelve a publicar solo con cada `git push` |
+| Datos iniciales | `pnpm run seed:georef` y `pnpm run seed:demo` | Corridos desde la compu de un integrante contra la base de Aiven |
 
 ## Propuesta de infraestructura (todo con planes gratuitos)
 
@@ -25,7 +40,7 @@ La cátedra pide que la base de datos sea un servicio externo y **no requiera ej
 | Parte | Servicio sugerido | Notas |
 | --- | --- | --- |
 | Base de datos MySQL | [Railway](https://railway.app), [Aiven](https://aiven.io/mysql) o [Clever Cloud](https://www.clever-cloud.com) | Crear la base y copiar host, puerto, usuario, contraseña y nombre |
-| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `corepack enable && pnpm install --frozen-lockfile && pnpm run build` · Start: `pnpm run start:prod` |
+| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `corepack pnpm install --frozen-lockfile && corepack pnpm run build` · Start: `node dist/main` · variable `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` (en Render no se puede usar `corepack enable`: la carpeta del sistema es de solo lectura) |
 | Frontend | [Vercel](https://vercel.com) o [Netlify](https://netlify.com) | Root: `manitas-frontend` · Build: `npm run build` · Output: `dist` |
 
 ### Variables de entorno
