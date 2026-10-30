@@ -26,13 +26,13 @@ const pestañasCliente: Pestaña[] = [
   { path: 'perfil', label: 'Mi perfil', icono: <AccountCircleIcon /> },
 ]
 
-// Según el boceto del profesional ("Turnos" pasó a llamarse Agenda). La ayuda está
-// como link al pie de su pantalla de inicio
+// Según el boceto del profesional ("Turnos" pasó a llamarse Agenda)
 const pestañasProfesional: Pestaña[] = [
   { path: '', label: 'Inicio', icono: <HomeIcon /> },
   { path: 'solicitudes', label: 'Solicitudes', icono: <AssignmentIcon /> },
   { path: 'agenda', label: 'Agenda', icono: <CalendarMonthIcon /> },
   { path: 'cobros', label: 'Cobros', icono: <RequestQuoteIcon /> },
+  { path: 'ayuda', label: 'Ayuda', icono: <HelpCenterIcon /> },
   { path: 'perfil', label: 'Mi perfil', icono: <AccountCircleIcon /> },
 ]
 
