@@ -6,6 +6,8 @@ import HelpCenterIcon from '@mui/icons-material/HelpCenter'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
+import CategoryIcon from '@mui/icons-material/Category'
+import MailOutlinedIcon from '@mui/icons-material/MailOutlined'
 import type { Rol } from './types'
 
 // Pestañas de la parte privada (siempre visibles con sesión iniciada).
@@ -34,7 +36,16 @@ const pestañasProfesional: Pestaña[] = [
   { path: 'perfil', label: 'Mi perfil', icono: <AccountCircleIcon /> },
 ]
 
+// El administrador maneja los catálogos (CRUD de las clases de negocio) y las consultas de Ayuda
+const pestañasAdmin: Pestaña[] = [
+  { path: '', label: 'Inicio', icono: <HomeIcon /> },
+  { path: 'catalogos', label: 'Catálogos', icono: <CategoryIcon /> },
+  { path: 'consultas', label: 'Consultas', icono: <MailOutlinedIcon /> },
+  { path: 'perfil', label: 'Mi cuenta', icono: <AccountCircleIcon /> },
+]
+
 export function pestañasDe(rol: Rol): Pestaña[] {
+  if (rol === 'admin') return pestañasAdmin
   return rol === 'profesional' ? pestañasProfesional : pestañasCliente
 }
 

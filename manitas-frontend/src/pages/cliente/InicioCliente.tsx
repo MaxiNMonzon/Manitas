@@ -29,7 +29,8 @@ import UrgenteDialog from '../../components/solicitudes/UrgenteDialog'
 import { buscarProfesionales, traerEspecialidades } from '../../api/profesionales'
 import { traerUbicacionCliente } from '../../api/perfil'
 import { useCarga } from '../../hooks/useCarga'
-import { promocionesDelMes, type ProfesionalResumen } from '../../mocks/inicioCliente'
+import { type ProfesionalResumen } from '../../mocks/inicioCliente'
+import { traerPromocionesDelMes } from '../../api/promociones'
 
 const CATEGORIAS_VISIBLES = 6
 const PROFESIONALES_VISIBLES = 10
@@ -71,6 +72,9 @@ export default function InicioCliente() {
     return lista.sort((a, b) => b.calificacion - a.calificacion).slice(0, PROFESIONALES_VISIBLES)
   })
   const profesionalesCercanos = cercanos.datos ?? []
+  // CUU "Informar promociones bancarias del mes" (GET /promocion/del-mes)
+  const promociones = useCarga('promociones-del-mes', traerPromocionesDelMes)
+  const promocionesDelMes = promociones.datos ?? []
   const irASolicitudes = (mensaje: string) => navigate('/app/solicitudes', { state: { mensaje } })
   const carrusel = useRef<HTMLDivElement>(null)
 
@@ -225,8 +229,11 @@ export default function InicioCliente() {
 
       {/* Promociones bancarias */}
       <Seccion titulo="Promos bancarias del mes">
+        {!promociones.cargando && promocionesDelMes.length === 0 && (
+          <Typography color="text.secondary">Este mes no hay promociones vigentes.</Typography>
+        )}
         <Grid container spacing={2}>
-          {promocionesDelMes.map((promo) => (
+          {promocionesDelMes.slice(0, 3).map((promo) => (
             <Grid key={promo.idPromocion} size={{ xs: 12, sm: 4 }}>
               <Card variant="outlined" sx={{ height: '100%' }}>
                 <CardContent>

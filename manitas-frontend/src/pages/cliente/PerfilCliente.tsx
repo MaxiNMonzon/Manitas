@@ -25,6 +25,7 @@ import { useListado } from '../../hooks/useListado'
 import AvatarPersona from '../../components/AvatarPersona'
 import SeccionTarjeta from '../../components/SeccionTarjeta'
 import CambiarContrasenaDialog from '../../components/perfil/CambiarContrasenaDialog'
+import BajaCuentaButton from '../../components/perfil/BajaCuentaButton'
 import type { CambiosPerfilCliente, Localidad, PerfilCliente, Provincia, Zona } from '../../types'
 
 // Lo que se puede editar, como texto (igual que en los campos)
@@ -398,6 +399,7 @@ export default function PerfilCliente() {
                 Cerrar sesión
               </Button>
             </Stack>
+            <BajaCuentaButton idUsuario={p.idUsuario} />
           </SeccionTarjeta>
         )}
       </Stack>

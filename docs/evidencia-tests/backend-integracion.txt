@@ -1,0 +1,14 @@
+Backend — test de integración (npm run test:e2e, Jest + Supertest)
+Ejecutado: 29/10/2026, 22:34:03
+
+PASS  test/turnos.e2e-spec.ts (8.6 s)
+  ✓ Turnos: API protegida por login y roles (integración) › sin token responde 401 (328 ms)
+  ✓ Turnos: API protegida por login y roles (integración) › con un token de cliente responde 403 (es una ruta de profesional) (82 ms)
+  ✓ Turnos: API protegida por login y roles (integración) › con datos inválidos responde 400 con los mensajes de validación (127 ms)
+  ✓ Turnos: API protegida por login y roles (integración) › rechaza campos que no están en el DTO (asignación masiva) (60 ms)
+  ✓ Turnos: API protegida por login y roles (integración) › el profesional guarda su horario y el id sale del token, no del pedido (41 ms)
+  ✓ Turnos: API protegida por login y roles (integración) › los turnos libres son públicos pero validan las fechas (25 ms)
+
+Suites: 1 pasaron, 0 fallaron, 1 en total
+Tests:  6 pasaron, 0 fallaron, 6 en total
+Resultado: OK
