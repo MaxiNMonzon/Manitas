@@ -22,6 +22,7 @@ import SolicitudesNuevas from '../../components/solicitudes/SolicitudesNuevas'
 import NovedadesInicio from '../../components/NovedadesInicio'
 import MedidorCalificacion from '../../components/profesional/MedidorCalificacion'
 import ListaDeEventos from '../../components/agenda/ListaDeEventos'
+import ItemAgenda from '../../components/agenda/ItemAgenda'
 import SeccionTarjeta from '../../components/SeccionTarjeta'
 import TiempoLlegadaDialog, { type UrgenteAAceptar } from '../../components/solicitudes/TiempoLlegadaDialog'
 import type { SolicitudResumen } from '../../types'
@@ -94,6 +95,8 @@ function TarjetaDato({ icono, titulo, valor, detalle, children, color, onClick }
   )
 }
 
+const PROXIMOS_VISIBLES = 5
+
 // Pantalla principal del profesional
 export default function InicioProfesional() {
   const navigate = useNavigate()
@@ -105,6 +108,13 @@ export default function InicioProfesional() {
   const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
   const urgentes = useCarga('urgentes', traerUrgentes, CADA_UN_MINUTO)
   const agendaHoy = useCarga(`hoy-${hoy}`, () => traerAgenda(hoy, hoy))
+  // Si hoy no tiene nada, se muestran las próximas (de los próximos 30 días) para que el inicio no quede vacío
+  const proximos = useCarga(`proximos-${hoy}`, async () => {
+    const manana = dayjs().add(1, 'day').format('YYYY-MM-DD')
+    const enUnMes = dayjs().add(30, 'day').format('YYYY-MM-DD')
+    return (await traerAgenda(manana, enUnMes)).slice(0, PROXIMOS_VISIBLES)
+  })
+  const sinNadaHoy = !agendaHoy.cargando && (agendaHoy.datos ?? []).length === 0
   const calificacion = useCarga('mi-calificacion', traerMiCalificacion)
 
   const datos = resumen(solicitudes.datos ?? [])
@@ -132,6 +142,7 @@ export default function InicioProfesional() {
       urgentes.recargar()
       solicitudes.recargar()
       agendaHoy.recargar()
+      proximos.recargar()
     }
   }
 
@@ -223,6 +234,25 @@ export default function InicioProfesional() {
             />
           </SeccionTarjeta>
         </Grid>
+
+        {/* Próximas: solo cuando hoy no hay nada */}
+        {sinNadaHoy && (
+          <Grid size={{ xs: 12 }}>
+            <SeccionTarjeta titulo="Próximas visitas y trabajos">
+              {proximos.cargando ? (
+                <Skeleton variant="rounded" height={110} />
+              ) : (proximos.datos ?? []).length === 0 ? (
+                <Typography color="text.secondary">Por ahora no tenés nada agendado para los próximos 30 días.</Typography>
+              ) : (
+                <Stack spacing={1.5}>
+                  {(proximos.datos ?? []).map((ev) => (
+                    <ItemAgenda key={`${ev.idSolicitud}-${ev.tipo}-${ev.inicio.getTime()}`} evento={ev} mostrarFecha />
+                  ))}
+                </Stack>
+              )}
+            </SeccionTarjeta>
+          </Grid>
+        )}
       </Grid>
 
       <TiempoLlegadaDialog urgente={aTomar} cargando={aceptando} onClose={() => setATomar(null)} onConfirmar={aceptarUrgente} />
