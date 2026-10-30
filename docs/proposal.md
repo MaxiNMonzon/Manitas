@@ -43,9 +43,6 @@ erDiagram
     ESPECIALIDAD ||--o{ SOLICITUD_DE_SERVICIO : "de"
     SOLICITUD_DE_SERVICIO ||--o{ TURNO : reserva
     PROFESIONAL ||--o{ TURNO : "ocupado en"
-    CLIENTE ||--o{ TARJETA : guarda
-    METODO_DE_PAGO ||--o{ TARJETA : "es de tipo"
-    TARJETA ||--o{ SOLICITUD_DE_SERVICIO : "paga"
     METODO_DE_PAGO }o--o{ PROMOCION : "tiene"
 
     SOLICITUD_DE_SERVICIO {
@@ -81,7 +78,7 @@ Adicionales para Aprobación:
 
 | Req | Detalle | Dónde está |
 | :- | :- | :- |
-| CRUD | CRUD de todas las clases de negocio necesarias: Usuario (Cliente, Profesional), Especialidad, Tipo de Servicio, Provincia, Localidad, Zona, Método de Pago, Promoción, Horario laboral, Tarjeta | Admin → Catálogos (Especialidad, Tipo de servicio, Provincia, Localidad, Zona, Método de pago, Promoción; Clientes y Profesionales en consulta); Profesional → Agenda → Mi horario; Usuario desde Mi perfil |
+| CRUD | CRUD de todas las clases de negocio necesarias: Usuario (Cliente, Profesional), Especialidad, Tipo de Servicio, Provincia, Localidad, Zona, Método de Pago, Promoción, Horario laboral | Admin → Catálogos (Especialidad, Tipo de servicio, Provincia, Localidad, Zona, Método de pago, Promoción; Clientes y Profesionales en consulta); Profesional → Agenda → Mi horario; Usuario desde Mi perfil |
 | CUU/Epic | 1. Solicitar presupuesto / servicio (también urgente)<br>2. Coordinar visita (turnos libres, aceptar y reprogramar)<br>3. Confirmar servicio (presupuesto + aceptación con reserva de horas)<br>4. Abonar servicio (Mercado Pago)<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas (avisos) | Encadenados: la solicitud (1) genera la visita (2), que habilita el presupuesto (3), que habilita el pago (4), que habilita la calificación (5), que alimenta el perfil del profesional que ve el próximo cliente (1) |
 
 ### Alcance Adicional Voluntario

@@ -76,10 +76,17 @@ export const catalogos: Catalogo[] = [
     columnas: [
       { label: 'Nombre', valor: (f) => texto(f.nombreEspecialidad) },
       { label: 'Descripción', valor: (f) => texto(f.descripcionEspecialidad) },
+      { label: 'Palabras clave', valor: (f) => texto(f.palabrasClave) },
     ],
     campos: [
       { clave: 'nombreEspecialidad', label: 'Nombre', tipo: 'texto', requerido: true },
       { clave: 'descripcionEspecialidad', label: 'Descripción', tipo: 'textoLargo', requerido: true },
+      {
+        clave: 'palabrasClave',
+        label: 'Palabras clave',
+        tipo: 'textoLargo',
+        ayuda: 'Separadas por coma. Son las palabras con las que el cliente cuenta su problema (ej: caño, canilla, pérdida)',
+      },
     ],
   },
   {
