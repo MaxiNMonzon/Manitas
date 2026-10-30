@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+DEFENSA_PROYECTO.md
+# Reportes de los tests end-to-end (Playwright)
+playwright-report
+test-results
+
+# Variables de entorno locales (el ejemplo sí se sube)
+.env
+.env.*
+!.env.example

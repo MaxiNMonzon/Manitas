@@ -23,7 +23,8 @@ export default function Login() {
   const { login } = useAuth()
   const [params] = useSearchParams()
 
-  const [rol, setRol] = useState<Rol>(params.get('rol') === 'profesional' ? 'profesional' : 'cliente')
+  const rolInicial = params.get('rol')
+  const [rol, setRol] = useState<Rol>(rolInicial === 'profesional' || rolInicial === 'admin' ? rolInicial : 'cliente')
   const [correo, setCorreo] = useState('')
   const [contraseña, setContraseña] = useState('')
   const [verContraseña, setVerContraseña] = useState(false)
@@ -48,17 +49,23 @@ export default function Login() {
   return (
     <AuthLayout volverA="/">
       <Stack component="form" spacing={2.5} onSubmit={onSubmit} noValidate>
-        <ToggleButtonGroup
-          exclusive
-          fullWidth
-          color="primary"
-          size="small"
-          value={rol}
-          onChange={(_, valor: Rol | null) => valor && setRol(valor)}
-        >
-          <ToggleButton value="cliente">Soy cliente</ToggleButton>
-          <ToggleButton value="profesional">Soy profesional</ToggleButton>
-        </ToggleButtonGroup>
+        {rol === 'admin' ? (
+          <Alert severity="info" icon={false} action={<Button size="small" onClick={() => setRol('cliente')}>Volver</Button>}>
+            Ingreso de administrador
+          </Alert>
+        ) : (
+          <ToggleButtonGroup
+            exclusive
+            fullWidth
+            color="primary"
+            size="small"
+            value={rol}
+            onChange={(_, valor: Rol | null) => valor && setRol(valor)}
+          >
+            <ToggleButton value="cliente">Soy cliente</ToggleButton>
+            <ToggleButton value="profesional">Soy profesional</ToggleButton>
+          </ToggleButtonGroup>
+        )}
 
         {error && <Alert severity="error">{error}</Alert>}
 
@@ -133,6 +140,11 @@ export default function Login() {
         <Link component={RouterLink} to="/registro/profesional" variant="body2">
           Registrate como profesional
         </Link>
+        {rol !== 'admin' && (
+          <Link component="button" type="button" variant="caption" color="text.secondary" onClick={() => setRol('admin')} sx={{ pt: 1.5 }}>
+            Ingreso de administrador
+          </Link>
+        )}
       </Stack>
 
       {/* PROVISORIO: accesos directos sin backend (solo en desarrollo) */}

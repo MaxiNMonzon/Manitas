@@ -13,7 +13,10 @@ INTEGRANTES
 REPOSITORIOS
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-(mas adelante backend-frontend)
+Monorepo: https://github.com/MaxiNMonzon/Manitas
+
+- `manitas-backend`: API REST (NestJS + TypeORM + MySQL)
+- `manitas-frontend`: SPA (React + Vite + Material UI)
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 TEMA
@@ -56,4 +59,31 @@ Adicionales para Aprobación
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
+---------------------------------------------------------------------------------------------------------------------------------------------------
+INSTALACIÓN Y EJECUCIÓN
+---------------------------------------------------------------------------------------------------------------------------------------------------
 
+Requisitos: Node.js 22+ y MySQL 8+. Guía completa: [docs/instalacion.md](docs/instalacion.md).
+
+```bash
+# Backend (API en http://localhost:3000, Swagger en http://localhost:3000/api)
+cd manitas-backend
+npm install
+cp .env.example .env        # completar la conexión a MySQL, JWT_SECRET, admin y Mercado Pago
+npm run start:dev
+npm run seed:demo           # opcional: datos y cuentas de prueba (contraseña Manitas123)
+
+# Frontend (http://localhost:5173)
+cd manitas-frontend
+npm install
+npm run dev
+```
+
+Tests: `npm test` y `npm run test:e2e` en cada carpeta ([docs/tests.md](docs/tests.md)).
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+DOCUMENTACIÓN
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+Toda la documentación del TP está en [docs/](docs/README.md): propuesta actualizada, instalación, API, evidencia de tests,
+deploy, minutas y seguimiento, con el estado de cada requisito para la Aprobación Directa.
