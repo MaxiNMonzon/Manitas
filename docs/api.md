@@ -11,7 +11,8 @@ los controladores y los DTOs.
 ## Autenticación y niveles de acceso
 
 - Login: `POST /auth/login/cliente`, `/auth/login/profesional` o `/auth/login/admin` con `{ correo, contraseña }` → `{ token }`.
-- Las rutas protegidas esperan el header `Authorization: Bearer <token>` (JWT firmado, vence a las 24 h).
+- Las rutas protegidas esperan el header `Authorization: Bearer <token>` (JWT firmado; vence a las 24 h, el del admin a las 2 h).
+- Login: 3 intentos fallidos seguidos bloquean esa cuenta 15 minutos (`429`); el front vuelve a la pantalla de inicio con el aviso.
 - Niveles: **cliente**, **profesional** y **admin**. Sin token → `401`; con un rol que no corresponde → `403`.
 - Errores: siempre `{ statusCode, message, error }`; los errores de validación devuelven `400` con la lista de problemas en `message`.
 
