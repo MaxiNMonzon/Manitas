@@ -15,7 +15,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import CloseIcon from '@mui/icons-material/Close'
 import PlaceIcon from '@mui/icons-material/Place'
-import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
+import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import dayjs from 'dayjs'
 import { traerCalificaciones } from '../../api/profesionales'
 import { useCarga } from '../../hooks/useCarga'
@@ -123,10 +123,10 @@ export default function PerfilProfesionalDialog({
                 fullWidth={pantallaChica}
                 variant="contained"
                 size="large"
-                startIcon={<RequestQuoteIcon />}
+                startIcon={<EventAvailableIcon />}
                 onClick={() => onSolicitar(profesional)}
               >
-                Pedir presupuesto
+                Pedir turno
               </Button>
             </DialogActions>
           )}

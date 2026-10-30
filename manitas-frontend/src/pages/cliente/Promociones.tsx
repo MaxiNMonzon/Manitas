@@ -24,7 +24,7 @@ export default function Promociones() {
         Promociones bancarias de {mes}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Pagando tus servicios con estos medios, tu banco te reintegra parte del pago.
+        Pagando tus arreglos con estos medios, tu banco te reintegra parte del pago (crédito: en el próximo resumen · débito: en tu cuenta).
       </Typography>
 
       {promociones.error && <Alert severity="error">{promociones.error}</Alert>}
