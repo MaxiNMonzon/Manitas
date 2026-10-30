@@ -237,7 +237,7 @@ export interface Cobro {
   monto: number
   fechaPago: string | null
   depositoEstimado: string | null
-  medioDePago: string | null // solo el tipo (ej: "Visa crédito Banco Nación"), nunca los números
+  medioDePago: string | null // con qué se pagó (hoy siempre "Mercado Pago")
   especialidad: string | null
   descripcionProblema: string
   cliente: { nombre: string; apellido: string }
