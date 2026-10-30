@@ -67,3 +67,9 @@ export async function cambiarContraseña(contraseñaActual: string, contraseñaN
   }
   await api.patch('/auth/contrasena', { contraseñaActual, contraseñaNueva })
 }
+
+// Dar de baja la propia cuenta (borrado lógico: el correo queda bloqueado)
+export async function darDeBajaCuenta(rol: 'cliente' | 'profesional', id: number): Promise<void> {
+  if (tokenStorage.esDemo()) return
+  await api.delete(`/${rol}/${id}`)
+}

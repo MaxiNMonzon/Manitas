@@ -127,3 +127,23 @@ DOCUMENTACION DE LA API
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 Con el back levantado: **http://localhost:3000/api** (Swagger). Estan todas las rutas agrupadas, que rol puede usar cada una, de que estado a que estado pasa cada paso de la solicitud, los errores y ejemplos. Con el boton "Authorize" se pega el token del login y se pueden probar desde ahi.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+TESTS
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+```bash
+cd manitas-backend
+pnpm test                 # unitarios
+pnpm run test:e2e         # integracion
+
+cd manitas-frontend
+npm test                  # unitarios
+npm run test:e2e          # end-to-end (Playwright)
+```
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+DOCUMENTACION
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+Toda la documentacion del TP esta en [docs/](docs/README.md): propuesta, instalacion, API, evidencia de los tests, deploy, minutas y seguimiento.
