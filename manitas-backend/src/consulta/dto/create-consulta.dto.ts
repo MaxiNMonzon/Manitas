@@ -24,7 +24,7 @@ export class CreateConsultaDto {
   @IsIn(['cliente', 'profesional', 'visitante'])
   rol?: 'cliente' | 'profesional' | 'visitante';
 
-  @ApiPropertyOptional({ example: 'laura.cliente@manitas.test', description: 'El correo de su cuenta, si tiene sesion' })
+  @ApiPropertyOptional({ example: 'valeriagodoy.ros@gmail.com', description: 'El correo de su cuenta, si tiene sesion' })
   @IsOptional()
   @IsEmail()
   @MaxLength(120)
