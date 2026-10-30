@@ -2,6 +2,7 @@
 // Siempre pasa por Mercado Pago: con la sesión demo (sin back) no se puede pagar.
 import { api } from './client'
 import type { SolicitudResumen } from '../types'
+import { registrarMiAccion } from './misAcciones'
 
 // Paso 1: el back arma el pago con el precio de la solicitud y devuelve el link de Mercado Pago
 export async function irAPagarConMercadoPago(idSolicitud: number): Promise<string> {
@@ -14,5 +15,6 @@ export async function irAPagarConMercadoPago(idSolicitud: number): Promise<strin
 // si el pago se aprobó y recién ahí marca la solicitud como pagada
 export async function confirmarPagoMercadoPago(paymentId: string): Promise<SolicitudResumen> {
   const { solicitud } = await api.post<{ solicitud: SolicitudResumen }>('/payments/confirmar', { paymentId })
+  registrarMiAccion(solicitud.idSolicitud)
   return solicitud
 }

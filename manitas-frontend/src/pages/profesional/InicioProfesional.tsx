@@ -1,21 +1,16 @@
 import { useState, type ReactElement, type ReactNode } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import ButtonBase from '@mui/material/ButtonBase'
-import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
-import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import AssignmentIcon from '@mui/icons-material/Assignment'
-import HelpCenterIcon from '@mui/icons-material/HelpCenter'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
 import StarIcon from '@mui/icons-material/Star'
-import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import dayjs from 'dayjs'
 import { aceptarSolicitud, traerAgenda, traerMiCalificacion, traerMisSolicitudes, traerUrgentes } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
@@ -23,27 +18,22 @@ import { useCarga } from '../../hooks/useCarga'
 // import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
 // import MedidorCarga from '../../components/MedidorCarga'
 import UrgenciasCerca from '../../components/solicitudes/UrgenciasCerca'
-import AgendarDialog from '../../components/agenda/AgendarDialog'
+import SolicitudesNuevas from '../../components/solicitudes/SolicitudesNuevas'
+import NovedadesInicio from '../../components/NovedadesInicio'
 import MedidorCalificacion from '../../components/profesional/MedidorCalificacion'
 import ListaDeEventos from '../../components/agenda/ListaDeEventos'
 import SeccionTarjeta from '../../components/SeccionTarjeta'
 import TiempoLlegadaDialog, { type UrgenteAAceptar } from '../../components/solicitudes/TiempoLlegadaDialog'
 import type { SolicitudResumen } from '../../types'
 
-const PLAZO_PARA_AGENDAR_HS = 48 // igual que el back: después vence
 const CADA_UN_MINUTO = 60 * 1000 // las urgentes vencen en 1 hora: se revisan seguido
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
-function horasQueQuedan(s: SolicitudResumen): number {
-  const pasadas = (Date.now() - new Date(s.fechaCambioEstado).getTime()) / (1000 * 60 * 60)
-  return Math.max(0, Math.floor(PLAZO_PARA_AGENDAR_HS - pasadas))
-}
-
 // Números del resumen, calculados con las solicitudes del profesional
 function resumen(solicitudes: SolicitudResumen[]) {
   const enCurso = solicitudes.filter((s) =>
-    ['en_coordinacion', 'agendado', 'presupuestado', 'contratado', 'reprogramacion'].includes(s.estadoServicio),
+    ['agendado', 'presupuestado', 'contratado', 'reprogramacion'].includes(s.estadoServicio),
   )
   // Por cobrar: trabajos con presupuesto aceptado que todavía no se pagaron
   const porCobrar = solicitudes.filter((s) => (s.estadoServicio === 'contratado' || s.estadoServicio === 'agendado') && s.costoEstimado != null && !s.fechaPago)
@@ -108,7 +98,6 @@ function TarjetaDato({ icono, titulo, valor, detalle, children, color, onClick }
 export default function InicioProfesional() {
   const navigate = useNavigate()
   const hoy = dayjs().format('YYYY-MM-DD')
-  const [aAgendar, setAAgendar] = useState<SolicitudResumen | null>(null)
   const [aTomar, setATomar] = useState<UrgenteAAceptar | null>(null)
   const [aceptando, setAceptando] = useState(false)
   const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
@@ -119,11 +108,10 @@ export default function InicioProfesional() {
   const calificacion = useCarga('mi-calificacion', traerMiCalificacion)
 
   const datos = resumen(solicitudes.datos ?? [])
-  // Las que aceptó y todavía no tienen fecha: vencen a las 48 h. Urgentes primero, después las más apuradas.
-  // (La visita de una urgente no se agenda: es en el día, con la hora de llegada que dio al aceptarla)
-  const pendientes = (solicitudes.datos ?? [])
-    .filter((s) => s.estadoServicio === 'en_coordinacion' && !(s.urgente && s.costoEstimado == null))
-    .sort((a, b) => Number(b.urgente) - Number(a.urgente) || horasQueQuedan(a) - horasQueQuedan(b))
+  // Las nuevas que tiene que responder: las que vencen antes, primero
+  const nuevas = (solicitudes.datos ?? [])
+    .filter((s) => s.estadoServicio === 'solicitado')
+    .sort((a, b) => new Date(a.fechaCambioEstado).getTime() - new Date(b.fechaCambioEstado).getTime())
   const error = solicitudes.error ?? agendaHoy.error ?? urgentes.error ?? calificacion.error
   // const medidor = useMedidorDeCarga(solicitudes.cargando || calificacion.cargando || agendaHoy.cargando)
 
@@ -211,59 +199,15 @@ export default function InicioProfesional() {
         onTomar={(u) => setATomar({ idSolicitud: u.idSolicitud, cliente: u.cliente, descripcionProblema: u.descripcionProblema })}
       />
 
-      <Grid container spacing={2}>
-        {/* Pendientes de fecha */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <SeccionTarjeta
-            titulo="Pendientes de fecha"
-            extra={pendientes.length > 0 && <Chip size="small" color="warning" label={pendientes.length} />}
-          >
-            {solicitudes.cargando ? (
-              <Skeleton variant="rounded" height={90} />
-            ) : pendientes.length === 0 ? (
-              <Typography color="text.secondary">No tenés solicitudes esperando fecha.</Typography>
-            ) : (
-              <Stack spacing={1.5}>
-                {pendientes.map((s) => {
-                  const horas = horasQueQuedan(s)
-                  return (
-                    <Paper key={s.idSolicitud} variant="outlined" sx={{ p: 1.5 }}>
-                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }} noWrap>
-                            {s.cliente ? `${s.cliente.nombre} ${s.cliente.apellido}` : 'Cliente'}
-                            {s.especialidad && (
-                              <Typography component="span" color="text.secondary">
-                                {' '}
-                                · {s.especialidad.nombreEspecialidad}
-                              </Typography>
-                            )}
-                          </Typography>
-                          <Typography variant="body2" color={horas <= 12 ? 'error' : 'text.secondary'}>
-                            {s.urgente && 'Urgente · '}
-                            {s.costoEstimado != null ? 'Trabajo' : 'Visita'} · vence en {horas} h
-                          </Typography>
-                        </Box>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          startIcon={<EventAvailableIcon />}
-                          onClick={() => setAAgendar(s)}
-                          sx={{ flexShrink: 0 }}
-                        >
-                          Agendar
-                        </Button>
-                      </Stack>
-                    </Paper>
-                  )
-                })}
-              </Stack>
-            )}
-          </SeccionTarjeta>
-        </Grid>
+      {/* Solicitudes nuevas: solo si hay */}
+      <SolicitudesNuevas solicitudes={nuevas} onResponder={(s) => navigate('/app/solicitudes', { state: { abrir: s.idSolicitud } })} />
 
+      {/* Lo que cambió por algo que hizo el cliente (aceptó el presupuesto, pagó...): solo si hay */}
+      <NovedadesInicio rol="profesional" />
+
+      <Grid container spacing={2}>
         {/* Hoy */}
-        <Grid size={{ xs: 12, md: 7 }}>
+        <Grid size={{ xs: 12 }}>
           <SeccionTarjeta
             titulo="Hoy"
             extra={
@@ -281,23 +225,7 @@ export default function InicioProfesional() {
         </Grid>
       </Grid>
 
-      {/* El profesional no tiene pestaña de Ayuda: el link va al pie de su inicio */}
-      <Box sx={{ textAlign: 'center', mt: 3 }}>
-        <Button startIcon={<HelpCenterIcon />} onClick={() => navigate('/app/ayuda')}>
-          Ayuda y preguntas frecuentes
-        </Button>
-      </Box>
-
       <TiempoLlegadaDialog urgente={aTomar} cargando={aceptando} onClose={() => setATomar(null)} onConfirmar={aceptarUrgente} />
-
-      <AgendarDialog
-        solicitud={aAgendar}
-        onClose={() => setAAgendar(null)}
-        onAgendado={() => {
-          solicitudes.recargar()
-          agendaHoy.recargar()
-        }}
-      />
 
       <Snackbar
         open={mensaje !== null}

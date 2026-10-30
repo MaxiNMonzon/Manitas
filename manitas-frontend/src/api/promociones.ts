@@ -38,6 +38,10 @@ export async function traerPromocionesDelMes(): Promise<PromoBancaria[]> {
       // Corto: el tope y las tarjetas están en la descripción; las fechas salen de la vigencia
       detalle: `${p.descripcion} · Válido del ${fecha(p.fechaInicioVigencia)} al ${fecha(p.fechaFinVigencia)}`,
       color: colorDe(banco),
+      condiciones: p.descripcion,
+      // Sin el banco, que ya está arriba (ej: "Visa crédito")
+      tarjetas: medios.map((m) => (bancos.size === 1 ? m.split(' - ')[0] : m)),
+      vigencia: `Del ${fecha(p.fechaInicioVigencia)} al ${fecha(p.fechaFinVigencia)}`,
     }
   })
 }

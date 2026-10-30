@@ -34,6 +34,10 @@ export interface PromoBancaria {
   titulo: string
   detalle: string
   color: string // color de la marca del banco, para el ícono
+  // Para "Ver condiciones": el texto de la promo, con qué tarjetas y hasta cuándo
+  condiciones?: string
+  tarjetas?: string[]
+  vigencia?: string
 }
 
 export const categorias: Categoria[] = [

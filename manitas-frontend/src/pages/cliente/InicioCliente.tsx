@@ -29,7 +29,9 @@ import UrgenteDialog from '../../components/solicitudes/UrgenteDialog'
 import { buscarProfesionales, traerEspecialidades } from '../../api/profesionales'
 import { traerUbicacionCliente } from '../../api/perfil'
 import { useCarga } from '../../hooks/useCarga'
-import { type ProfesionalResumen } from '../../mocks/inicioCliente'
+import { type ProfesionalResumen, type PromoBancaria } from '../../mocks/inicioCliente'
+import CondicionesPromoDialog from '../../components/CondicionesPromoDialog'
+import NovedadesInicio from '../../components/NovedadesInicio'
 import { traerPromocionesDelMes } from '../../api/promociones'
 
 const CATEGORIAS_VISIBLES = 6
@@ -59,6 +61,7 @@ export default function InicioCliente() {
   const [perfilAbierto, setPerfilAbierto] = useState<ProfesionalResumen | null>(null)
   const [aSolicitar, setASolicitar] = useState<ProfesionalResumen | null>(null)
   const [urgenteAbierto, setUrgenteAbierto] = useState(false)
+  const [condiciones, setCondiciones] = useState<PromoBancaria | null>(null)
 
   const especialidades = useCarga('especialidades', traerEspecialidades)
   const categorias = especialidades.datos ?? []
@@ -138,6 +141,9 @@ export default function InicioCliente() {
       </Paper>
 
       {/* Categorías */}
+      {/* Novedades de sus solicitudes (el profesional confirmó, mandó presupuesto...): solo si hay */}
+      <NovedadesInicio rol="cliente" sx={{ mt: 3 }} />
+
       <Seccion titulo="Categorías">
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))', gap: 1.5 }}>
           {categoriasMostradas.map((c) => (
@@ -250,6 +256,9 @@ export default function InicioCliente() {
                   <Typography variant="body2" color="text.secondary">
                     {promo.detalle}
                   </Typography>
+                  <Link component="button" variant="body2" onClick={() => setCondiciones(promo)} sx={{ mt: 1 }}>
+                    Ver condiciones
+                  </Link>
                 </CardContent>
               </Card>
             </Grid>
@@ -260,6 +269,7 @@ export default function InicioCliente() {
             Ver todas las promociones bancarias
           </Link>
         </Box>
+        <CondicionesPromoDialog promo={condiciones} onCerrar={() => setCondiciones(null)} />
       </Seccion>
 
       <PerfilProfesionalDialog

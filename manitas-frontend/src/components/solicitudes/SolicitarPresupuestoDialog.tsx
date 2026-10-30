@@ -64,8 +64,14 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
         },
       )
       const cuando = dayjs(inicio).format('dddd DD/MM [a las] HH:mm')
+      // Igual que el back: tiene 48 h para responder, o hasta la hora del turno si llega antes
+      const en48hs = dayjs().add(48, 'hour')
+      const limite = dayjs(inicio).isBefore(en48hs) ? dayjs(inicio) : en48hs
       cerrar()
-      onCreada(`Solicitud enviada a ${p.nombre}. Visita pedida para el ${cuando}: te avisamos cuando la confirme.`)
+      onCreada(
+        `Solicitud enviada a ${p.nombre}. Visita pedida para el ${cuando}. ` +
+          `Tiene tiempo de responder hasta el ${limite.format('dddd DD/MM [a las] HH:mm')}: te avisamos cuando confirme.`,
+      )
     } catch (e) {
       // Ej: "El turno ya no esta libre"
       setError(e instanceof Error ? e.message : 'No se pudo enviar la solicitud')

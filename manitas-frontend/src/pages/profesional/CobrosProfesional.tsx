@@ -441,7 +441,7 @@ export default function CobrosProfesional() {
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <SeccionTarjeta titulo="Medios de pago">
-              <Torta datos={agrupar(recientes, (c) => c.medioDePago ?? 'Tarjeta')} colores={coloresTorta} />
+              <Torta datos={agrupar(recientes, (c) => c.medioDePago ?? 'Mercado Pago')} colores={coloresTorta} />
             </SeccionTarjeta>
           </Grid>
           <Grid size={12}>

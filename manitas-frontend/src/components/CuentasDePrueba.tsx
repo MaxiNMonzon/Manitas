@@ -20,7 +20,7 @@ const cuentas: { rol: Rol; titulo: string; personas: { nombre: string; correo: s
       { nombre: 'Martín', correo: 'martin.cliente@manitas.test', ayuda: 'Visita hecha, esperando presupuesto' },
       { nombre: 'Sofía', correo: 'sofia.cliente@manitas.test', ayuda: 'Una nueva para Jorge' },
       { nombre: 'Diego', correo: 'diego.cliente@manitas.test', ayuda: 'Una nueva para Oscar' },
-      { nombre: 'Carla', correo: 'carla.cliente@manitas.test', ayuda: 'Vive en Fisherton' },
+      { nombre: 'Carla', correo: 'carla.cliente@manitas.test', ayuda: 'Vive en el distrito Noroeste' },
     ],
   },
   {

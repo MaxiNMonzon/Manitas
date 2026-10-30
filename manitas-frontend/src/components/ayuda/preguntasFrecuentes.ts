@@ -29,12 +29,12 @@ const cliente: TemaAyuda[] = [
       {
         pregunta: '¿Qué es una solicitud urgente?',
         respuesta:
-          'Es para algo que no puede esperar (una pérdida de agua, quedarte afuera de casa). Tocá "Es urgente", elegí el oficio y contá qué pasó: le llega a todos los profesionales de ese oficio en tu zona y el primero que la toma te dice a qué hora llega. Si nadie la toma en 1 hora, se cancela sola.',
+          'Es para algo que no puede esperar (una pérdida de agua, quedarte afuera de casa). Tocá "Es urgente", elegí el oficio y contá qué pasó: la enviamos a los profesionales de ese oficio en tu zona y el primero que la acepte te avisa en cuánto llega. Si nadie la toma en 1 hora, vence y podés volver a pedirla.',
       },
       {
         pregunta: '¿Por qué no veo profesionales cerca?',
         respuesta:
-          'Te mostramos los que trabajan en la zona de tu domicilio. Revisá que tu zona esté bien cargada en "Mi perfil", o desactivá "Solo en mi zona" en el buscador para ver todos.',
+          'Te mostramos solo los que trabajan en la zona de tu domicilio, porque la visita es en tu casa. Revisá que tu dirección y tu zona estén bien cargadas en "Mi perfil".',
       },
     ],
   },
@@ -54,7 +54,7 @@ const cliente: TemaAyuda[] = [
       {
         pregunta: '¿Puedo cambiar el día u horario?',
         respuesta:
-          'Sí, desde el detalle de la solicitud con "Cambiar horario", hasta 12 horas antes de la visita o del trabajo. El profesional tiene que aceptar el horario nuevo; mientras tanto sigue valiendo el anterior. Si es una solicitud nueva todavía sin respuesta, cancelala y pedí de nuevo.',
+          'Sí, desde el detalle de la solicitud con "Cambiar horario", hasta 12 horas antes de la visita o del trabajo. El profesional tiene que aceptar el horario nuevo; mientras tanto sigue valiendo el anterior. Si es el profesional el que te propone otro horario, podés aceptarlo, proponerle otro o cancelar; si no contestás en 24 horas, la solicitud se cancela sola. Si es una solicitud nueva todavía sin respuesta, cancelala y pedí de nuevo.',
       },
       {
         pregunta: '¿Puedo cancelar?',
@@ -78,7 +78,13 @@ const cliente: TemaAyuda[] = [
       },
       {
         pregunta: '¿Hay promociones con mi banco?',
-        respuesta: 'En Inicio están las promos bancarias del mes. El reintegro lo hace tu banco según las condiciones de cada promo.',
+        respuesta:
+          'En Inicio y en "Promociones" están las promos bancarias del mes. Tocá "Ver condiciones" en cada una para ver el tope, las tarjetas que participan y la vigencia. Pagá con Mercado Pago usando una de esas tarjetas y el banco te hace el reintegro.',
+      },
+      {
+        pregunta: '¿No me llegó el reintegro de una promo?',
+        respuesta:
+          'El reintegro lo hace tu banco, no Manitas. Si es con tarjeta de crédito, aparece en el próximo resumen; si es de débito, en tu cuenta en hasta 5 días hábiles. Si pasado ese tiempo no lo ves, comunicate con tu banco emisor.',
       },
     ],
   },
@@ -120,7 +126,7 @@ const profesional: TemaAyuda[] = [
       {
         pregunta: '¿Puedo cambiar el horario de una visita o trabajo?',
         respuesta:
-          'Sí, con "Proponer otro horario" en el detalle, hasta 12 horas antes. El cliente lo acepta o lo rechaza; mientras tanto sigue el horario anterior. Si el cliente propone uno, te aparece "Responder horario".',
+          'Sí, con "Proponer otro horario" en el detalle, hasta 12 horas antes. El cliente acepta el horario nuevo, te propone otro o cancela (como vos no podés en el anterior, no se puede quedar con ese). Si no contesta en 24 horas, se cancela sola. Si el cliente propone uno, te aparece "Responder horario" y podés aceptarlo o seguir con el que ya tenían.',
       },
     ],
   },

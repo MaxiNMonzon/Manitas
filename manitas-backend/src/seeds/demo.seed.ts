@@ -93,7 +93,10 @@ function juntarPalabras(actuales: string | null, nuevas: string): string {
   return lista.filter((p) => !vistas.has(normalizar(p)) && vistas.add(normalizar(p))).join(', ');
 }
 
-const ZONAS_ROSARIO =['Centro', 'Echesortu', 'Norte', 'Sur', 'Oeste', 'Fisherton'];
+// Los 6 distritos oficiales de la Municipalidad de Rosario
+const ZONAS_ROSARIO = ['Centro', 'Norte', 'Noroeste', 'Oeste', 'Sudoeste', 'Sur'];
+// Zonas que cargaba una version vieja del seed y no son distritos: su gente pasa al distrito y se dan de baja
+const ZONAS_VIEJAS: Record<string, string> = { Echesortu: 'Centro', Fisherton: 'Noroeste' };
 
 // ---------- Usuarios ----------
 
@@ -112,10 +115,10 @@ interface ClienteSeed {
 
 const CLIENTES: ClienteSeed[] = [
   { correo: 'laura.cliente@manitas.test', nombre: 'Laura', apellido: 'Méndez', dni: 30111222, telefono: '3415551001', calle: 'Zeballos', altura: 1451, piso: '3', depto: 'B', zona: 'Centro' },
-  { correo: 'martin.cliente@manitas.test', nombre: 'Martín', apellido: 'Suárez', dni: 31222333, telefono: '3415551002', calle: 'Mendoza', altura: 3200, zona: 'Echesortu' },
+  { correo: 'martin.cliente@manitas.test', nombre: 'Martín', apellido: 'Suárez', dni: 31222333, telefono: '3415551002', calle: 'Mendoza', altura: 3200, zona: 'Oeste' },
   { correo: 'sofia.cliente@manitas.test', nombre: 'Sofía', apellido: 'Paz', dni: 32333444, telefono: '3415551003', calle: 'Alberdi', altura: 850, zona: 'Norte' },
   { correo: 'diego.cliente@manitas.test', nombre: 'Diego', apellido: 'Ramos', dni: 33444555, telefono: '3415551004', calle: 'Uriburu', altura: 1200, zona: 'Sur' },
-  { correo: 'carla.cliente@manitas.test', nombre: 'Carla', apellido: 'Funes', dni: 34555666, telefono: '3415551005', calle: 'Eva Perón', altura: 7800, zona: 'Fisherton' },
+  { correo: 'carla.cliente@manitas.test', nombre: 'Carla', apellido: 'Funes', dni: 34555666, telefono: '3415551005', calle: 'Eva Perón', altura: 7800, zona: 'Noroeste' },
 ];
 
 interface ProfesionalSeed {
@@ -138,15 +141,15 @@ const LUNES_A_VIERNES = (desde: number, hasta: number): [number, number, number]
   [1, 2, 3, 4, 5].map((d) => [d, desde, hasta]);
 
 const PROFESIONALES: ProfesionalSeed[] = [
-  { correo: 'jorge.plomero@manitas.test', nombre: 'Jorge', apellido: 'Díaz', dni: 25111222, telefono: '3416662001', oficios: ['Plomería', 'Gas'], zonas: ['Centro', 'Echesortu', 'Norte'], costoVisita: 5000, descripcion: 'Plomero y gasista con 20 años de experiencia. Pérdidas, destapaciones, termotanques y calefones.', cbu: '0110599520000001234561', matricula: { oficio: 'Gas', numero: 'MG-4521', descripcion: 'Gasista de 2da categoría - Litoral Gas' }, horario: [...LUNES_A_VIERNES(8, 17), [6, 9, 13]] },
-  { correo: 'oscar.electricista@manitas.test', nombre: 'Oscar', apellido: 'Gómez', dni: 26222333, telefono: '3416662002', oficios: ['Electricidad'], zonas: ['Centro', 'Sur', 'Oeste'], costoVisita: 4500, descripcion: 'Electricista matriculado. Instalaciones nuevas, tableros, disyuntores y reparaciones.', cbu: '0170099220000067890123', matricula: { oficio: 'Electricidad', numero: 'ME-1187', descripcion: 'Colegio de Técnicos de Santa Fe' }, horario: LUNES_A_VIERNES(9, 18) },
-  { correo: 'marta.pintora@manitas.test', nombre: 'Marta', apellido: 'Ríos', dni: 27333444, telefono: '3416662003', oficios: ['Pintura', 'Albañilería'], zonas: ['Centro', 'Norte', 'Fisherton'], costoVisita: null, descripcion: 'Pintura de interiores y exteriores, reparación de paredes y humedad. Presupuesto sin cargo.', cbu: '0720000788000012345678', horario: [...LUNES_A_VIERNES(8, 13), ...LUNES_A_VIERNES(15, 19)] },
-  { correo: 'lucia.carpintera@manitas.test', nombre: 'Lucía', apellido: 'Fernández', dni: 28444555, telefono: '3416662004', oficios: ['Carpintería'], zonas: ['Centro', 'Echesortu', 'Oeste'], costoVisita: 5000, descripcion: 'Muebles a medida, placares y arreglos de aberturas de madera.', cbu: '0140999801200012345671', horario: LUNES_A_VIERNES(9, 17) },
-  { correo: 'julian.gasista@manitas.test', nombre: 'Julián', apellido: 'Pereyra', dni: 29555666, telefono: '3416662005', oficios: ['Gas', 'Climatización'], zonas: ['Norte', 'Sur', 'Fisherton'], costoVisita: 6000, descripcion: 'Gasista matriculado e instalador de aires acondicionados.', cbu: '0150501102000123456789', matricula: { oficio: 'Gas', numero: 'MG-7730', descripcion: 'Gasista de 1ra categoría - ENARGAS' }, horario: [...LUNES_A_VIERNES(8, 16), [6, 8, 12]] },
-  { correo: 'ramon.cerrajero@manitas.test', nombre: 'Ramón', apellido: 'Acosta', dni: 24666777, telefono: '3416662006', oficios: ['Cerrajería'], zonas: ['Centro', 'Echesortu', 'Norte', 'Sur', 'Oeste', 'Fisherton'], costoVisita: 3500, descripcion: 'Cerrajería las 24 horas. Aperturas, cambio de cerraduras y combinaciones.', cbu: '0340040108400012345675', horario: [0, 1, 2, 3, 4, 5, 6].map((d) => [d, 8, 22] as [number, number, number]) },
-  { correo: 'ana.limpieza@manitas.test', nombre: 'Ana', apellido: 'Benítez', dni: 30777888, telefono: '3416662007', oficios: ['Limpieza'], zonas: ['Centro', 'Norte', 'Fisherton'], costoVisita: null, descripcion: 'Limpieza de casas, departamentos y final de obra.', cbu: '0070999030004012345671', horario: [...LUNES_A_VIERNES(8, 14), [6, 8, 12]] },
-  { correo: 'pablo.jardinero@manitas.test', nombre: 'Pablo', apellido: 'Sosa', dni: 31888999, telefono: '3416662008', oficios: ['Jardinería'], zonas: ['Fisherton', 'Oeste', 'Norte'], costoVisita: 3000, descripcion: 'Corte de césped, poda y mantenimiento de jardines.', cbu: '2850590940090412345671', horario: [[2, 8, 16], [4, 8, 16], [6, 8, 14]] },
-  { correo: 'nicolas.clima@manitas.test', nombre: 'Nicolás', apellido: 'Vera', dni: 32999000, telefono: '3416662009', oficios: ['Climatización', 'Electricidad'], zonas: ['Centro', 'Sur', 'Echesortu'], costoVisita: 5500, descripcion: 'Instalación y service de aires acondicionados split. También electricidad domiciliaria.', cbu: '0720168520000001234567', horario: LUNES_A_VIERNES(10, 19) },
+  { correo: 'jorge.plomero@manitas.test', nombre: 'Jorge', apellido: 'Díaz', dni: 25111222, telefono: '3416662001', oficios: ['Plomería', 'Gas'], zonas: ['Centro', 'Norte', 'Oeste'], costoVisita: 5000, descripcion: 'Plomero y gasista con 20 años de experiencia. Pérdidas, destapaciones, termotanques y calefones.', cbu: '0110599520000001234561', matricula: { oficio: 'Gas', numero: 'MG-4521', descripcion: 'Gasista de 2da categoría - Litoral Gas' }, horario: [...LUNES_A_VIERNES(8, 17), [6, 9, 13]] },
+  { correo: 'oscar.electricista@manitas.test', nombre: 'Oscar', apellido: 'Gómez', dni: 26222333, telefono: '3416662002', oficios: ['Electricidad'], zonas: ['Centro', 'Sur', 'Oeste', 'Sudoeste'], costoVisita: 4500, descripcion: 'Electricista matriculado. Instalaciones nuevas, tableros, disyuntores y reparaciones.', cbu: '0170099220000067890123', matricula: { oficio: 'Electricidad', numero: 'ME-1187', descripcion: 'Colegio de Técnicos de Santa Fe' }, horario: LUNES_A_VIERNES(9, 18) },
+  { correo: 'marta.pintora@manitas.test', nombre: 'Marta', apellido: 'Ríos', dni: 27333444, telefono: '3416662003', oficios: ['Pintura', 'Albañilería'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Pintura de interiores y exteriores, reparación de paredes y humedad. Presupuesto sin cargo.', cbu: '0720000788000012345678', horario: [...LUNES_A_VIERNES(8, 13), ...LUNES_A_VIERNES(15, 19)] },
+  { correo: 'lucia.carpintera@manitas.test', nombre: 'Lucía', apellido: 'Fernández', dni: 28444555, telefono: '3416662004', oficios: ['Carpintería'], zonas: ['Centro', 'Oeste', 'Noroeste'], costoVisita: 5000, descripcion: 'Muebles a medida, placares y arreglos de aberturas de madera.', cbu: '0140999801200012345671', horario: LUNES_A_VIERNES(9, 17) },
+  { correo: 'julian.gasista@manitas.test', nombre: 'Julián', apellido: 'Pereyra', dni: 29555666, telefono: '3416662005', oficios: ['Gas', 'Climatización'], zonas: ['Norte', 'Sur', 'Noroeste', 'Sudoeste'], costoVisita: 6000, descripcion: 'Gasista matriculado e instalador de aires acondicionados.', cbu: '0150501102000123456789', matricula: { oficio: 'Gas', numero: 'MG-7730', descripcion: 'Gasista de 1ra categoría - ENARGAS' }, horario: [...LUNES_A_VIERNES(8, 16), [6, 8, 12]] },
+  { correo: 'ramon.cerrajero@manitas.test', nombre: 'Ramón', apellido: 'Acosta', dni: 24666777, telefono: '3416662006', oficios: ['Cerrajería'], zonas: ['Centro', 'Norte', 'Noroeste', 'Oeste', 'Sudoeste', 'Sur'], costoVisita: 3500, descripcion: 'Cerrajería las 24 horas. Aperturas, cambio de cerraduras y combinaciones.', cbu: '0340040108400012345675', horario: [0, 1, 2, 3, 4, 5, 6].map((d) => [d, 8, 22] as [number, number, number]) },
+  { correo: 'ana.limpieza@manitas.test', nombre: 'Ana', apellido: 'Benítez', dni: 30777888, telefono: '3416662007', oficios: ['Limpieza'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Limpieza de casas, departamentos y final de obra.', cbu: '0070999030004012345671', horario: [...LUNES_A_VIERNES(8, 14), [6, 8, 12]] },
+  { correo: 'pablo.jardinero@manitas.test', nombre: 'Pablo', apellido: 'Sosa', dni: 31888999, telefono: '3416662008', oficios: ['Jardinería'], zonas: ['Noroeste', 'Oeste', 'Norte'], costoVisita: 3000, descripcion: 'Corte de césped, poda y mantenimiento de jardines.', cbu: '2850590940090412345671', horario: [[2, 8, 16], [4, 8, 16], [6, 8, 14]] },
+  { correo: 'nicolas.clima@manitas.test', nombre: 'Nicolás', apellido: 'Vera', dni: 32999000, telefono: '3416662009', oficios: ['Climatización', 'Electricidad'], zonas: ['Centro', 'Sur', 'Sudoeste'], costoVisita: 5500, descripcion: 'Instalación y service de aires acondicionados split. También electricidad domiciliaria.', cbu: '0720168520000001234567', horario: LUNES_A_VIERNES(10, 19) },
 ];
 
 // ---------- Ayudas ----------
@@ -206,6 +209,39 @@ async function seedCatalogo(ds: DataSource) {
     mapaZonas.set(nombre, zona);
   }
 
+  // Las zonas viejas que no son distritos: los clientes y profesionales pasan al distrito y la zona se da de baja
+  for (const [vieja, distrito] of Object.entries(ZONAS_VIEJAS)) {
+    const zonaVieja = zonasRosario.find((z) => normalizar(z.nombreZona) === normalizar(vieja));
+    if (!zonaVieja) continue;
+    const nueva = mapaZonas.get(distrito)!;
+
+    const clientesRepo = ds.getRepository(Cliente);
+    const queViven = await clientesRepo.find({ where: { zonaResidencia: { idZona: zonaVieja.idZona } }, withDeleted: true });
+    for (const cliente of queViven) {
+      cliente.zonaResidencia = nueva;
+      await clientesRepo.save(cliente);
+    }
+
+    const profesionalesRepo = ds.getRepository(Profesional);
+    const queLaCubren = await profesionalesRepo.find({
+      where: { zonasDeCobertura: { idZona: zonaVieja.idZona } },
+      relations: { zonasDeCobertura: true },
+      withDeleted: true,
+    });
+    for (const profesional of queLaCubren) {
+      // Se recarga con todas sus zonas (el where de arriba trae solo la que coincide)
+      const completo = await profesionalesRepo.findOne({ where: { idUsuario: profesional.idUsuario }, relations: { zonasDeCobertura: true }, withDeleted: true });
+      if (!completo) continue;
+      const sinLaVieja = completo.zonasDeCobertura.filter((z) => z.idZona !== zonaVieja.idZona);
+      if (!sinLaVieja.some((z) => z.idZona === nueva.idZona)) sinLaVieja.push(nueva);
+      completo.zonasDeCobertura = sinLaVieja;
+      await profesionalesRepo.save(completo);
+    }
+
+    await zonas.softDelete({ idZona: zonaVieja.idZona });
+    console.log(`  ~ zona ${vieja} pasada a ${distrito} (y dada de baja)`);
+  }
+
   const mapaOficios = new Map<string, Especialidad>();
   const mapaHabilidades = new Map<string, TiposDeServicio[]>();
   for (const oficio of OFICIOS) {
@@ -242,13 +278,17 @@ async function seedUsuarios(ds: DataSource, turnos: TurnoService, catalogo: Awai
 
   const clientes = new Map<string, Cliente>();
   for (const c of CLIENTES) {
-    let cliente = await clientesRepo.findOne({ where: { correo: c.correo }, withDeleted: true });
+    let cliente = await clientesRepo.findOne({ where: { correo: c.correo }, relations: { zonaResidencia: true }, withDeleted: true });
     if (!cliente) {
       const { zona, ...datos } = c;
       cliente = await clientesRepo.save(
         clientesRepo.create({ ...datos, fechaNacimiento: new Date('1990-05-10'), contraseña: hash, zonaResidencia: catalogo.mapaZonas.get(zona) }),
       );
       console.log(`  + cliente ${c.correo}`);
+    } else if (cliente.zonaResidencia?.idZona !== catalogo.mapaZonas.get(c.zona)!.idZona) {
+      // Las cuentas de prueba siguen la lista de arriba (ej: si cambiaron las zonas de Rosario)
+      cliente.zonaResidencia = catalogo.mapaZonas.get(c.zona)!;
+      cliente = await clientesRepo.save(cliente);
     }
     clientes.set(c.correo, cliente);
   }
@@ -282,6 +322,15 @@ async function seedUsuarios(ds: DataSource, turnos: TurnoService, catalogo: Awai
         horarios: p.horario.map(([diaSemana, horaDesde, horaHasta]) => ({ diaSemana, horaDesde, horaHasta })),
       });
       console.log(`  + profesional ${p.correo}`);
+    } else {
+      // Las cuentas de prueba siguen la lista de arriba: se les ponen exactamente esas zonas
+      const conZonas = await profesionalesRepo.findOne({ where: { idUsuario: profesional.idUsuario }, relations: { zonasDeCobertura: true }, withDeleted: true });
+      const queTiene = (conZonas?.zonasDeCobertura ?? []).map((z) => z.idZona).sort().join(',');
+      const zonasDeLaLista = p.zonas.map((z) => catalogo.mapaZonas.get(z)!);
+      if (conZonas && queTiene !== zonasDeLaLista.map((z) => z.idZona).sort().join(',')) {
+        conZonas.zonasDeCobertura = zonasDeLaLista;
+        profesional = await profesionalesRepo.save(conZonas);
+      }
     }
     profesionales.set(p.correo, profesional);
   }

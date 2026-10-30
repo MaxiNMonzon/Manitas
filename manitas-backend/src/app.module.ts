@@ -37,8 +37,11 @@ import { ConsultaModule } from './consulta/consulta.module';
             username: config.get<string>('DB_USERNAME'),
             password: config.get<string>('DB_PASSWORD'),
             database: config.get<string>('DB_NAME'),
+            // Las bases en la nube (ej: Aiven) piden conexion segura: DB_SSL=true en el servidor (en local no hace falta).
+        // DB_SSL_CA es el certificado del proveedor (el "CA certificate"), con el que se verifica que la base sea la real
+            ssl: config.get('DB_SSL') === 'true' ? { ca: config.get<string>('DB_SSL_CA')?.replace(/\\n/g, '\n') } : undefined,
             entities: [__dirname + '/**/*.entity{.ts,.js}'], //también hubiera sido válido autoLoadEntities: true,
-          //En la línea 41 las entidades se generan automáticamente.
+          //las entidades se generan automáticamente.
             synchronize: true, //En esta línea las entidades se sincronizan con los controladores y servicios.
 
       //  ssl: {
@@ -46,6 +49,7 @@ import { ConsultaModule } from './consulta/consulta.module';
    // },
       }),
     }),
+
     TiposDeServicioModule,
     EspecialidadModule,
     LocalidadModule,

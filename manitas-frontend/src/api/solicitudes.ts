@@ -1,6 +1,7 @@
 // Llamadas al back sobre solicitudes, agenda y avisos.
 // Con la sesión demo (provisoria) devuelven datos mock en vez de llamar a la API.
 import { api, tokenStorage } from './client'
+import { registrarMiAccion } from './misAcciones'
 import type {
   Aviso,
   Calificaciones,
@@ -14,7 +15,6 @@ import type {
 } from '../types'
 import {
   aceptarDemo,
-  agendarDemo,
   eventosDemo,
   presupuestarDemo,
   propuestaProfesionalDemo,
@@ -70,12 +70,14 @@ export async function traerUrgentes(): Promise<UrgenteDisponible[]> {
 export async function aceptarSolicitud(idSolicitud: number, minutosLlegada?: number): Promise<void> {
   if (tokenStorage.esDemo()) return aceptarDemo(idSolicitud, minutosLlegada)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/aceptar`, minutosLlegada ? { minutosLlegada } : {})
+  registrarMiAccion(idSolicitud)
 }
 
 // Profesional: rechazar una solicitud nueva (ej: no hace ese trabajo)
 export async function rechazarSolicitud(idSolicitud: number): Promise<void> {
   if (tokenStorage.esDemo()) return rechazarDemo(idSolicitud)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/rechazar`, {})
+  registrarMiAccion(idSolicitud)
 }
 
 // Profesional: mandar el presupuesto después de la visita (o cambiar el precio a mitad del trabajo).
@@ -84,18 +86,21 @@ export async function rechazarSolicitud(idSolicitud: number): Promise<void> {
 export async function presupuestar(idSolicitud: number, costo: number, horasTrabajo?: number): Promise<void> {
   if (tokenStorage.esDemo()) return presupuestarDemo(idSolicitud, costo, horasTrabajo)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/presupuestar`, horasTrabajo ? { costo, horasTrabajo } : { costo })
+  registrarMiAccion(idSolicitud)
 }
 
 // Profesional: proponer otro horario (a una nueva, a la visita o al trabajo). Le toca contestar al cliente
 export async function reprogramarComoProfesional(idSolicitud: number, inicio: Date): Promise<void> {
   if (tokenStorage.esDemo()) return reprogramarProfesionalDemo(idSolicitud, inicio)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/reprogramar`, { inicio: fechaLocal(inicio) })
+  registrarMiAccion(idSolicitud)
 }
 
 // Profesional: contestar el horario que propuso el cliente (mismo endpoint que el cliente; la demo usa otros datos)
 export async function responderReprogramacionProfesional(idSolicitud: number, acepta: boolean): Promise<void> {
   if (tokenStorage.esDemo()) return responderReprogramacionProfesionalDemo(idSolicitud, acepta)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/${acepta ? 'aceptar' : 'rechazar'}-reprogramacion`, {})
+  registrarMiAccion(idSolicitud)
 }
 
 export async function traerHorarioPropuestoProfesional(idSolicitud: number): Promise<Date | null> {
@@ -108,15 +113,6 @@ export async function traerMiIdProfesional(): Promise<number> {
   if (tokenStorage.esDemo()) return profesionalDemo.idUsuario
   const { idUsuario } = await api.get<{ idUsuario: number }>('/auth/perfil')
   return idUsuario
-}
-
-// fecha: Date con día y hora local. Se manda sin zona horaria ("2026-10-20T10:00:00"),
-// que el back interpreta en hora local (Argentina), igual que el ejemplo de Swagger
-export async function agendar(idSolicitud: number, fecha: Date, duracionMinutos: number): Promise<void> {
-  if (tokenStorage.esDemo()) return agendarDemo(idSolicitud, fecha, duracionMinutos)
-  const p = (n: number) => String(n).padStart(2, '0')
-  const local = `${fecha.getFullYear()}-${p(fecha.getMonth() + 1)}-${p(fecha.getDate())}T${p(fecha.getHours())}:${p(fecha.getMinutes())}:00`
-  await api.patch(`/solicitud-de-servicio/${idSolicitud}/agendar`, { fecha: local, duracionEstimada: duracionMinutos })
 }
 
 // Profesional: su promedio de estrellas. El token no trae el id, así que primero se pide el perfil
@@ -166,6 +162,7 @@ export async function crearUrgente(idEspecialidad: number, descripcionProblema: 
 export async function reprogramarComoCliente(idSolicitud: number, inicio: Date): Promise<void> {
   if (tokenStorage.esDemo()) return reprogramarClienteDemo(idSolicitud, inicio)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/reprogramar`, { inicio: fechaLocal(inicio) })
+  registrarMiAccion(idSolicitud)
 }
 
 // Cliente: aceptar el presupuesto. inicioTrabajo = null → se hace en el momento, en la visita
@@ -175,17 +172,20 @@ export async function aceptarPresupuesto(idSolicitud: number, inicioTrabajo: Dat
     `/solicitud-de-servicio/${idSolicitud}/aceptar-presupuesto`,
     inicioTrabajo ? { inicioTrabajo: fechaLocal(inicioTrabajo) } : { enElMomento: true },
   )
+  registrarMiAccion(idSolicitud)
 }
 
 // Cliente: rechazar el presupuesto (si el profesional cobra la visita, queda para pagar eso)
 export async function rechazarPresupuesto(idSolicitud: number): Promise<void> {
   if (tokenStorage.esDemo()) return rechazarPresupuestoDemo(idSolicitud)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/rechazar-presupuesto`, {})
+  registrarMiAccion(idSolicitud)
 }
 
 export async function cancelarSolicitud(idSolicitud: number): Promise<void> {
   if (tokenStorage.esDemo()) return cancelarDemo(idSolicitud)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/cancelar`, {})
+  registrarMiAccion(idSolicitud)
 }
 
 // Cliente: de 1 a 5 estrellas y una reseña opcional (una sola vez, en una finalizada)
@@ -201,6 +201,7 @@ export async function calificarServicio(idSolicitud: number, estrellas: number, 
 export async function responderReprogramacion(idSolicitud: number, acepta: boolean): Promise<void> {
   if (tokenStorage.esDemo()) return responderReprogramacionDemo(idSolicitud, acepta)
   await api.patch(`/solicitud-de-servicio/${idSolicitud}/${acepta ? 'aceptar' : 'rechazar'}-reprogramacion`, {})
+  registrarMiAccion(idSolicitud)
 }
 
 // El horario propuesto en una reprogramación (sale del detalle: GET /:id trae los turnos propuestos)

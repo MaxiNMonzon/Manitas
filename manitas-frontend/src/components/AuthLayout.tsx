@@ -92,8 +92,8 @@ export default function AuthLayout({ children, volverA, ancho = false }: Props) 
               Volver
             </Button>
           )}
-          <Box sx={{ mb: 4 }}>
-            <Marca />
+          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+            <Marca alto={{ xs: 56, sm: 72 }} />
           </Box>
           {children}
         </Paper>
