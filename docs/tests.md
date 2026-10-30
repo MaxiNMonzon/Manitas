@@ -40,8 +40,8 @@ al menos 1 test unitario de un componente y 1 test end-to-end en el front.
 
 ```bash
 cd manitas-backend
-npm test               # unitarios
-npm run test:e2e       # integración
+pnpm test              # unitarios
+pnpm run test:e2e      # integración
 
 cd manitas-frontend
 npm test               # componente

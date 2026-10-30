@@ -9,7 +9,8 @@ Manitas tiene dos partes independientes que se comunican por una API REST:
 
 ## Requisitos
 
-- [Node.js](https://nodejs.org) 22 o superior (incluye `npm`).
+- [Node.js](https://nodejs.org) 22 o superior (incluye `npm`, que usa el front).
+- [pnpm](https://pnpm.io), que usa el back: `npm install -g pnpm`.
 - [MySQL](https://dev.mysql.com/downloads/) 8 o superior, con una base creada (por ejemplo `manitas`). Las tablas se crean solas al iniciar el back.
 - Para pagar: una cuenta de vendedor de prueba de [Mercado Pago](https://www.mercadopago.com.ar/developers) (solo el *access token*).
 - Para los tests end-to-end del front: Google Chrome instalado (o `npx playwright install chromium`).
@@ -18,7 +19,7 @@ Manitas tiene dos partes independientes que se comunican por una API REST:
 
 ```bash
 cd manitas-backend
-npm install
+pnpm install
 cp .env.example .env      # en Windows: copy .env.example .env
 ```
 
@@ -26,7 +27,7 @@ Completar el `.env` (cada variable está explicada en [`.env.example`](../manita
 la conexión a MySQL (`DB_*`), `JWT_SECRET`, `ADMIN_CORREO` / `ADMIN_CONTRASENA` y `MERCADOPAGO_ACCESS_TOKEN`.
 
 ```bash
-npm run start:dev         # API en http://localhost:3000 (se reinicia al guardar cambios)
+pnpm run start:dev         # API en http://localhost:3000 (se reinicia al guardar cambios)
 ```
 
 La documentación interactiva de la API queda en **http://localhost:3000/api** (Swagger).
@@ -34,8 +35,8 @@ La documentación interactiva de la API queda en **http://localhost:3000/api** (
 ### Datos iniciales (opcional pero recomendado)
 
 ```bash
-npm run seed:georef       # provincias y localidades de Argentina (API Georef del Gobierno)
-npm run seed:demo         # oficios, zonas, clientes, profesionales, solicitudes y promociones de prueba
+pnpm run seed:georef       # provincias y localidades de Argentina (API Georef del Gobierno)
+pnpm run seed:demo         # oficios, zonas, clientes, profesionales, solicitudes y promociones de prueba
 ```
 
 `seed:demo` crea cuentas de prueba con contraseña **`Manitas123`** (detalle en [`SEED.md`](../manitas-backend/SEED.md)).
@@ -57,8 +58,8 @@ En la pantalla de login (modo desarrollo) hay botones para entrar directo con la
 
 | Comando | Dónde | Qué corre |
 | --- | --- | --- |
-| `npm test` | `manitas-backend` | Tests unitarios (Jest) |
-| `npm run test:e2e` | `manitas-backend` | Test de integración de la API (Jest + Supertest) |
+| `pnpm test` | `manitas-backend` | Tests unitarios (Jest) |
+| `pnpm run test:e2e` | `manitas-backend` | Test de integración de la API (Jest + Supertest) |
 | `npm test` | `manitas-frontend` | Test unitario de componentes (Vitest + Testing Library) |
 | `npm run test:e2e` | `manitas-frontend` | Tests end-to-end en el navegador (Playwright) |
 
@@ -67,7 +68,7 @@ Ninguno necesita la base de datos. Ver [tests.md](tests.md).
 ## 4. Build de producción
 
 ```bash
-cd manitas-backend && npm run build && npm run start:prod     # node dist/main
+cd manitas-backend && pnpm run build && pnpm run start:prod    # node dist/main
 cd manitas-frontend && npm run build                          # genera dist/ (archivos estáticos)
 ```
 
