@@ -38,6 +38,11 @@ const cuentas: { rol: Rol; titulo: string; personas: { nombre: string; correo: s
       { nombre: 'Pablo (jardinería)', correo: 'pablo.jardinero@manitas.test', ayuda: '' },
     ],
   },
+  {
+    rol: 'admin',
+    titulo: 'Administrador (ADMIN_CORREO / ADMIN_CONTRASENA del .env del back)',
+    personas: [{ nombre: 'Administrador', correo: 'admin@manitas.test', ayuda: 'Catálogos (CRUD) y consultas de Ayuda' }],
+  },
 ]
 
 export default function CuentasDePrueba() {
