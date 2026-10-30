@@ -12,7 +12,6 @@ import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import AssignmentIcon from '@mui/icons-material/Assignment'
-import HelpCenterIcon from '@mui/icons-material/HelpCenter'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
 import StarIcon from '@mui/icons-material/Star'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
@@ -280,13 +279,6 @@ export default function InicioProfesional() {
           </SeccionTarjeta>
         </Grid>
       </Grid>
-
-      {/* El profesional no tiene pestaña de Ayuda: el link va al pie de su inicio */}
-      <Box sx={{ textAlign: 'center', mt: 3 }}>
-        <Button startIcon={<HelpCenterIcon />} onClick={() => navigate('/app/ayuda')}>
-          Ayuda y preguntas frecuentes
-        </Button>
-      </Box>
 
       <TiempoLlegadaDialog urgente={aTomar} cargando={aceptando} onClose={() => setATomar(null)} onConfirmar={aceptarUrgente} />
 
