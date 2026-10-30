@@ -1,0 +1,12 @@
+{
+  // Solo para los tests (Jest): compila a CommonJS. Hace falta porque @nestjs/jwt se publica
+  // como ESM y Jest lo transforma con esta configuración para poder cargarlo
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolvePackageJsonExports": false,
+    "allowJs": true,
+    "incremental": false
+  }
+}

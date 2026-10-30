@@ -35,7 +35,7 @@ constructor(
   }
 
   async findAll() {
-    return await this.metodoDePagoRepository.find();
+    return await this.metodoDePagoRepository.find({ relations: { promociones: true }, order: { tipo: 'ASC' } });
   }
 
   async findOne(id: number) {

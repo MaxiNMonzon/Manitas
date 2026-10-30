@@ -21,6 +21,8 @@ import { Profesional } from '../profesional/entities/profesional.entity';
 import { SolicitudDeServicio } from '../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
 import { SolicitudDeServicioService } from '../solicitud-de-servicio/solicitud-de-servicio.service';
 import { TurnoService } from '../turno/turno.service';
+import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
+import { Promocion } from '../promocion/entities/promocion.entity';
 import { EstadoSolicitud } from '../common/enums/estado-solicitud.enum';
 import { Rol } from '../common/enums/rol.enum';
 
@@ -417,6 +419,51 @@ async function seedSolicitudes(
   console.log('  + solicitudes de ejemplo en todos los estados');
 }
 
+// Métodos de pago y promociones bancarias vigentes en el mes actual (las ve el cliente en Inicio)
+const METODOS = ['Visa crédito Banco Nación', 'Mastercard crédito Banco Galicia', 'Visa débito Banco Macro', 'Mercado Pago'];
+async function seedPromociones(ds: DataSource) {
+  const metodos = ds.getRepository(MetodoDePago);
+  const promociones = ds.getRepository(Promocion);
+
+  const porTipo = new Map<string, MetodoDePago>();
+  for (const tipo of METODOS) {
+    let metodo = await metodos.findOne({ where: { tipo }, relations: { promociones: true } });
+    if (!metodo) {
+      metodo = await metodos.save(metodos.create({ tipo, estado: 'activo', promociones: [] }));
+      console.log(`  + método de pago ${tipo}`);
+    }
+    porTipo.set(tipo, metodo);
+  }
+
+  // Del primero al último día del mes en curso, así siempre hay promos "del mes"
+  const hoy = new Date();
+  const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+  const promos: { codigo: string; porcentaje: number; descripcion: string; metodo: string }[] = [
+    { codigo: 'NACION20', porcentaje: 20, descripcion: 'Reintegro con Visa crédito del Banco Nación. Tope $10.000 por mes.', metodo: 'Visa crédito Banco Nación' },
+    { codigo: 'GALICIA15', porcentaje: 15, descripcion: 'Reintegro con Mastercard crédito Galicia. Tope $8.000.', metodo: 'Mastercard crédito Banco Galicia' },
+    { codigo: 'MACRO10', porcentaje: 10, descripcion: 'Reintegro con débito Macro, sin tope.', metodo: 'Visa débito Banco Macro' },
+  ];
+  for (const p of promos) {
+    const existente = await promociones.findOne({ where: { codigo: p.codigo } });
+    if (existente) {
+      // Se renueva la vigencia al mes actual
+      existente.fechaInicioVigencia = inicio;
+      existente.fechaFinVigencia = fin;
+      await promociones.save(existente);
+      continue;
+    }
+    const nueva = await promociones.save(
+      promociones.create({ codigo: p.codigo, porcentajeDescuento: p.porcentaje, descripcion: p.descripcion, fechaInicioVigencia: inicio, fechaFinVigencia: fin }),
+    );
+    // La relación la guarda el método de pago (es el dueño de la tabla intermedia)
+    const metodo = porTipo.get(p.metodo)!;
+    metodo.promociones = [...(metodo.promociones ?? []), nueva];
+    await metodos.save(metodo);
+    console.log(`  + promoción ${p.codigo}`);
+  }
+}
+
 async function main() {
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn'] });
   try {
@@ -427,6 +474,8 @@ async function main() {
     const usuarios = await seedUsuarios(ds, app.get(TurnoService), catalogo);
     console.log('Solicitudes de ejemplo...');
     await seedSolicitudes(ds, app.get(SolicitudDeServicioService), app.get(TurnoService), usuarios, catalogo);
+    console.log('Métodos de pago y promociones del mes...');
+    await seedPromociones(ds);
 
     console.log(`\nListo. Contraseña de todas las cuentas de prueba: ${CONTRASEÑA}`);
     console.log('Clientes:      ' + CLIENTES.map((c) => c.correo).join(', '));

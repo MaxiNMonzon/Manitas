@@ -35,7 +35,7 @@ constructor(
   }
 
   async findAll() {
-    return await this.promocionRepository.find();
+    return await this.promocionRepository.find({ relations: { metodosPago: true }, order: { fechaFinVigencia: 'DESC' } });
   }
 
   // Las que estan vigentes en algun momento de este mes, de mayor a menor descuento
