@@ -18,11 +18,11 @@ export class Consulta {
   @Column({ type: 'text' })
   mensaje!: string;
 
-  // Quien pregunta: cliente, profesional o alguien sin cuenta
+  // Quien pregunta (cliente o profesional), tomado del token
   @Column({ length: 15 })
-  rol!: 'cliente' | 'profesional' | 'visitante';
+  rol!: 'cliente' | 'profesional';
 
-  // El correo de la cuenta con la que estaba logueado (si estaba)
+  // El correo de la cuenta con la que estaba logueado, tomado del token
   @Column({ type: 'varchar', length: 120, nullable: true })
   correoCuenta!: string | null;
 
