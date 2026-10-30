@@ -22,20 +22,21 @@ export class ProfesionalController {
   constructor(private readonly profesionalService: ProfesionalService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Buscar profesionales', description: 'Listado con filtros opcionales y combinables. Cada profesional trae todas sus zonas y especialidades.' })
+  @ApiOperation({ summary: 'Buscar profesionales', description: 'Listado con filtros opcionales y combinables. Cada profesional trae todas sus zonas y especialidades. Sin datos personales (DNI, correo, telefono, CBU).' })
   @ApiQuery({ name: 'especialidad', required: false, type: Number, description: 'id de la especialidad (ej: Plomeria)' })
   @ApiQuery({ name: 'zona', required: false, type: Number, description: 'id de la zona que cubre' })
-  findAll(
+  async findAll(
     @Query('especialidad', new ParseIntPipe({ optional: true })) idEspecialidad?: number,
     @Query('zona', new ParseIntPipe({ optional: true })) idZona?: number,
   ) {
-    return this.profesionalService.findAll(idEspecialidad, idZona);
+    const profesionales = await this.profesionalService.findAll(idEspecialidad, idZona);
+    return profesionales.map((p) => this.profesionalService.vistaPublica(p));
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Ver un profesional', description: 'Con sus zonas de cobertura y especialidades.' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.profesionalService.findOne(id);
+  @ApiOperation({ summary: 'Ver un profesional', description: 'Con sus zonas de cobertura y especialidades. Sin datos personales (DNI, correo, telefono, CBU).' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.profesionalService.vistaPublica(await this.profesionalService.findOne(id));
   }
 
   @Get(':id/calificaciones')
