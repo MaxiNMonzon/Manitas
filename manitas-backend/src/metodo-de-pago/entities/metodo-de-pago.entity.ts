@@ -1,6 +1,5 @@
-import { Column, DeleteDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, DeleteDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Promocion } from "../../promocion/entities/promocion.entity";
-import { Tarjeta } from "../../tarjeta/entities/tarjeta.entity";
 
 @Entity()
 export class MetodoDePago {
@@ -17,8 +16,6 @@ export class MetodoDePago {
     @JoinTable()
     promociones!: Promocion[];
 
-    @OneToMany(() => Tarjeta, (tarjeta) => tarjeta.metodoDePago)
-    tarjetas!: Tarjeta[];
 
     @DeleteDateColumn()
     deleteAt!: Date;

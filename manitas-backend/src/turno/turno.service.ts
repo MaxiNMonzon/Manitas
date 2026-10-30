@@ -94,8 +94,8 @@ export class TurnoService {
     if (hasta <= desde) {
       throw new BadRequestException('"hasta" no puede ser anterior a "desde"');
     }
-    if (hasta.getTime() - desde.getTime() > 31 * 24 * UNA_HORA) {
-      throw new BadRequestException('Se pueden pedir hasta 31 dias juntos');
+    if (hasta.getTime() - desde.getTime() > 92 * 24 * UNA_HORA) {
+      throw new BadRequestException('Se pueden pedir hasta 3 meses juntos');
     }
 
     const horarios = await this.horariosDe(idProfesional);

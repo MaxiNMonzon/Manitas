@@ -14,8 +14,7 @@ import { debePagar } from '../components/solicitudes/estadosCliente'
 import EnConstruccion from './EnConstruccion'
 
 // Pestaña "Pagos" del cliente: lo que tiene para pagar (el trabajo contratado que ya empezó,
-// o la visita de un presupuesto que rechazó). Por ahora solo con Mercado Pago (modo prueba);
-// pagar con una tarjeta guardada ya está en el back (PATCH /solicitud-de-servicio/:id/pagar).
+// o la visita de un presupuesto que rechazó). Se paga con Mercado Pago (modo prueba).
 // También se puede pagar desde el detalle de cada solicitud, en "Mis solicitudes"
 export default function Pagos() {
   const { sesion } = useAuth()

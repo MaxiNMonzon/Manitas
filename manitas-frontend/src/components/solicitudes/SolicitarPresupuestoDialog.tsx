@@ -76,7 +76,7 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
 
   return (
     <Dialog open={p !== null} onClose={cerrar} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
-      <DialogTitle>Pedir presupuesto</DialogTitle>
+      <DialogTitle>Solicitar turno</DialogTitle>
       <DialogContent dividers>
         {p && (
           <Stack spacing={2.5}>
@@ -87,7 +87,7 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
                   {p.nombre} {p.apellido}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {p.costoVisita ? `Visita: ${formatoPesos(p.costoVisita)}` : 'Visita sin cargo'} · el trabajo se presupuesta después
+                  {p.costoVisita ? `Visita: ${formatoPesos(p.costoVisita)}` : 'Visita sin cargo'} · Presupuesto a confirmar
                 </Typography>
               </div>
             </Stack>
@@ -110,7 +110,7 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
             )}
 
             <TextField
-              label="Contale el problema"
+              label="Contanos tu problema"
               placeholder="Ej: gotea la canilla de la cocina y hace ruido"
               multiline
               minRows={3}
@@ -121,7 +121,7 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
 
             <div>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                ¿Cuándo puede ir a verlo?
+                Elegí el día y la hora de la visita
               </Typography>
               <SelectorTurno idProfesional={p.idUsuario} valor={inicio} onChange={setInicio} etiquetaHora="Hora de la visita" />
             </div>

@@ -13,7 +13,12 @@ export class Especialidad {
 
     @Column()
     descripcionEspecialidad!: string;
-    
+
+    // Palabras que usa el cliente para contar su problema, separadas por coma (ej: "caño, canilla, pérdida").
+    // Las carga el admin; el buscador las usa para llevar al cliente a los profesionales de este oficio
+    @Column({ type: 'text', nullable: true })
+    palabrasClave!: string | null;
+
     @OneToMany (() => TiposDeServicio, (tiposDeServicio) => tiposDeServicio.especialidad)
     servicios!: TiposDeServicio[];
 

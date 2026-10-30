@@ -1,4 +1,4 @@
-// Pagar con Mercado Pago (Checkout Pro en modo prueba / sandbox). Es la otra opción, además de la tarjeta guardada.
+// Pagar con Mercado Pago (Checkout Pro en modo prueba / sandbox). Es la forma de pagar de la app.
 // Siempre pasa por Mercado Pago: con la sesión demo (sin back) no se puede pagar.
 import { api } from './client'
 import type { SolicitudResumen } from '../types'

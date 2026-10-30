@@ -2,14 +2,12 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import FormControlLabel from '@mui/material/FormControlLabel'
 import Grid from '@mui/material/Grid'
 import InputAdornment from '@mui/material/InputAdornment'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
-import Switch from '@mui/material/Switch'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import SearchIcon from '@mui/icons-material/Search'
@@ -33,14 +31,14 @@ export default function Profesionales() {
   const [params, setParams] = useSearchParams()
   const texto = params.get('q') ?? ''
   const idEspecialidad = Number(params.get('especialidad')) || null
-  const [soloMiZona, setSoloMiZona] = useState(true)
   const [perfil, setPerfil] = useState<ProfesionalResumen | null>(null)
   const [aSolicitar, setASolicitar] = useState<ProfesionalResumen | null>(null)
   const [urgenteAbierto, setUrgenteAbierto] = useState(false)
 
   const especialidades = useCarga('especialidades', traerEspecialidades)
   const ubicacion = useCarga('ubicacion-cliente', traerUbicacionCliente)
-  const idZona = soloMiZona ? (ubicacion.datos?.idZona ?? null) : null
+  // Siempre los de la zona del cliente: la visita es en su casa
+  const idZona = ubicacion.datos?.idZona ?? null
   const profesionales = useCarga(`profesionales-${idEspecialidad}-${idZona}-${ubicacion.cargando}`, () =>
     // Se espera a saber la zona del cliente para no buscar dos veces
     ubicacion.cargando ? Promise.resolve([]) : buscarProfesionales({ idEspecialidad, idZona }),
@@ -54,8 +52,26 @@ export default function Profesionales() {
   }
 
   const buscado = normalizar(texto.trim())
+  // Palabras de lo que escribió (las muy cortas no, para que "a" o "el" no encuentren todo)
+  const palabrasBuscadas = buscado.split(/\s+/).filter((p) => p.length >= 3)
+  // Oficios cuyas palabras clave coinciden con lo que escribió (ej: "caño" → Plomería)
+  const oficiosPorPalabra = new Set(
+    (especialidades.datos ?? [])
+      .filter((e) =>
+        (e.palabrasClave ?? []).some((clave) => {
+          const k = normalizar(clave)
+          return buscado.includes(k) || palabrasBuscadas.some((p) => k.includes(p))
+        }),
+      )
+      .map((e) => e.nombre),
+  )
   const lista = (profesionales.datos ?? []).filter(
-    (p) => !buscado || normalizar(`${p.nombre} ${p.apellido} ${p.especialidades.join(' ')} ${p.descripcion}`).includes(buscado),
+    (p) =>
+      !buscado ||
+      // Su nombre, sus oficios, sus habilidades o su descripción
+      normalizar(`${p.nombre} ${p.apellido} ${p.especialidades.join(' ')} ${(p.habilidades ?? []).join(' ')} ${p.descripcion}`).includes(buscado) ||
+      // O hace un oficio que tiene esa palabra clave
+      p.especialidades.some((e) => oficiosPorPalabra.has(e)),
   )
   const cargando = profesionales.cargando || ubicacion.cargando
   const error = profesionales.error ?? especialidades.error
@@ -91,7 +107,7 @@ export default function Profesionales() {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               select
               fullWidth
@@ -107,13 +123,6 @@ export default function Profesionales() {
                 </MenuItem>
               ))}
             </TextField>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <FormControlLabel
-              control={<Switch checked={soloMiZona} onChange={(e) => setSoloMiZona(e.target.checked)} />}
-              label={ubicacion.datos?.nombreZona ? `Solo en ${ubicacion.datos.nombreZona}` : 'Solo en mi zona'}
-              disabled={!ubicacion.datos?.idZona}
-            />
           </Grid>
         </Grid>
       </Paper>
@@ -135,9 +144,9 @@ export default function Profesionales() {
       ) : lista.length === 0 ? (
         <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
           <Typography color="text.secondary" sx={{ mb: 2 }}>
-            No encontramos profesionales con esos filtros.
+            No encontramos profesionales con esos filtros
+            {ubicacion.datos?.nombreZona ? ` que trabajen en tu zona (${ubicacion.datos.nombreZona})` : ''}.
           </Typography>
-          {soloMiZona && ubicacion.datos?.idZona && <Button onClick={() => setSoloMiZona(false)}>Buscar en todas las zonas</Button>}
         </Paper>
       ) : (
         <Grid container spacing={2}>

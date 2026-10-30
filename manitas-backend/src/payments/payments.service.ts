@@ -5,7 +5,7 @@ import { SolicitudDeServicioService } from '../solicitud-de-servicio/solicitud-d
 import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 // Pago con Mercado Pago (Checkout Pro, en modo prueba / sandbox). Lo arranco Mica.
-// Es la otra opcion para pagar, ademas de la tarjeta guardada (PATCH /solicitud-de-servicio/:id/pagar)
+// Es la forma de pagar de la app: el cliente paga en Mercado Pago con la tarjeta que quiera
 @Injectable()
 export class PaymentsService {
   // Si no hay token en el .env queda en null: el server arranca igual y solo falla pagar con Mercado Pago
@@ -33,7 +33,7 @@ export class PaymentsService {
   // Paso 1: arma el pago en Mercado Pago y devuelve el link para ir a pagar
   async createPreference(idSolicitud: number, usuario: UsuarioActivoInterface) {
     const client = this.clienteMercadoPago();
-    // Las mismas reglas que pagar con tarjeta (es del cliente, se puede pagar, no esta pagada)
+    // Revisa que se pueda pagar (es del cliente, esta para pagar, no esta pagada)
     const { solicitud, monto } = await this.solicitudService.montoAPagar(idSolicitud, usuario);
 
     // Al tocar "Volver al sitio", Mercado Pago vuelve a "Mis solicitudes" del front con

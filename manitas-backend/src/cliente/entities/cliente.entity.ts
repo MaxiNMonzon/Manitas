@@ -2,7 +2,6 @@ import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { Usuario } from '../../usuario/entities/usuario.entity';
 import { Zona } from '../../zona/entities/zona.entity';
 import { SolicitudDeServicio } from '../../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
-import { Tarjeta } from '../../tarjeta/entities/tarjeta.entity';
 
 @Entity('clientes')
 export class Cliente extends Usuario {
@@ -25,6 +24,4 @@ export class Cliente extends Usuario {
   @OneToMany(() => SolicitudDeServicio, (solicitud) => solicitud.cliente)
   solicitudes!: SolicitudDeServicio[];
 
-  @OneToMany(() => Tarjeta, (tarjeta) => tarjeta.cliente)
-  tarjetas!: Tarjeta[];
 }

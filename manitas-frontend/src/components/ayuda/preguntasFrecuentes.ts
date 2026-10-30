@@ -19,7 +19,7 @@ const cliente: TemaAyuda[] = [
       {
         pregunta: '¿Cómo pido un presupuesto?',
         respuesta:
-          'Desde Inicio o desde "Mis solicitudes → Nueva solicitud" buscá un profesional por oficio o por nombre, abrí su perfil y tocá "Pedir presupuesto". Contale el problema y elegí uno de sus turnos libres para que vaya a verlo. La solicitud le llega al instante.',
+          'Desde Inicio o desde "Mis solicitudes → Nueva solicitud" buscá un profesional por oficio o por nombre, abrí su perfil y tocá "Pedir turno". Contale el problema y elegí uno de sus turnos libres para que vaya a verlo. La solicitud le llega al instante.',
       },
       {
         pregunta: '¿Qué pasa después de enviar la solicitud?',

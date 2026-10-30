@@ -7,6 +7,8 @@
 export interface Categoria {
   idEspecialidad: number
   nombre: string
+  // Las palabras con las que el cliente cuenta su problema (ej: "caño" → Plomería)
+  palabrasClave?: string[]
 }
 
 export interface ProfesionalResumen {
@@ -22,6 +24,8 @@ export interface ProfesionalResumen {
   cantidadCalificaciones: number
   descripcion: string
   costoVisita: number | null
+  // Sus habilidades (ej: "Destapaciones"), para el buscador
+  habilidades?: string[]
 }
 
 export interface PromoBancaria {

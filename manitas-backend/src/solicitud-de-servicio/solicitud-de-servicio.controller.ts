@@ -8,7 +8,6 @@ import { AceptarDto } from './dto/aceptar.dto';
 import { AgendaQueryDto } from './dto/agenda-query.dto';
 import { PresupuestarDto } from './dto/presupuestar.dto';
 import { AceptarPresupuestoDto } from './dto/aceptar-presupuesto.dto';
-import { PagarDto } from './dto/pagar.dto';
 import { CalificarDto } from './dto/calificar.dto';
 import { CreateUrgenteDto } from './dto/create-urgente.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
@@ -28,7 +27,7 @@ export class SolicitudDeServicioController {
   @Auth(Rol.CLIENTE)
   @ApiOperation({
     summary: 'Solicitar presupuesto',
-    description: 'El cliente le pide un trabajo a un profesional: la especialidad que necesita (el profesional tiene que hacerla), el problema y el turno de la visita (uno de los libres del profesional, ver GET /turnos/libres). El turno queda bloqueado. Queda en estado "solicitado"; el profesional tiene 48 hs (o hasta el turno) para responder.',
+    description: 'El cliente le pide un trabajo a un profesional: la especialidad que necesita (el profesional tiene que hacerla y trabajar en la zona del cliente), el problema y el turno de la visita (uno de los libres del profesional, ver GET /turnos/libres). El turno queda bloqueado. Queda en estado "solicitado"; el profesional tiene 48 hs (o hasta el turno) para responder.',
   })
   create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.create(createSolicitudDeServicioDto, usuario.sub);
@@ -92,7 +91,7 @@ export class SolicitudDeServicioController {
     description:
       'Los trabajos y visitas que cobro o tiene para cobrar, de lo mas nuevo a lo mas viejo. Cada uno con su estado: ' +
       'pendiente_cobro (el cliente todavia no pago, o pago y falta el deposito; fechaPago dice cual) o cobrado (ya depositado). ' +
-      'El deposito se simula a los 3 dias habiles del pago. Del medio de pago solo se ve el tipo, nunca los numeros de la tarjeta. ' +
+      'El deposito se simula a los 3 dias habiles del pago. Del medio de pago se ve si fue con Mercado Pago. ' +
       'Tambien devuelve los ultimos 4 numeros del CBU/CVU donde se deposita (cuentaDeposito).',
   })
   cobros(@UsuarioActivo() usuario: UsuarioActivoInterface) {
@@ -120,7 +119,7 @@ export class SolicitudDeServicioController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Ver una solicitud',
-    description: 'Con el cliente, el profesional, la tarjeta con la que se pago, sus turnos reservados y, si hay una reprogramacion, los propuestos. Solo para quienes participan.',
+    description: 'Con el cliente, el profesional, sus turnos reservados y, si hay una reprogramacion, los propuestos. Solo para quienes participan.',
   })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
@@ -203,19 +202,6 @@ export class SolicitudDeServicioController {
   @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
   rechazarPresupuesto(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.rechazarPresupuesto(id, usuario);
-  }
-
-  @Patch(':id/pagar')
-  @Auth(Rol.CLIENTE)
-  @ApiOperation({
-    summary: 'Abonar servicio',
-    description:
-      'Con una tarjeta guardada del cliente. En "contratado" (trabajo ya empezado) pasa a finalizado; en "rechazado" paga solo la visita. ' +
-      'Se cobra el precio completo: si la tarjeta tiene una promo vigente, la respuesta informa el reintegro que devuelve el banco.',
-  })
-  @ApiBadRequestResponse({ description: 'No hay nada para pagar, ya se pago, o la tarjeta no es valida (vencida, ajena o metodo inactivo)' })
-  pagar(@Param('id', ParseIntPipe) id: number, @Body() pagarDto: PagarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.pagar(id, pagarDto, usuario);
   }
 
   @Patch(':id/calificar')

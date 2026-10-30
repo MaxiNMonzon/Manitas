@@ -43,7 +43,7 @@ export class TurnoController {
     summary: 'Turnos libres de un profesional (el calendario)',
     description:
       'Los turnos de una hora que el cliente puede elegir entre dos dias: el horario fijo del profesional ' +
-      'menos los turnos ya tomados. Solo los que todavia no empezaron. Hasta 31 dias juntos. Publico.',
+      'menos los turnos ya tomados. Solo los que todavia no empezaron. Hasta 3 meses juntos. Publico.',
   })
   libres(@Param('idProfesional', ParseIntPipe) idProfesional: number, @Query() query: TurnosLibresQueryDto) {
     return this.turnoService.libres(idProfesional, query);

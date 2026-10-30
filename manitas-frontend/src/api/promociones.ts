@@ -28,12 +28,15 @@ export async function traerPromocionesDelMes(): Promise<PromoBancaria[]> {
   const lista = await api.get<PromocionApi[]>('/promocion/del-mes')
   return lista.map((p) => {
     const medios = (p.metodosPago ?? []).map((m) => m.tipo)
-    const banco = medios[0] ?? 'Todos los medios de pago'
+    // Los métodos traen el banco en el nombre (ej: "Visa crédito - Banco Galicia"): si todos son del mismo, se muestra el banco
+    const bancos = new Set(medios.map((m) => m.split(' - ')[1] ?? m))
+    const banco = bancos.size === 1 ? [...bancos][0] : (medios[0] ?? 'Todos los medios de pago')
     return {
       idPromocion: p.idPromocion,
       banco,
       titulo: `${Number(p.porcentajeDescuento)}% de reintegro`,
-      detalle: `${p.descripcion}${medios.length > 1 ? ` · También con ${medios.slice(1).join(', ')}` : ''} · Del ${fecha(p.fechaInicioVigencia)} al ${fecha(p.fechaFinVigencia)}`,
+      // Corto: el tope y las tarjetas están en la descripción; las fechas salen de la vigencia
+      detalle: `${p.descripcion} · Válido del ${fecha(p.fechaInicioVigencia)} al ${fecha(p.fechaFinVigencia)}`,
       color: colorDe(banco),
     }
   })

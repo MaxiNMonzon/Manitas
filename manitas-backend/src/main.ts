@@ -33,7 +33,6 @@ async function bootstrap() {
     .addTag('Profesionales', 'Buscar profesionales, ver sus calificaciones y editar la cuenta de profesional')
     .addTag('Solicitudes de servicio', 'Todo el recorrido: solicitar presupuesto con un turno → visita → presupuesto → contratar → abonar → calificar')
     .addTag('Turnos', 'Horario fijo del profesional y sus turnos libres')
-    .addTag('Tarjetas del cliente', 'Las tarjetas que el cliente guarda para pagar')
     .addTag('Pagos con Mercado Pago', 'La otra forma de pagar (modo prueba): ir a pagar al sitio de Mercado Pago y confirmar al volver')
     .addTag('Promociones', 'Promociones bancarias (reintegros por metodo de pago)')
     .addTag('Clientes', 'La cuenta del cliente')

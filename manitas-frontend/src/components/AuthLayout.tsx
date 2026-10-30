@@ -5,22 +5,14 @@ import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import PlumbingIcon from '@mui/icons-material/Plumbing'
-import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices'
-import FormatPaintIcon from '@mui/icons-material/FormatPaint'
-import CarpenterIcon from '@mui/icons-material/Carpenter'
-import CleaningServicesIcon from '@mui/icons-material/CleaningServices'
-import AcUnitIcon from '@mui/icons-material/AcUnit'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import Marca from './Marca'
+import IconoEspecialidad from './IconoEspecialidad'
 
+// Los mismos 10 oficios que carga el seed (el ícono sale de IconoEspecialidad)
 const oficios = [
-  { icono: <PlumbingIcon fontSize="large" />, nombre: 'Plomería' },
-  { icono: <ElectricalServicesIcon fontSize="large" />, nombre: 'Electricidad' },
-  { icono: <FormatPaintIcon fontSize="large" />, nombre: 'Pintura' },
-  { icono: <CarpenterIcon fontSize="large" />, nombre: 'Carpintería' },
-  { icono: <CleaningServicesIcon fontSize="large" />, nombre: 'Limpieza' },
-  { icono: <AcUnitIcon fontSize="large" />, nombre: 'Climatización' },
+  'Plomería', 'Electricidad', 'Gas', 'Pintura', 'Albañilería',
+  'Carpintería', 'Cerrajería', 'Climatización', 'Limpieza', 'Jardinería',
 ]
 
 // Pantalla dividida: panel de imagen a la izquierda y el contenido (formularios) a la derecha.
@@ -41,9 +33,11 @@ export default function AuthLayout({ children, volverA, ancho = false }: Props) 
           flex: 1.1,
           display: { xs: 'none', [ancho ? 'lg' : 'md']: 'flex' },
           flexDirection: 'column',
-          justifyContent: 'center',
+          // Arriba, a la misma altura que la tarjeta de la derecha (si no, en el login queda muy abajo)
+          justifyContent: 'flex-start',
           gap: 5,
           p: 8,
+          pt: 13,
           color: 'common.white',
           background: (t) =>
             `linear-gradient(135deg, ${t.palette.primary.dark} 0%, ${t.palette.primary.main} 55%, ${t.palette.secondary.main} 130%)`,
@@ -51,29 +45,30 @@ export default function AuthLayout({ children, volverA, ancho = false }: Props) 
       >
         <Box>
           <Typography variant="h3" sx={{ fontWeight: 700, mb: 2, maxWidth: 520 }}>
-            El profesional que tu casa necesita, cuando lo necesitás.
+            Los expertos que necesitás, a un paso de tu hogar.
           </Typography>
           <Typography variant="h6" sx={{ opacity: 0.85, fontWeight: 400, maxWidth: 520 }}>
-            Pedí servicios urgentes o programados, compará presupuestos y calificá a quien te ayudó.
+            Accedé a profesionales calificados, solicitá presupuestos y encontrá soluciones al instante.
           </Typography>
         </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 120px)', gap: 2 }}>
-          {oficios.map((o) => (
+        {/* 10 oficios: 5 columnas x 2 filas */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 96px)', gap: 1.5 }}>
+          {oficios.map((nombre) => (
             <Stack
-              key={o.nombre}
+              key={nombre}
               spacing={1}
               sx={{
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: 110,
+                height: 96,
                 borderRadius: 3,
                 bgcolor: 'rgba(255,255,255,0.12)',
                 backdropFilter: 'blur(4px)',
                 border: '1px solid rgba(255,255,255,0.2)',
               }}
             >
-              {o.icono}
-              <Typography variant="body2">{o.nombre}</Typography>
+              <IconoEspecialidad nombre={nombre} fontSize="large" />
+              <Typography variant="caption">{nombre}</Typography>
             </Stack>
           ))}
         </Box>
@@ -83,9 +78,11 @@ export default function AuthLayout({ children, volverA, ancho = false }: Props) 
         sx={{
           flex: 1,
           display: 'flex',
-          alignItems: 'center',
+          // En pantallas grandes la tarjeta arranca arriba, pareja con la frase de la izquierda
+          alignItems: { xs: 'center', md: 'flex-start' },
           justifyContent: 'center',
           p: { xs: 2, sm: 4 },
+          pt: { md: 8 },
           bgcolor: 'grey.50',
         }}
       >

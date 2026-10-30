@@ -215,7 +215,7 @@ async function horarioPropuesto(idSolicitud: number): Promise<Date | null> {
   return primero ? new Date(primero.inicio) : null
 }
 
-// Turnos libres de un profesional. desde / hasta: 'AAAA-MM-DD', los dos días incluidos (hasta 31 días)
+// Turnos libres de un profesional. desde / hasta: 'AAAA-MM-DD', los dos días incluidos (hasta 3 meses)
 export async function traerTurnosLibres(idProfesional: number, desde: string, hasta: string): Promise<TurnoLibre[]> {
   if (tokenStorage.esDemo()) return turnosLibresDemo(desde, hasta)
   return api.get<TurnoLibre[]>(`/turnos/libres/${idProfesional}?desde=${desde}&hasta=${hasta}`)

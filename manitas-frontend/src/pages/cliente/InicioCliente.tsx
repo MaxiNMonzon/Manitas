@@ -62,13 +62,12 @@ export default function InicioCliente() {
 
   const especialidades = useCarga('especialidades', traerEspecialidades)
   const categorias = especialidades.datos ?? []
-  // Los que trabajan en la zona del cliente, los mejor calificados primero (si no hay ninguno, todos)
+  // Los que trabajan en la zona del cliente, los mejor calificados primero (la visita es en su casa)
   const ubicacion = useCarga('ubicacion-cliente', traerUbicacionCliente)
   const idZona = ubicacion.datos?.idZona ?? null
   const cercanos = useCarga(`cercanos-${idZona}-${ubicacion.cargando}`, async () => {
     if (ubicacion.cargando) return []
-    const enMiZona = await buscarProfesionales({ idZona })
-    const lista = enMiZona.length > 0 || !idZona ? enMiZona : await buscarProfesionales({})
+    const lista = await buscarProfesionales({ idZona })
     return lista.sort((a, b) => b.calificacion - a.calificacion).slice(0, PROFESIONALES_VISIBLES)
   })
   const profesionalesCercanos = cercanos.datos ?? []

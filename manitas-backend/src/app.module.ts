@@ -13,7 +13,6 @@ import { SolicitudDeServicioModule } from './solicitud-de-servicio/solicitud-de-
 import { ClienteModule } from './cliente/cliente.module';
 import { ProfesionalModule } from './profesional/profesional.module';
 import { AuthModule } from './auth/auth.module';
-import { TarjetaModule } from './tarjeta/tarjeta.module';
 import { TurnoModule } from './turno/turno.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ConsultaModule } from './consulta/consulta.module';
@@ -44,7 +43,6 @@ import { ConsultaModule } from './consulta/consulta.module';
     ClienteModule,
     ProfesionalModule,
     AuthModule,
-    TarjetaModule,
     TurnoModule,
     PaymentsModule,
     ConsultaModule,

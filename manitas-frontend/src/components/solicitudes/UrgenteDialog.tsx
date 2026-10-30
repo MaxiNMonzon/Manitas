@@ -63,8 +63,8 @@ export default function UrgenteDialog({ abierto, especialidades, idEspecialidadI
       </DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Le llega a todos los profesionales de esa especialidad en tu zona. El primero que la toma te dice a qué hora
-          llega. Si nadie la toma en 1 hora, se cancela sola.
+          Enviamos tu urgencia a los profesionales de tu zona. El primero que la acepte te avisa en cuánto llega. Si
+          nadie la toma en 1 hora, vence y podés volver a pedirla.
         </Typography>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
