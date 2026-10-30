@@ -29,6 +29,9 @@ import { ConsultaModule } from './consulta/consulta.module';
         username: config.get('DB_USERNAME'),
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
+        // Las bases en la nube (ej: Aiven) piden conexion segura: DB_SSL=true en el servidor (en local no hace falta).
+        // DB_SSL_CA es el certificado del proveedor (el "CA certificate"), con el que se verifica que la base sea la real
+        ssl: config.get('DB_SSL') === 'true' ? { ca: config.get<string>('DB_SSL_CA')?.replace(/\\n/g, '\n') } : undefined,
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
       }),

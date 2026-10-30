@@ -1,20 +1,20 @@
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
-import HandymanIcon from '@mui/icons-material/Handyman'
+import Box from '@mui/material/Box'
 
-// Logo + nombre + slogan de Manitas
-export default function Marca({ color = 'primary.main' }: { color?: string }) {
+interface Props {
+  // "color" (azul y naranja) sobre fondo claro; "blanco" sobre fondo azul oscuro (la barra de arriba)
+  variante?: 'color' | 'blanco'
+  // Alto del logo (el ancho sale solo, para no deformarlo). Puede cambiar según la pantalla
+  alto?: number | Record<string, number>
+}
+
+// Logo de Manitas: la casa con el corazón + "Manitas" + "Tu hogar en buenas manos" (archivos en public/logo)
+export default function Marca({ variante = 'color', alto = 64 }: Props) {
   return (
-    <Stack spacing={0.5} sx={{ alignItems: 'center', color }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-        <HandymanIcon fontSize="large" />
-        <Typography variant="h4" component="span" sx={{ fontWeight: 700, letterSpacing: 1 }}>
-          Manitas
-        </Typography>
-      </Stack>
-      <Typography variant="subtitle1" sx={{ fontStyle: 'italic', opacity: 0.85 }}>
-        Tu hogar en buenas manos
-      </Typography>
-    </Stack>
+    <Box
+      component="img"
+      src={`/logo/logo-${variante}.svg`}
+      alt="Manitas - Tu hogar en buenas manos"
+      sx={{ height: alto, width: 'auto', display: 'block' }}
+    />
   )
 }
