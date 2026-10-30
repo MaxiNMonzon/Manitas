@@ -65,7 +65,6 @@ Todo el recorrido: solicitar presupuesto con un turno → visita → presupuesto
 | `PATCH` | `/solicitud-de-servicio/{id}/presupuestar` | profesional | Enviar presupuesto |
 | `PATCH` | `/solicitud-de-servicio/{id}/aceptar-presupuesto` | cliente | Confirmar servicio (aceptar el presupuesto) |
 | `PATCH` | `/solicitud-de-servicio/{id}/rechazar-presupuesto` | cliente | Rechazar el presupuesto |
-| `PATCH` | `/solicitud-de-servicio/{id}/pagar` | cliente | Abonar servicio |
 | `PATCH` | `/solicitud-de-servicio/{id}/calificar` | cliente | Calificar profesional |
 | `PATCH` | `/solicitud-de-servicio/{id}/reprogramar` | con sesión | Proponer otro horario (reprogramar) |
 | `PATCH` | `/solicitud-de-servicio/{id}/aceptar-reprogramacion` | con sesión | Aceptar el horario propuesto |
@@ -83,21 +82,9 @@ Horario fijo del profesional y sus turnos libres
 | `GET` | `/turnos/horario/{idProfesional}` | público | Ver el horario fijo de un profesional |
 | `GET` | `/turnos/libres/{idProfesional}` | público | Turnos libres de un profesional (el calendario) |
 
-### Tarjetas del cliente
-
-Las tarjetas que el cliente guarda para pagar
-
-| Método | Ruta | Acceso | Descripción |
-| --- | --- | --- | --- |
-| `POST` | `/tarjeta` | cliente | Agregar una tarjeta |
-| `GET` | `/tarjeta` | cliente | Mis tarjetas |
-| `GET` | `/tarjeta/promociones` | cliente | Mis tarjetas con su promocion |
-| `GET` | `/tarjeta/{id}` | cliente | Ver una de mis tarjetas |
-| `DELETE` | `/tarjeta/{id}` | cliente | Borrar una de mis tarjetas |
-
 ### Pagos con Mercado Pago
 
-La otra forma de pagar (modo prueba): ir a pagar al sitio de Mercado Pago y confirmar al volver
+Abonar servicio (modo prueba): ir a pagar al sitio de Mercado Pago y confirmar al volver
 
 | Método | Ruta | Acceso | Descripción |
 | --- | --- | --- | --- |

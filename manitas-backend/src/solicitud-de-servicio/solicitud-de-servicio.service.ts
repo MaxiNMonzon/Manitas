@@ -5,10 +5,7 @@ import { CreateUrgenteDto } from './dto/create-urgente.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, IsNull, Repository } from 'typeorm';
 import { SolicitudDeServicio } from './entities/solicitud-de-servicio.entity';
-import { Tarjeta } from '../tarjeta/entities/tarjeta.entity';
 import { Especialidad } from '../especialidad/entities/especialidad.entity';
-import { PagarDto } from './dto/pagar.dto';
-import { mejorPromocionVigente } from '../promocion/mejor-promocion';
 import { CalificarDto } from './dto/calificar.dto';
 import { Cliente } from '../cliente/entities/cliente.entity';
 import { Profesional } from '../profesional/entities/profesional.entity';
@@ -49,7 +46,7 @@ export interface Cobro {
   monto: number;
   fechaPago: Date | null;
   depositoEstimado: Date | null;
-  // Solo el tipo (ej: "Visa credito Banco Nacion"), nunca los digitos de la tarjeta del cliente
+  // Con que se pago (hoy solo "Mercado Pago")
   medioDePago: string | null;
   especialidad: string | null;
   descripcionProblema: string;
@@ -81,9 +78,6 @@ export class SolicitudDeServicioService {
     @InjectRepository(SolicitudDeServicio)
     private readonly solicitudDeServicioRepository: Repository<SolicitudDeServicio>,
 
-    @InjectRepository(Tarjeta)
-    private readonly tarjetaRepository: Repository<Tarjeta>,
-
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
 
@@ -99,8 +93,9 @@ export class SolicitudDeServicioService {
   // ---------- Solicitar presupuesto (el cliente elige el turno de la visita) ----------
 
   async create(createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, idCliente: number) {
-    const cliente = await this.clienteRepository.findOneBy({
-      idUsuario: idCliente,
+    const cliente = await this.clienteRepository.findOne({
+      where: { idUsuario: idCliente },
+      relations: { zonaResidencia: true },
     });
 
     if (!cliente) {
@@ -109,7 +104,7 @@ export class SolicitudDeServicioService {
 
     const profesional = await this.profesionalRepository.findOne({
       where: { idUsuario: createSolicitudDeServicioDto.idProfesional },
-      relations: { especialidades: true },
+      relations: { especialidades: true, zonasDeCobertura: true },
     });
 
     if (!profesional) {
@@ -128,6 +123,12 @@ export class SolicitudDeServicioService {
     const laHace = profesional.especialidades.some((e) => e.idEspecialidad === especialidad.idEspecialidad);
     if (!laHace) {
       throw new BadRequestException('Ese profesional no hace esa especialidad');
+    }
+
+    // Regla: la visita es en la casa del cliente, asi que el profesional tiene que trabajar en su zona
+    const vaASuZona = profesional.zonasDeCobertura.some((z) => z.idZona === cliente.zonaResidencia?.idZona);
+    if (!vaASuZona) {
+      throw new BadRequestException('Ese profesional no trabaja en tu zona');
     }
 
     // El turno tiene que ser uno libre del profesional
@@ -256,7 +257,7 @@ export class SolicitudDeServicioService {
   async findOne(id: number, usuario: UsuarioActivoInterface) {
     const solicitudDeServicio = await this.solicitudDeServicioRepository.findOne({
       where: { idSolicitud: id },
-      relations: { cliente: true, profesional: true, especialidad: true, tarjeta: { metodoDePago: true } },
+      relations: { cliente: true, profesional: true, especialidad: true },
     });
     if (!solicitudDeServicio) {
       throw new NotFoundException(`SolicitudDeServicio con ID ${id} no encontrada`);
@@ -467,8 +468,7 @@ export class SolicitudDeServicioService {
 
   // Paga el trabajo (Contratado -> Finalizado) o solo la visita si rechazo el presupuesto (queda Rechazado).
   // Se cobra siempre el precio completo: el descuento de la promo lo reintegra el banco
-  // Lo usan los dos medios de pago (tarjeta guardada y Mercado Pago):
-  // revisa que la solicitud se pueda pagar y devuelve cuanto hay que pagar
+  // Lo usa el pago con Mercado Pago: revisa que la solicitud se pueda pagar y devuelve cuanto hay que pagar
   async montoAPagar(id: number, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     if (usuario.rol !== Rol.CLIENTE) {
@@ -492,9 +492,9 @@ export class SolicitudDeServicioService {
     return { solicitud, monto: Number(solicitud.costoFinal) };
   }
 
-  // Ya se pago con alguno de los dos medios
+  // Ya se pago: la fecha de pago se guarda al pagar (y las de prueba del seed ya la traen)
   private estaPagada(solicitud: SolicitudDeServicio) {
-    return solicitud.tarjeta != null || solicitud.idPagoMercadoPago != null;
+    return solicitud.fechaPago != null || solicitud.idPagoMercadoPago != null;
   }
 
   // Deja la solicitud pagada: el trabajo pasa a finalizado, la visita de un rechazado queda como esta
@@ -512,49 +512,6 @@ export class SolicitudDeServicioService {
   async registrarPagoMercadoPago(solicitud: SolicitudDeServicio, idPago: string) {
     solicitud.idPagoMercadoPago = idPago;
     return this.marcarPagada(solicitud);
-  }
-
-  async pagar(id: number, pagarDto: PagarDto, usuario: UsuarioActivoInterface) {
-    const { solicitud } = await this.montoAPagar(id, usuario);
-
-    // La tarjeta tiene que ser del cliente, no estar vencida y su metodo estar activo
-    const tarjeta = await this.tarjetaRepository.findOne({
-      where: { idTarjeta: pagarDto.idTarjeta, cliente: { idUsuario: usuario.sub } },
-      relations: { metodoDePago: { promociones: true } },
-    });
-    if (!tarjeta) {
-      throw new BadRequestException('Esa tarjeta no existe o no es tuya');
-    }
-    const hoy = new Date();
-    const anioActual = hoy.getFullYear();
-    const mesActual = hoy.getMonth() + 1;
-    if (tarjeta.anioVencimiento < anioActual || (tarjeta.anioVencimiento === anioActual && tarjeta.mesVencimiento < mesActual)) {
-      throw new BadRequestException('La tarjeta esta vencida');
-    }
-    if (tarjeta.metodoDePago.estado !== 'activo') {
-      throw new BadRequestException('Ese metodo de pago no esta disponible');
-    }
-
-    // De las promos vigentes hoy para ese metodo, la de mayor descuento
-    const mejorPromocion = mejorPromocionVigente(tarjeta.metodoDePago.promociones);
-
-    solicitud.tarjeta = tarjeta;
-    const guardada = await this.marcarPagada(solicitud);
-
-    // Solo se informa: el reintegro (y su tope, que esta en la descripcion de la promo) lo hace el banco
-    let reintegro: object | null = null;
-    if (mejorPromocion) {
-      const dondeSeVe = tarjeta.metodoDePago.tipo.toLowerCase().includes('crédito')
-        ? 'en el resumen de tu tarjeta'
-        : 'en tu cuenta';
-      reintegro = {
-        promocion: mejorPromocion.descripcion,
-        porcentaje: Number(mejorPromocion.porcentajeDescuento),
-        mensaje: `${mejorPromocion.descripcion}. Te lo devuelve el banco ${dondeSeVe}`,
-      };
-    }
-
-    return { solicitud: guardada, reintegro };
   }
 
   // Calificar al profesional: solo una vez y con el trabajo terminado
@@ -704,7 +661,7 @@ export class SolicitudDeServicioService {
     const esCliente = usuario.rol === Rol.CLIENTE;
     const solicitudes = await this.solicitudDeServicioRepository.find({
       where: esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } },
-      relations: { cliente: true, profesional: true, especialidad: true, tarjeta: true },
+      relations: { cliente: true, profesional: true, especialidad: true },
     });
 
     const avisos: { idSolicitud: number; mensaje: string }[] = [];
@@ -853,7 +810,7 @@ export class SolicitudDeServicioService {
         profesional: { idUsuario: usuario.sub },
         estadoServicio: In([EstadoSolicitud.CONTRATADO, EstadoSolicitud.FINALIZADO, EstadoSolicitud.RECHAZADO]),
       },
-      relations: { cliente: true, especialidad: true, tarjeta: { metodoDePago: true } },
+      relations: { cliente: true, especialidad: true },
     });
 
     const ahora = new Date();
@@ -876,7 +833,7 @@ export class SolicitudDeServicioService {
         monto: Number(solicitud.costoFinal ?? solicitud.costoEstimado ?? 0),
         fechaPago,
         depositoEstimado,
-        medioDePago: solicitud.tarjeta?.metodoDePago?.tipo ?? (solicitud.idPagoMercadoPago ? 'Mercado Pago' : null),
+        medioDePago: solicitud.idPagoMercadoPago ? 'Mercado Pago' : null,
         especialidad: solicitud.especialidad?.nombreEspecialidad ?? null,
         descripcionProblema: solicitud.descripcionProblema,
         // El cliente puede haberse dado de baja

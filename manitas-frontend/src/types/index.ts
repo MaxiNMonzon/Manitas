@@ -52,6 +52,8 @@ export interface Especialidad {
   idEspecialidad: number
   nombreEspecialidad: string
   descripcionEspecialidad: string
+  // Separadas por coma (ej: "caño, canilla, pérdida"); las usa el buscador del cliente
+  palabrasClave?: string | null
 }
 
 // En el registro de profesional se muestran como "Habilidades"
@@ -162,6 +164,8 @@ export interface ProfesionalApi {
   descripcion?: string | null
   especialidades: { idEspecialidad: number; nombreEspecialidad: string }[]
   zonasDeCobertura: { idZona: number; nombreZona: string }[]
+  // Sus habilidades (tipos de servicio)
+  tiposDeServicio?: { idServicio: number; nombreServicio: string }[]
 }
 
 // GET /profesional/:id/calificaciones (con las reseñas)

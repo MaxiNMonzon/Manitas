@@ -8,7 +8,11 @@ import { categorias, profesionalesCercanos, type Categoria, type ProfesionalResu
 export async function traerEspecialidades(): Promise<Categoria[]> {
   if (tokenStorage.esDemo()) return categorias
   const lista = await api.get<Especialidad[]>('/especialidad')
-  return lista.map((e) => ({ idEspecialidad: e.idEspecialidad, nombre: e.nombreEspecialidad }))
+  return lista.map((e) => ({
+    idEspecialidad: e.idEspecialidad,
+    nombre: e.nombreEspecialidad,
+    palabrasClave: (e.palabrasClave ?? '').split(',').map((p) => p.trim()).filter(Boolean),
+  }))
 }
 
 export async function traerCalificaciones(idProfesional: number): Promise<CalificacionesDetalle> {
@@ -53,6 +57,7 @@ export async function buscarProfesionales(filtros: { idEspecialidad?: number | n
         cantidadCalificaciones: cal?.cantidad ?? 0,
         descripcion: p.descripcion ?? '',
         costoVisita: p.costoVisita ?? null,
+        habilidades: (p.tiposDeServicio ?? []).map((t) => t.nombreServicio),
       }
     }),
   )

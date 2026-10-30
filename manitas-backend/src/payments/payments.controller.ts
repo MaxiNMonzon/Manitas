@@ -20,7 +20,7 @@ export class PaymentsController {
   @ApiOperation({
     summary: 'Ir a pagar con Mercado Pago',
     description:
-      'Otra forma de pagar, ademas de la tarjeta guardada. Mismas reglas: "contratado" con el trabajo ya empezado, o la visita de un "rechazado". ' +
+      'El cliente paga con Mercado Pago (con tarjeta de credito, debito o saldo). Se puede pagar en "contratado" con el trabajo ya empezado, o la visita de un "rechazado". ' +
       'El precio sale de la solicitud. Devuelve el link (init_point) para ir a pagar al sitio de Mercado Pago (modo prueba).',
   })
   @ApiBadRequestResponse({ description: 'No hay nada para pagar, ya se pago, o fallo Mercado Pago' })

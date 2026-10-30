@@ -20,7 +20,7 @@ export class CreatePromocionDto {
     @IsPositive()
     porcentajeDescuento!: number;
 
-    @ApiProperty({ example: '30% de reintegro con Visa y Mastercard del Banco Galicia (tope de $20.000)', description: 'Si la promo tiene tope de reintegro, se aclara aca' })
+    @ApiProperty({ example: 'Tope $20.000 mensual · Crédito y débito Visa y Mastercard', description: 'Corta: el tope y con qué tarjetas (el banco y el porcentaje ya se muestran aparte)' })
     @IsString()
     descripcion!: string;
 

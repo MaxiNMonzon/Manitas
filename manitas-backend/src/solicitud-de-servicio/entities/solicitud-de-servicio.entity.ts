@@ -1,6 +1,5 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Turno } from "../../turno/entities/turno.entity";
-import { Tarjeta } from "../../tarjeta/entities/tarjeta.entity";
 import { Cliente } from "../../cliente/entities/cliente.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
 import { Especialidad } from "../../especialidad/entities/especialidad.entity";
@@ -26,7 +25,7 @@ export class SolicitudDeServicio {
     fechaSolicitud!: Date;
 
     // Se actualiza en cada cambio de estado, sirve para contar las 48 hs
-    @Column({ type: 'datetime', nullable: true })
+    @Column({ type: 'datetime' })
     fechaCambioEstado!: Date;
 
     @Column({ type: 'datetime', nullable: true })
@@ -49,7 +48,7 @@ export class SolicitudDeServicio {
     @Column({ type: 'datetime', nullable: true })
     fechaPago!: Date;
 
-    // Si se pago con Mercado Pago (en vez de una tarjeta guardada): el numero de pago que da Mercado Pago
+    // El numero de pago que da Mercado Pago (se paga siempre por Mercado Pago)
     @Column({ type: 'varchar', length: 30, nullable: true })
     idPagoMercadoPago!: string | null;
 
@@ -83,10 +82,6 @@ export class SolicitudDeServicio {
 
     @Column({ nullable: true })
     reseñaServicio!: string;
-
-    // Con que tarjeta se pago (el metodo de pago se saca de la tarjeta)
-    @ManyToOne(() => Tarjeta, (tarjeta) => tarjeta.solicitudes, { nullable: true })
-    tarjeta!: Tarjeta;
 
     @ManyToOne(() => Cliente, (cliente) => cliente.solicitudes)
     cliente!: Cliente;

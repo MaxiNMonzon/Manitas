@@ -7,7 +7,7 @@ export class TurnosLibresQueryDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'desde tiene que ser una fecha AAAA-MM-DD' })
   desde!: string;
 
-  @ApiProperty({ example: '2026-10-26', description: 'Ultimo dia, incluido (AAAA-MM-DD). Hasta 31 dias juntos' })
+  @ApiProperty({ example: '2026-10-26', description: 'Ultimo dia, incluido (AAAA-MM-DD). Hasta 3 meses juntos' })
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'hasta tiene que ser una fecha AAAA-MM-DD' })
   hasta!: string;
 }

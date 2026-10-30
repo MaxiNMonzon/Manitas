@@ -77,7 +77,9 @@ export class ProfesionalService {
     const query = this.profesionalRepository
       .createQueryBuilder('profesional')
       .leftJoinAndSelect('profesional.zonasDeCobertura', 'zona')
-      .leftJoinAndSelect('profesional.especialidades', 'especialidad');
+      .leftJoinAndSelect('profesional.especialidades', 'especialidad')
+      // Las habilidades, para que el buscador del cliente las encuentre
+      .leftJoinAndSelect('profesional.tiposDeServicio', 'habilidad');
 
     // Los filtros usan joins aparte para no recortar las zonas y especialidades que se devuelven
     if (idEspecialidad) {

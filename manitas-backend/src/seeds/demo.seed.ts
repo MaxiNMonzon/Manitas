@@ -44,7 +44,56 @@ const OFICIOS: { nombre: string; descripcion: string; habilidades: string[] }[] 
   { nombre: 'Jardinería', descripcion: 'Mantenimiento de jardines y espacios verdes', habilidades: ['Corte de césped', 'Poda', 'Diseño de canteros'] },
 ];
 
-const ZONAS_ROSARIO = ['Centro', 'Echesortu', 'Norte', 'Sur', 'Oeste', 'Fisherton'];
+// Palabras con las que el cliente cuenta su problema: el buscador las usa para llevarlo al oficio.
+// Despues el admin las puede ir sumando desde su panel
+const PALABRAS_CLAVE: Record<string, string> = {
+  Electricidad:
+    'electricista, electricidad, luz, sin luz, se cortó la luz, corte de luz, enchufe, toma, tomacorriente, llave de luz, interruptor, ' +
+    'cable, cableado, corto, cortocircuito, chispa, tablero, disyuntor, térmica, salta la térmica, lámpara, foco, luminaria, ' +
+    'plafón, aplique, dicroica, led, ventilador de techo, timbre, portero eléctrico, alargue, zapatilla, tensión, puesta a tierra',
+  Plomería:
+    'plomero, plomería, caño, caños, cañería, canilla, grifo, griferia, pérdida, pérdida de agua, gotea, goteo, inodoro, mochila, ' +
+    'depósito, bidet, lavatorio, pileta, bacha, ducha, bañera, baño, destapar, destapación, tapado, desagüe, cloaca, rejilla, sifón, ' +
+    'agua, sin agua, poca presión, tanque, tanque de agua, flotante, bomba de agua, termotanque, agua caliente, humedad en el piso',
+  Gas:
+    'gasista, gas, olor a gas, pérdida de gas, calefón, termotanque a gas, estufa, calefactor, tiro balanceado, cocina, hornalla, ' +
+    'horno, garrafa, gas natural, medidor de gas, llave de gas, caño de gas, matafuego, monóxido, piloto, no prende, habilitación de gas',
+  Pintura:
+    'pintor, pintura, pintar, pared, paredes, techo, cielorraso, humedad, mancha, manchas, moho, hongos, descascarado, se descascara, ' +
+    'frente, fachada, rejas, puertas, aberturas, barniz, laca, esmalte, látex, impermeabilizante, membrana líquida, empapelado, enduido',
+  Albañilería:
+    'albañil, albañilería, pared, rajadura, grieta, fisura, revoque, revoque caído, azulejo, azulejos, cerámico, cerámica, porcelanato, ' +
+    'piso, contrapiso, carpeta, ladrillo, mampostería, construcción, reforma, ampliación, demolición, cemento, yeso, durlock, ' +
+    'humedad de cimientos, techo, losa, filtración, goteras, membrana, impermeabilización, vereda, parrilla',
+  Carpintería:
+    'carpintero, carpintería, madera, mueble, muebles, mueble a medida, puerta, puertas, placard, placares, vestidor, ventana, ' +
+    'ventanas, persiana, postigo, bisagra, cajón, cajonera, estante, estantería, alacena, bajo mesada, mesa, silla, deck, pérgola, ' +
+    'marco, zócalo, se traba, no cierra, lustrar, restaurar',
+  Cerrajería:
+    'cerrajero, cerrajería, llave, llaves, copia de llave, cerradura, cambio de cerradura, me quedé afuera, quedé afuera, ' +
+    'puerta trabada, no abre, perdí la llave, candado, cerrojo, traba, combinación, caja fuerte, puerta blindada, picaporte, cilindro, ' +
+    'auto',
+  Climatización:
+    'aire, aire acondicionado, acondicionado, split, ventana, frío, calor, no enfría, no calienta, gotea el aire, carga de refrigerante, ' +
+    'instalación de aire, service de aire, filtro, calefacción, caldera, radiador, losa radiante, ventilación, ' +
+    'extractor, climatización, climatizador',
+  Limpieza:
+    'limpieza, limpiar, limpiadora, final de obra, después de obra, mudanza, limpieza profunda, vidrios, ventanas, alfombra, alfombras, ' +
+    'tapizado, sillón, colchón, cortinas, cocina, baño, azulejos, desinfección, orden, casa, departamento, oficina, plancha',
+  Jardinería:
+    'jardinero, jardinería, jardín, patio, parque, pasto, césped, cortar el pasto, corte de pasto, bordes, flores, plantas, planta, ' +
+    'macetas, cantero, canteros, árbol, árboles, poda, podar, cerco, ligustro, arbusto, seto, hojas, malezas, yuyos, desmalezado, ' +
+    'riego, regar, riego automático, semillas, siembra, abono, fertilizante, plagas, fumigación, huerta, pileta, paisajismo',
+};
+
+// Junta dos listas separadas por coma, sin repetir (sin importar mayúsculas ni tildes)
+function juntarPalabras(actuales: string | null, nuevas: string): string {
+  const lista = [...(actuales ?? '').split(','), ...nuevas.split(',')].map((p) => p.trim()).filter(Boolean);
+  const vistas = new Set<string>();
+  return lista.filter((p) => !vistas.has(normalizar(p)) && vistas.add(normalizar(p))).join(', ');
+}
+
+const ZONAS_ROSARIO =['Centro', 'Echesortu', 'Norte', 'Sur', 'Oeste', 'Fisherton'];
 
 // ---------- Usuarios ----------
 
@@ -164,6 +213,12 @@ async function seedCatalogo(ds: DataSource) {
     if (!especialidad) {
       especialidad = await especialidades.save(especialidades.create({ nombreEspecialidad: oficio.nombre, descripcionEspecialidad: oficio.descripcion }));
       console.log(`  + oficio ${oficio.nombre}`);
+    }
+    // Se suman las palabras clave que falten, sin borrar las que ya tenía (ej: las que agregó el admin)
+    const palabras = juntarPalabras(especialidad.palabrasClave, PALABRAS_CLAVE[oficio.nombre] ?? '');
+    if (palabras !== (especialidad.palabrasClave ?? '')) {
+      especialidad.palabrasClave = palabras;
+      especialidad = await especialidades.save(especialidad);
     }
     mapaOficios.set(oficio.nombre, especialidad);
 
@@ -420,7 +475,15 @@ async function seedSolicitudes(
 }
 
 // Métodos de pago y promociones bancarias vigentes en el mes actual (las ve el cliente en Inicio)
-const METODOS = ['Visa crédito Banco Nación', 'Mastercard crédito Banco Galicia', 'Visa débito Banco Macro', 'Mercado Pago'];
+// Las tarjetas de los 3 bancos con promo van con el banco en el nombre; las demas son de cualquier banco (sin promo)
+const BANCOS = ['Banco Nación', 'Banco Macro', 'Banco Galicia'];
+const TARJETAS_DE_BANCO = ['Visa crédito', 'Visa débito', 'Mastercard crédito', 'Mastercard débito'];
+const METODOS = [
+  'Visa crédito', 'Visa débito', 'Mastercard crédito', 'Mastercard débito', 'American Express crédito',
+  'Naranja X crédito', 'Naranja X débito', 'Cabal crédito', 'Cabal débito', 'Mercado Pago prepaga', 'Mercado Pago crédito',
+  ...BANCOS.flatMap((banco) => TARJETAS_DE_BANCO.map((tarjeta) => `${tarjeta} - ${banco}`)),
+];
+const tarjetasDe = (banco: string) => TARJETAS_DE_BANCO.map((tarjeta) => `${tarjeta} - ${banco}`);
 async function seedPromociones(ds: DataSource) {
   const metodos = ds.getRepository(MetodoDePago);
   const promociones = ds.getRepository(Promocion);
@@ -439,17 +502,20 @@ async function seedPromociones(ds: DataSource) {
   const hoy = new Date();
   const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
-  const promos: { codigo: string; porcentaje: number; descripcion: string; metodo: string }[] = [
-    { codigo: 'NACION20', porcentaje: 20, descripcion: 'Reintegro con Visa crédito del Banco Nación. Tope $10.000 por mes.', metodo: 'Visa crédito Banco Nación' },
-    { codigo: 'GALICIA15', porcentaje: 15, descripcion: 'Reintegro con Mastercard crédito Galicia. Tope $8.000.', metodo: 'Mastercard crédito Banco Galicia' },
-    { codigo: 'MACRO10', porcentaje: 10, descripcion: 'Reintegro con débito Macro, sin tope.', metodo: 'Visa débito Banco Macro' },
+  // El tope no se guarda: el reintegro lo hace el banco, la app solo lo informa (va en el texto)
+  const promos: { codigo: string; porcentaje: number; descripcion: string; metodos: string[] }[] = [
+    // Corta: el banco y el porcentaje ya se muestran aparte, y las fechas salen de la vigencia
+    { codigo: 'NACION20', porcentaje: 20, descripcion: 'Sin tope · Crédito y débito Visa y Mastercard', metodos: tarjetasDe('Banco Nación') },
+    { codigo: 'MACRO15', porcentaje: 15, descripcion: 'Tope $30.000 mensual · Crédito y débito Visa y Mastercard', metodos: tarjetasDe('Banco Macro') },
+    { codigo: 'GALICIA30', porcentaje: 30, descripcion: 'Tope $20.000 mensual · Crédito y débito Visa y Mastercard', metodos: tarjetasDe('Banco Galicia') },
   ];
   for (const p of promos) {
     const existente = await promociones.findOne({ where: { codigo: p.codigo } });
     if (existente) {
-      // Se renueva la vigencia al mes actual
+      // Se renueva la vigencia al mes actual y el texto
       existente.fechaInicioVigencia = inicio;
       existente.fechaFinVigencia = fin;
+      existente.descripcion = p.descripcion;
       await promociones.save(existente);
       continue;
     }
@@ -457,9 +523,11 @@ async function seedPromociones(ds: DataSource) {
       promociones.create({ codigo: p.codigo, porcentajeDescuento: p.porcentaje, descripcion: p.descripcion, fechaInicioVigencia: inicio, fechaFinVigencia: fin }),
     );
     // La relación la guarda el método de pago (es el dueño de la tabla intermedia)
-    const metodo = porTipo.get(p.metodo)!;
-    metodo.promociones = [...(metodo.promociones ?? []), nueva];
-    await metodos.save(metodo);
+    for (const tipo of p.metodos) {
+      const metodo = porTipo.get(tipo)!;
+      metodo.promociones = [...(metodo.promociones ?? []), nueva];
+      await metodos.save(metodo);
+    }
     console.log(`  + promoción ${p.codigo}`);
   }
 }

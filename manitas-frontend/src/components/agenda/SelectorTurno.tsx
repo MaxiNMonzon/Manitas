@@ -5,12 +5,13 @@ import Chip from '@mui/material/Chip'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import Paper from '@mui/material/Paper'
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
 import dayjs, { type Dayjs } from 'dayjs'
 import { traerTurnosLibres } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
 
-const DIAS_A_MOSTRAR = 30 // el back deja pedir hasta 31 días juntos
+const DIAS_A_MOSTRAR = 90 // unos 3 meses (el back deja pedir hasta 3 meses juntos)
 
 interface Props {
   idProfesional: number | null
@@ -22,8 +23,8 @@ interface Props {
   desde?: Dayjs
 }
 
-// Elegir uno de los turnos libres del profesional (GET /turnos/libres/:id): primero el día
-// (solo se pueden elegir los que tienen algún turno) y después la hora
+// Elegir uno de los turnos libres del profesional (GET /turnos/libres/:id): primero el día en el
+// calendario (siempre a la vista; solo se pueden elegir los días que tienen algún turno) y después la hora
 export default function SelectorTurno({ idProfesional, valor, onChange, etiquetaHora = 'Hora', desde }: Props) {
   const [dia, setDia] = useState<Dayjs | null>(valor ? dayjs(valor) : null)
   const hoy = dayjs().format('YYYY-MM-DD')
@@ -35,7 +36,7 @@ export default function SelectorTurno({ idProfesional, valor, onChange, etiqueta
   const diasConTurnos = new Set(turnos.map((t) => dayjs(t.inicio).format('YYYY-MM-DD')))
   const delDia = dia ? turnos.filter((t) => dayjs(t.inicio).isSame(dia, 'day')) : []
 
-  if (libres.cargando) return <Skeleton variant="rounded" height={56} />
+  if (libres.cargando) return <Skeleton variant="rounded" height={320} />
   if (libres.error) return <Alert severity="error">{libres.error}</Alert>
   if (turnos.length === 0) {
     return <Alert severity="warning">No hay turnos libres en los próximos {DIAS_A_MOSTRAR} días.</Alert>
@@ -43,17 +44,25 @@ export default function SelectorTurno({ idProfesional, valor, onChange, etiqueta
 
   return (
     <Stack spacing={2}>
-      <DatePicker
-        label="Día"
-        value={dia}
-        onChange={(d) => {
-          setDia(d)
-          onChange(null)
-        }}
-        disablePast
-        maxDate={dayjs().add(DIAS_A_MOSTRAR, 'day')}
-        shouldDisableDate={(d) => !diasConTurnos.has(d.format('YYYY-MM-DD'))}
-      />
+      <Paper variant="outlined">
+        <DateCalendar
+          value={dia}
+          onChange={(d) => {
+            setDia(d)
+            onChange(null)
+          }}
+          // Solo días (sin la lista de años): los turnos son de los próximos 3 meses, se pasa de mes con las flechas
+          views={['day']}
+          disablePast
+          maxDate={dayjs().add(DIAS_A_MOSTRAR, 'day')}
+          shouldDisableDate={(d) => !diasConTurnos.has(d.format('YYYY-MM-DD'))}
+        />
+      </Paper>
+      {!dia && (
+        <Typography variant="body2" color="text.secondary">
+          Elegí un día del calendario (los días apagados no tienen turnos libres).
+        </Typography>
+      )}
       {dia && (
         <Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>

@@ -1,4 +1,5 @@
-import { IsString } from "class-validator";
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength } from "class-validator";
 
 export class CreateEspecialidadDto {
 
@@ -7,6 +8,11 @@ export class CreateEspecialidadDto {
 
     @IsString()
     descripcionEspecialidad!: string;
-    
-}
 
+    @ApiPropertyOptional({ example: 'caño, canilla, pérdida, inodoro, destapar', description: 'Separadas por coma' })
+    @IsOptional()
+    @IsString()
+    @MaxLength(1000)
+    palabrasClave?: string;
+
+}

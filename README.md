@@ -26,8 +26,8 @@ Aplicación que conecta clientes con profesionales de distintos oficios (plomer�
 El cliente busca profesionales de su zona, les pide presupuesto eligiendo un turno de su calendario, y compara los presupuestos que recibe.
 Si es algo urgente, lo pide sin elegir profesional: les aparece a todos los de ese oficio en su zona y el primero que acepta va.
 Los profesionales cargan su horario de trabajo, presupuestan después de la visita y reciben calificaciones.
-Los clientes pagan desde la app con tarjeta o Mercado Pago.
-Incluye promociones bancarias según la tarjeta con la que se paga.
+Los clientes pagan desde la app con Mercado Pago (con tarjeta de crédito, débito o saldo).
+Informa las promociones bancarias del mes: el reintegro lo hace el banco (crédito: en el resumen · débito: en la cuenta).
 Apunta a brindar rapidez, confianza y variedad de opciones.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
