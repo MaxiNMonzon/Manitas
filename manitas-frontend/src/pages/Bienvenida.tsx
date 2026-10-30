@@ -13,8 +13,8 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import AuthLayout from '../components/AuthLayout'
 import SobreManitas from '../components/bienvenida/SobreManitas'
 
-// Pantalla de entrada: arriba, ingresar o registrarse. Al tocar la flecha (o bajar) se explica qué es Manitas,
-// cómo funciona y quiénes somos, para el que llega sin conocer la app
+// Pantalla de entrada: arriba, ingresar o registrarse. Al tocar la flecha (o bajar) se explica qué es Manitas
+// y cómo funciona, para el que llega sin conocer la app
 export default function Bienvenida() {
   // Aviso que trae del login (ej: cuenta bloqueada por intentos fallidos)
   const aviso = (useLocation().state as { aviso?: string } | null)?.aviso

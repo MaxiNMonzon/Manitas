@@ -18,10 +18,9 @@ import PlaceIcon from '@mui/icons-material/Place'
 import PaymentsIcon from '@mui/icons-material/Payments'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import HandshakeIcon from '@mui/icons-material/Handshake'
-import SchoolIcon from '@mui/icons-material/School'
 import Marca from '../Marca'
 
-// Lo que se ve al bajar en la pantalla de bienvenida: qué es Manitas, cómo funciona y quiénes somos.
+// Lo que se ve al bajar en la pantalla de bienvenida: qué es Manitas, y cómo funciona.
 // Es para alguien que llega sin saber nada de la app
 
 const pasosCliente = [
@@ -66,8 +65,6 @@ const ventajasProfesional = [
     texto: 'Cobrás por la app y ves cada pago y cuándo se deposita en tu cuenta.',
   },
 ]
-
-const equipo = ['Francisco Arias', 'Maximiliano Monzón', 'Micaela Baremboum', 'Lautaro Coria']
 
 function Seccion({ id, fondo, children }: { id?: string; fondo?: string; children: ReactNode }) {
   return (
@@ -262,61 +259,6 @@ export default function SobreManitas() {
             </Grid>
           </Grid>
         </Grid>
-      </Seccion>
-
-      {/* Quiénes somos */}
-      <Seccion fondo="grey.50">
-        <Titulo chico="Quiénes somos">Un proyecto hecho en Rosario</Titulo>
-        <Typography
-          color="text.secondary"
-          sx={{
-            textAlign: 'center',
-            maxWidth: 720,
-            mx: 'auto',
-            mb: 5,
-            fontSize: 17,
-          }}
-        >
-          Somos cuatro estudiantes de Ingeniería en Sistemas de la UTN Facultad Regional Rosario. Manitas nació en la materia Desarrollo de
-          Software, pensando en algo que a todos nos pasó: necesitar a alguien de confianza para un arreglo en casa y no saber a quién
-          llamar.
-        </Typography>
-        <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
-          {equipo.map((nombre) => (
-            <Grid key={nombre} size={{ xs: 6, sm: 3 }}>
-              <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
-                <Avatar
-                  sx={{
-                    width: 72,
-                    height: 72,
-                    bgcolor: 'primary.main',
-                    fontSize: 26,
-                    fontWeight: 700,
-                  }}
-                >
-                  {nombre
-                    .split(' ')
-                    .map((p) => p[0])
-                    .join('')}
-                </Avatar>
-                <Typography sx={{ fontWeight: 600 }}>{nombre}</Typography>
-              </Stack>
-            </Grid>
-          ))}
-        </Grid>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            mt: 4,
-            color: 'text.secondary',
-          }}
-        >
-          <SchoolIcon fontSize="small" />
-          <Typography variant="body2">UTN FRRo · Desarrollo de Software · 2026</Typography>
-        </Stack>
       </Seccion>
 
       {/* Cierre */}
