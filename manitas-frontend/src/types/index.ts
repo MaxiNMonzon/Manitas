@@ -92,7 +92,6 @@ export interface MatriculaRequest {
 
 export type EstadoSolicitud =
   | 'solicitado'
-  | 'en_coordinacion'
   | 'presupuestado'
   | 'agendado'
   | 'contratado'

@@ -2,14 +2,13 @@
 // Los nombres son distintos a los del profesional: el cliente habla de "Pendiente", "Confirmada"...
 import dayjs from 'dayjs'
 import type { EstadoSolicitud, SolicitudResumen } from '../../types'
-import { formatoPesos, type ColorChip } from './estados'
+import { formatoFecha, formatoPesos, yaFueLaVisita, type ColorChip } from './estados'
 
 export const estadosCliente: Record<EstadoSolicitud, { label: string; color: ColorChip }> = {
   solicitado: { label: 'Pendiente', color: 'warning' },
-  en_coordinacion: { label: 'A coordinar', color: 'info' },
   agendado: { label: 'Confirmada', color: 'primary' },
   presupuestado: { label: 'Presupuesto recibido', color: 'secondary' },
-  contratado: { label: 'En proceso', color: 'info' },
+  contratado: { label: 'Trabajo agendado', color: 'info' },
   reprogramacion: { label: 'Cambio de horario', color: 'warning' },
   finalizado: { label: 'Finalizada', color: 'success' },
   rechazado: { label: 'Rechazada', color: 'default' },
@@ -64,33 +63,30 @@ export function fechaClave(s: SolicitudResumen): { que: 'Visita' | 'Trabajo' | '
 }
 
 export function proximoPasoCliente(s: SolicitudResumen): string {
+  // Describe en qué situación está la solicitud (no le da órdenes al cliente: para eso están los botones)
   switch (s.estadoServicio) {
     case 'solicitado':
-      return s.urgente && !s.profesional
-        ? 'Buscando un profesional cerca tuyo (hasta 1 hora)'
-        : 'Esperando que el profesional confirme la visita'
-    case 'en_coordinacion':
-      return 'El profesional se va a comunicar para coordinar la fecha'
+      return s.urgente && !s.profesional ? 'Buscando un profesional cerca tuyo (hasta 1 hora)' : 'Esperando confirmación del profesional'
     case 'agendado':
-      if (s.urgente && s.fechaVisita) return `Llega a las ${dayjs(s.fechaVisita).format('HH:mm')}`
-      return s.costoEstimado == null
-        ? 'Después de la visita te manda el presupuesto'
-        : `Trabajo confirmado: ${formatoPesos(s.costoFinal)}`
+      if (s.urgente && s.fechaVisita) return `Profesional en camino · llega a las ${dayjs(s.fechaVisita).format('HH:mm')}`
+      if (s.costoEstimado != null) return `Trabajo confirmado · ${formatoPesos(s.costoFinal)}`
+      return yaFueLaVisita(s) ? 'Visita en curso · presupuesto pendiente' : 'Presupuesto pendiente'
     case 'presupuestado':
-      return `Te mandó un presupuesto de ${formatoPesos(s.costoFinal)}: aceptalo o rechazalo`
+      return `Presupuesto recibido: ${formatoPesos(s.costoFinal)} · esperando tu respuesta`
     case 'contratado':
-      return debePagar(s) ? `Trabajo en curso. Pagá ${formatoPesos(s.costoFinal)} cuando termine` : `Trabajo contratado: ${formatoPesos(s.costoFinal)}`
+      if (debePagar(s)) return `Trabajo en curso · ${formatoPesos(s.costoFinal)} a pagar`
+      return s.fechaInicio ? `Trabajo agendado para el ${formatoFecha(s.fechaInicio)} · ${formatoPesos(s.costoFinal)}` : `Trabajo contratado · ${formatoPesos(s.costoFinal)}`
     case 'reprogramacion':
       return s.propuestaDe === 'profesional'
-        ? 'El profesional propuso otro horario: aceptalo o rechazalo'
-        : 'Esperando que el profesional responda tu cambio de horario'
+        ? 'Cambio de horario propuesto por el profesional · se cancela si no respondés en 24 h'
+        : 'Cambio de horario propuesto · esperando respuesta del profesional'
     case 'finalizado':
-      return s.calificacionServicio ? `Pagado: ${formatoPesos(s.costoFinal)}` : '¡Terminado! Calificá al profesional'
+      return s.calificacionServicio ? `Trabajo finalizado · pagado ${formatoPesos(s.costoFinal)}` : 'Trabajo finalizado · falta tu calificación'
     case 'rechazado':
-      return debePagar(s) ? `Rechazada. Queda por pagar la visita: ${formatoPesos(s.costoFinal)}` : 'Rechazada'
+      return debePagar(s) ? `Rechazada · visita a pagar: ${formatoPesos(s.costoFinal)}` : 'Rechazada'
     case 'cancelado':
       return 'Cancelada'
     case 'expirado':
-      return 'Venció sin respuesta del profesional'
+      return 'Vencida sin respuesta del profesional'
   }
 }

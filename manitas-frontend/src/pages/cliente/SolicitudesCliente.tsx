@@ -87,8 +87,6 @@ export default function SolicitudesCliente() {
   const vueltaDePago = params.get('payment_id') || params.get('status') ? Number(params.get('external_reference')) || null : null
   const [grupo, setGrupo] = useState<GrupoCliente>('en_curso')
   const [cantidadVisible, setCantidadVisible] = useState(POR_PAGINA)
-  // Se guarda el id (no la solicitud) para que el detalle se actualice al recargar (ej: después de pagar)
-  const [idDetalle, setIdDetalle] = useState<number | null>(null)
   const [confirmandoPago, setConfirmandoPago] = useState(vueltaDePago !== null)
   const pagoProcesado = useRef(false)
   const [aAceptar, setAAceptar] = useState<SolicitudResumen | null>(null)
@@ -99,7 +97,10 @@ export default function SolicitudesCliente() {
   const [aConfirmar, setAConfirmar] = useState<Confirmacion | null>(null)
   const [enviando, setEnviando] = useState(false)
   // Al llegar después de pedir un presupuesto o una urgencia (ver Profesionales), viene el aviso en el state
-  const { state } = useLocation() as { state: { mensaje?: string } | null }
+  // También puede venir de una novedad del Inicio ("Ver"): se abre esa solicitud
+  const { state } = useLocation() as { state: { mensaje?: string; abrir?: number } | null }
+  // Se guarda el id (no la solicitud) para que el detalle se actualice al recargar (ej: después de pagar)
+  const [idDetalle, setIdDetalle] = useState<number | null>(state?.abrir ?? null)
   const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' | 'warning' } | null>(
     state?.mensaje ? { texto: state.mensaje, tipo: 'success' } : null,
   )
@@ -238,16 +239,6 @@ export default function SolicitudesCliente() {
 
     if (s.estadoServicio === 'reprogramacion' && s.propuestaDe === 'profesional') {
       botones.push(
-        <Button
-          key="rechazar-horario"
-          variant="outlined"
-          disabled={enviando}
-          onClick={() =>
-            ejecutar(() => responderReprogramacion(s.idSolicitud, false), 'Seguís con el horario que tenías.')
-          }
-        >
-          Mantener el mío
-        </Button>,
         <Button
           key="aceptar-horario"
           variant="contained"
@@ -436,7 +427,8 @@ export default function SolicitudesCliente() {
 
       <Snackbar
         open={mensaje !== null}
-        autoHideDuration={5000}
+        // 10 s: el de "solicitud enviada" trae el plazo que tiene el profesional y hay que poder leerlo
+        autoHideDuration={10000}
         onClose={() => setMensaje(null)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >

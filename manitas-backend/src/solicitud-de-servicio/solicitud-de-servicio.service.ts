@@ -612,6 +612,11 @@ export class SolicitudDeServicioService {
   async rechazarReprogramacion(id: number, usuario: UsuarioActivoInterface) {
     const solicitud = await this.findOne(id, usuario);
     this.validarQueLeTocaContestar(solicitud, usuario);
+    // Si el que propuso es el profesional, es porque no puede en el horario original: el cliente
+    // no puede "quedarse con el suyo", tiene que aceptar, proponer otro horario o cancelar
+    if (solicitud.propuestaDe === 'profesional') {
+      throw new BadRequestException('El profesional no puede en tu horario: acepta el nuevo, propone otro o cancela');
+    }
     await this.volverAlHorarioOriginal(solicitud);
     return await this.detalle(id, usuario);
   }
@@ -757,6 +762,10 @@ export class SolicitudDeServicioService {
     const cuando = this.texto(propuestos[0].inicio);
     if (solicitud.propuestaDe === yo) {
       return `Le propusiste a ${otro} pasar ${que} al ${cuando}: esperando su respuesta`;
+    }
+    // Si el que propone es el profesional, el cliente no puede quedarse con el horario de antes
+    if (yo === 'cliente') {
+      return `${otro} te propone pasar ${que} al ${cuando}. Acepta o propone otro horario: si no contestas en 24 hs, se cancela`;
     }
     return `${otro} te propone pasar ${que} al ${cuando}. Acepta, propone otro horario o rechaza`;
   }
@@ -1028,7 +1037,8 @@ export class SolicitudDeServicioService {
   }
 
   // Los vencimientos se revisan cada vez que alguien mira la solicitud (no hay un proceso aparte):
-  // - una propuesta de horario sin contestar en 24 hs (o que ya llego) se da por rechazada
+  // - una propuesta de horario sin contestar en 24 hs (o que ya llego): si la hizo el cliente, se da por
+  //   rechazada (sigue el horario de antes); si la hizo el profesional, se cancela (el no puede en el de antes)
   // - una solicitud nueva sin respuesta en 48 hs, o cuando ya llego el turno elegido, vence
   // - una urgente que nadie tomo en 1 hora, vence
   private async revisarVencimiento(solicitud: SolicitudDeServicio) {
@@ -1037,7 +1047,13 @@ export class SolicitudDeServicioService {
       const pasoElPlazo = Date.now() - solicitud.fechaCambioEstado.getTime() >= HORAS_PROPUESTA * UNA_HORA;
       const yaLlego = propuestos.length === 0 || propuestos[0].inicio <= new Date();
       if (pasoElPlazo || yaLlego) {
-        await this.volverAlHorarioOriginal(solicitud);
+        if (solicitud.propuestaDe === 'profesional') {
+          solicitud.estadoAnterior = null;
+          solicitud.propuestaDe = null;
+          await this.cambiarEstadoLiberando(solicitud, EstadoSolicitud.CANCELADO);
+        } else {
+          await this.volverAlHorarioOriginal(solicitud);
+        }
       }
     }
 
