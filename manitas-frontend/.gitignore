@@ -23,7 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-DEFENSA_PROYECTO.md
 # Reportes de los tests end-to-end (Playwright)
 playwright-report
 test-results
