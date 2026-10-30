@@ -15,13 +15,13 @@
 
 | Rol | Correo | Contraseña |
 | --- | --- | --- |
-| Cliente | laura.cliente@manitas.test | Manitas123 |
-| Profesional | jorge.plomero@manitas.test | Manitas123 |
+| Cliente | valeriagodoy.ros@gmail.com | Manitas123 |
+| Profesional | raulbustos.plomeria@gmail.com | Manitas123 |
 | Administrador | admin@manitas.com | tuhogarenbuenasmanos |
 
-Hay más cuentas de prueba (todas con la contraseña `Manitas123`): clientes `martin`, `sofia`, `diego` y `carla`
-(`<nombre>.cliente@manitas.test`) y profesionales `oscar.electricista`, `marta.pintora`, `lucia.carpintera`,
-`julian.gasista`, `ramon.cerrajero`, `ana.limpieza`, `pablo.jardinero` y `nicolas.clima` (`@manitas.test`).
+Valeria tiene un presupuesto para responder, un trabajo para pagar y trabajos terminados; Raúl (plomería y gas)
+tiene solicitudes nuevas para aceptar y una visita para presupuestar. Hay más clientes y un profesional por oficio,
+todos con la contraseña `Manitas123` (la lista está en [SEED.md](../manitas-backend/SEED.md)).
 Para pagar con Mercado Pago (modo prueba) se usa un usuario comprador de prueba de Mercado Pago.
 
 ## Qué usamos

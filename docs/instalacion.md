@@ -39,7 +39,7 @@ pnpm run seed:georef       # provincias y localidades de Argentina (API Georef d
 pnpm run seed:demo         # oficios, zonas, clientes, profesionales, solicitudes y promociones de prueba
 ```
 
-`seed:demo` crea cuentas de prueba con contraseña **`Manitas123`** (detalle en [`SEED.md`](../manitas-backend/SEED.md)).
+`seed:demo` crea clientes y profesionales con contraseña **`Manitas123`** (detalle en [`SEED.md`](../manitas-backend/SEED.md)).
 Se puede correr varias veces: no duplica ni modifica lo que ya existe.
 
 ## 2. Frontend
