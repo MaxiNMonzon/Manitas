@@ -16,6 +16,7 @@ import AuthLayout from '../components/AuthLayout'
 import AccesosDemo from '../components/AccesosDemo'
 import CuentasDePrueba from '../components/CuentasDePrueba'
 import { useAuth } from '../auth/useAuth'
+import { ApiError } from '../api/client'
 import type { Rol } from '../types'
 
 export default function Login() {
@@ -40,6 +41,11 @@ export default function Login() {
       await login(rol, { correo, contraseña })
       navigate('/app')
     } catch (err) {
+      // 3 intentos fallidos: la cuenta queda bloqueada un rato y se vuelve al inicio con el aviso
+      if (err instanceof ApiError && err.status === 429) {
+        navigate('/', { replace: true, state: { aviso: err.message } })
+        return
+      }
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión')
     } finally {
       setEnviando(false)
