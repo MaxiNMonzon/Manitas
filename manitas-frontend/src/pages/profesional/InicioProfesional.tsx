@@ -1,7 +1,6 @@
 import { useState, type ReactElement, type ReactNode } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import ButtonBase from '@mui/material/ButtonBase'
 import Grid from '@mui/material/Grid'
@@ -10,7 +9,6 @@ import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import AssignmentIcon from '@mui/icons-material/Assignment'
-import HelpCenterIcon from '@mui/icons-material/HelpCenter'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
 import StarIcon from '@mui/icons-material/Star'
 import dayjs from 'dayjs'
@@ -226,13 +224,6 @@ export default function InicioProfesional() {
           </SeccionTarjeta>
         </Grid>
       </Grid>
-
-      {/* El profesional no tiene pestaña de Ayuda: el link va al pie de su inicio */}
-      <Box sx={{ textAlign: 'center', mt: 3 }}>
-        <Button startIcon={<HelpCenterIcon />} onClick={() => navigate('/app/ayuda')}>
-          Ayuda y preguntas frecuentes
-        </Button>
-      </Box>
 
       <TiempoLlegadaDialog urgente={aTomar} cargando={aceptando} onClose={() => setATomar(null)} onConfirmar={aceptarUrgente} />
 
