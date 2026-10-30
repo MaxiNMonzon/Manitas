@@ -1,0 +1,16 @@
+Frontend — tests end-to-end (npm run test:e2e, Playwright con Google Chrome; escritorio y celular)
+Ejecutado: 29/10/2026 22:36
+
+
+Running 8 tests using 1 worker
+
+  ok 1 [escritorio] › e2e\cliente.spec.ts:11:1 › sin sesión, las pantallas privadas mandan al login (21.0s)
+  ok 2 [escritorio] › e2e\cliente.spec.ts:16:1 › el cliente ve sus solicitudes y abre el detalle de una (15.5s)
+  ok 3 [escritorio] › e2e\cliente.spec.ts:34:1 › el cliente busca en Ayuda y no puede mandar una consulta vacía (15.0s)
+  ok 4 [escritorio] › e2e\cliente.spec.ts:47:1 › un cliente no puede entrar a las pantallas del administrador (17.1s)
+  ok 5 [celular] › e2e\cliente.spec.ts:11:1 › sin sesión, las pantallas privadas mandan al login (9.4s)
+  ok 6 [celular] › e2e\cliente.spec.ts:16:1 › el cliente ve sus solicitudes y abre el detalle de una (12.3s)
+  ok 7 [celular] › e2e\cliente.spec.ts:34:1 › el cliente busca en Ayuda y no puede mandar una consulta vacía (14.3s)
+  ok 8 [celular] › e2e\cliente.spec.ts:47:1 › un cliente no puede entrar a las pantallas del administrador (12.3s)
+
+  8 passed (2.7m)
