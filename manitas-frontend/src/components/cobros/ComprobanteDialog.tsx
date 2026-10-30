@@ -8,7 +8,7 @@ import Divider from '@mui/material/Divider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dayjs from 'dayjs'
-import HandymanIcon from '@mui/icons-material/Handyman'
+import Marca from '../Marca'
 import { estadosCobro, formatoPesos, numeroComprobante } from './estadosCobro'
 import type { Cobro } from '../../types'
 
@@ -34,12 +34,7 @@ export default function ComprobanteDialog({ cobro: c, cuentaDeposito, onClose }:
         <>
           <DialogContent>
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', color: 'primary.main' }}>
-                <HandymanIcon />
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Manitas
-                </Typography>
-              </Stack>
+              <Marca alto={36} />
               <Box sx={{ textAlign: 'right' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                   Comprobante de pago
@@ -59,7 +54,7 @@ export default function ComprobanteDialog({ cobro: c, cuentaDeposito, onClose }:
                 {c.descripcionProblema}
               </Typography>
               <Divider sx={{ my: 1 }} />
-              <Fila label="Medio de pago" valor={c.medioDePago ?? 'Tarjeta'} />
+              <Fila label="Medio de pago" valor={c.medioDePago ?? 'Mercado Pago'} />
               <Fila label="Se deposita en" valor={cuentaDeposito ? `CBU/CVU terminado en ${cuentaDeposito}` : 'Tu CBU/CVU'} />
               <Fila
                 label={c.estado === 'cobrado' ? 'Depositado el' : 'Depósito estimado'}

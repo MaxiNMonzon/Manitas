@@ -25,13 +25,14 @@ La cátedra pide que la base de datos sea un servicio externo y **no requiera ej
 | Parte | Servicio sugerido | Notas |
 | --- | --- | --- |
 | Base de datos MySQL | [Railway](https://railway.app), [Aiven](https://aiven.io/mysql) o [Clever Cloud](https://www.clever-cloud.com) | Crear la base y copiar host, puerto, usuario, contraseña y nombre |
-| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `pnpm install && pnpm run build` · Start: `pnpm run start:prod` |
+| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `corepack enable && pnpm install --frozen-lockfile && pnpm run build` · Start: `pnpm run start:prod` |
 | Frontend | [Vercel](https://vercel.com) o [Netlify](https://netlify.com) | Root: `manitas-frontend` · Build: `npm run build` · Output: `dist` |
 
 ### Variables de entorno
 
 **Backend** (las mismas de [`.env.example`](../manitas-backend/.env.example)):
-`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET` (uno nuevo, largo y aleatorio),
+`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`, `DB_SSL=true` y `DB_SSL_CA` (el certificado CA del
+proveedor de la base, si pide conexión segura), `JWT_SECRET` (uno nuevo, largo y aleatorio),
 `ADMIN_CORREO`, `ADMIN_CONTRASENA`, `MERCADOPAGO_ACCESS_TOKEN` y
 `MERCADOPAGO_VUELTA_URL=https://<dominio-del-front>/app/solicitudes`.
 

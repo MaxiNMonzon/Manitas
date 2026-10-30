@@ -9,13 +9,14 @@ import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import HandymanIcon from '@mui/icons-material/Handyman'
+import Marca from './Marca'
 import { useAuth } from '../auth/useAuth'
 import { pestañaActiva, pestañasDe } from '../navegacion'
 import Notificaciones from './Notificaciones'
 
 const ALTO_NAV_INFERIOR = 64
+// Barra de arriba más alta, para que el nombre se vea más grande
+const ALTO_BARRA = { xs: 72, md: 84 }
 
 // Layout de la parte privada de la app: solo se ve con sesión iniciada.
 export default function Layout() {
@@ -32,23 +33,23 @@ export default function Layout() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <AppBar position="sticky" elevation={1}>
-        <Toolbar sx={{ gap: 2 }}>
+        <Toolbar sx={{ gap: 2, minHeight: ALTO_BARRA }}>
           <Stack
             direction="row"
             spacing={1}
             component={RouterLink}
             to="/app"
-            sx={{ alignItems: 'center', color: 'inherit', textDecoration: 'none' }}
+            sx={{
+              alignItems: 'center',
+              color: 'inherit',
+              textDecoration: 'none',
+              // En celular el logo va al medio de la barra (la campanita queda a la derecha); en compu, a la izquierda
+              position: { xs: 'absolute', md: 'static' },
+              left: { xs: '50%', md: 'auto' },
+              transform: { xs: 'translateX(-50%)', md: 'none' },
+            }}
           >
-            <HandymanIcon />
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
-                Manitas
-              </Typography>
-              <Typography variant="caption" sx={{ fontStyle: 'italic', opacity: 0.85, display: { xs: 'none', sm: 'block' } }}>
-                Tu hogar en buenas manos
-              </Typography>
-            </Box>
+            <Marca variante="blanco" alto={{ xs: 40, md: 56 }} />
           </Stack>
 
           {/* Pestañas arriba solo en pantallas grandes */}
@@ -60,7 +61,7 @@ export default function Layout() {
             sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center', alignSelf: 'stretch', '& .MuiTabs-flexContainer': { height: '100%', justifyContent: 'center' } }}
           >
             {pestañas.map((p) => (
-              <Tab key={p.path} value={p.path} label={p.label} icon={p.icono} iconPosition="start" sx={{ minHeight: 64 }} />
+              <Tab key={p.path} value={p.path} label={p.label} icon={p.icono} iconPosition="start" sx={{ minHeight: ALTO_BARRA.md, fontSize: '0.95rem' }} />
             ))}
           </Tabs>
           <Box sx={{ flexGrow: 1, display: { xs: 'block', md: 'none' } }} />
