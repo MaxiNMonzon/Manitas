@@ -33,6 +33,7 @@ import AvatarPersona from '../../components/AvatarPersona'
 import SeccionTarjeta from '../../components/SeccionTarjeta'
 import SelectorConChips, { type Opcion } from '../../components/SelectorConChips'
 import CambiarContrasenaDialog from '../../components/perfil/CambiarContrasenaDialog'
+import BajaCuentaButton from '../../components/perfil/BajaCuentaButton'
 import EditorMatriculas, { ListaMatriculas } from '../../components/perfil/EditorMatriculas'
 import { erroresMatriculas, matriculasParaEnviar, type MatriculaForm } from '../../components/perfil/matriculas'
 import { cbuValido, entidadDeCuenta } from '../../components/perfil/cuentaBancaria'
@@ -547,6 +548,7 @@ export default function PerfilProfesional() {
                 Cerrar sesión
               </Button>
             </Stack>
+            <BajaCuentaButton idUsuario={p.idUsuario} />
           </SeccionTarjeta>
         )}
       </Stack>
