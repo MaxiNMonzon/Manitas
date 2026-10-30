@@ -9,7 +9,7 @@ import { useAuth } from '../auth/useAuth'
 import type { Rol } from '../types'
 
 // Solo en desarrollo: entrar con un clic a las cuentas que crea el seed del back
-// (npm run seed:demo en manitas-backend, ver SEED.md). Son cuentas reales: usan la API.
+// (pnpm run seed:demo en manitas-backend, ver SEED.md). Son cuentas reales: usan la API.
 const CONTRASEÑA = 'Manitas123'
 const cuentas: { rol: Rol; titulo: string; personas: { nombre: string; correo: string; ayuda: string }[] }[] = [
   {
@@ -60,7 +60,7 @@ export default function CuentasDePrueba() {
       await login(rol, { correo, contraseña: CONTRASEÑA })
       navigate('/app')
     } catch (e) {
-      setError(`${e instanceof Error ? e.message : 'No se pudo entrar'}. ¿Corriste "npm run seed:demo" en el back?`)
+      setError(`${e instanceof Error ? e.message : 'No se pudo entrar'}. ¿Corriste "pnpm run seed:demo" en el back?`)
     } finally {
       setEntrando(null)
     }
@@ -70,7 +70,7 @@ export default function CuentasDePrueba() {
     <Alert severity="info" icon={false} sx={{ mt: 2 }}>
       <AlertTitle>Cuentas de prueba (con el back)</AlertTitle>
       <Typography variant="body2" sx={{ mb: 1.5 }}>
-        Las crea <code>npm run seed:demo</code> en el back. Contraseña de todas: <strong>{CONTRASEÑA}</strong>
+        Las crea <code>pnpm run seed:demo</code> en el back. Contraseña de todas: <strong>{CONTRASEÑA}</strong>
       </Typography>
       {error && (
         <Alert severity="error" sx={{ mb: 1.5 }}>
