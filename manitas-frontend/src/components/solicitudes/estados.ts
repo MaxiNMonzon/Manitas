@@ -8,7 +8,6 @@ export type ColorChip = 'default' | 'primary' | 'secondary' | 'success' | 'warni
 // `plural` es para los títulos de los grupos (ej: la carpeta "Agendadas")
 export const estados: Record<EstadoSolicitud, { label: string; plural: string; color: ColorChip }> = {
   solicitado: { label: 'Nueva', plural: 'Nuevas', color: 'warning' },
-  en_coordinacion: { label: 'A coordinar', plural: 'A coordinar', color: 'info' },
   agendado: { label: 'Agendada', plural: 'Agendadas', color: 'primary' },
   presupuestado: { label: 'Presupuestada', plural: 'Presupuestadas', color: 'secondary' },
   contratado: { label: 'Contratada', plural: 'Contratadas', color: 'info' },
@@ -24,7 +23,6 @@ export type Grupo = 'nuevas' | 'en_curso' | 'historial'
 export function grupoDe(estado: EstadoSolicitud): Grupo {
   if (estado === 'solicitado') return 'nuevas'
   if (
-    estado === 'en_coordinacion' ||
     estado === 'agendado' ||
     estado === 'presupuestado' ||
     estado === 'contratado' ||
@@ -39,13 +37,18 @@ const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS
 export const formatoPesos = (monto: number | null | undefined) => pesos.format(monto ?? 0)
 export const formatoFecha = (fecha: string) => dayjs(fecha).format('ddd DD/MM · HH:mm [h]')
 
-// Plazos del back: 48 h para responder o cargar la fecha; una urgente, 1 h para que alguien la tome
+// Plazos del back: 48 h para responder (o hasta la hora del turno pedido, lo que llegue antes);
+// una urgente, 1 h para que alguien la tome
 export function tiempoQueQueda(s: SolicitudResumen): string {
   const horasPasadas = (Date.now() - new Date(s.fechaCambioEstado).getTime()) / (1000 * 60 * 60)
   if (s.urgente && s.estadoServicio === 'solicitado') {
     return `${Math.max(0, Math.floor((1 - horasPasadas) * 60))} min`
   }
-  return `${Math.max(0, Math.floor(48 - horasPasadas))} h`
+  let horas = 48 - horasPasadas
+  if (s.estadoServicio === 'solicitado' && s.fechaVisita) {
+    horas = Math.min(horas, (new Date(s.fechaVisita).getTime() - Date.now()) / (1000 * 60 * 60))
+  }
+  return `${Math.max(0, Math.floor(horas))} h`
 }
 
 // La fecha que importa ahora: la del trabajo si ya hay presupuesto aceptado, si no la de la visita
@@ -60,39 +63,36 @@ export const yaFueLaVisita = (s: SolicitudResumen) => !!s.fechaVisita && new Dat
 
 // Qué le toca hacer al profesional (o qué está esperando)
 export function proximoPaso(s: SolicitudResumen): string {
+  // Describe en qué situación está la solicitud (no le da órdenes al profesional)
   switch (s.estadoServicio) {
     case 'solicitado':
       return s.fechaVisita
-        ? `Pidió la visita para el ${formatoFecha(s.fechaVisita)}. Aceptá, proponé otro horario o rechazá (quedan ${tiempoQueQueda(s)})`
-        : `Respondé antes de que venza: quedan ${tiempoQueQueda(s)}`
-    case 'en_coordinacion':
-      return s.costoEstimado == null
-        ? `Coordiná la visita y cargá la fecha (vence en ${tiempoQueQueda(s)})`
-        : `Coordiná la fecha del trabajo (vence en ${tiempoQueQueda(s)})`
+        ? `Visita pedida para el ${formatoFecha(s.fechaVisita)} · quedan ${tiempoQueQueda(s)} para responder`
+        : `Solicitud nueva · quedan ${tiempoQueQueda(s)} para responder`
     case 'agendado':
       // Urgente: la visita es a la hora de llegada que dio al aceptarla
-      if (s.urgente && s.costoEstimado == null && s.fechaVisita) {
-        return `Urgente: llegá a las ${dayjs(s.fechaVisita).format('HH:mm')} y después mandá el presupuesto`
-      }
-      if (s.costoEstimado != null) return `A cobrar cuando termines: ${formatoPesos(s.costoFinal)}`
-      return yaFueLaVisita(s) ? 'Ya fue la visita: mandá el presupuesto' : 'Visita confirmada. Después de verlo, mandá el presupuesto'
+      if (s.urgente && s.costoEstimado == null && s.fechaVisita) return `Urgencia aceptada · llegada a las ${dayjs(s.fechaVisita).format('HH:mm')}`
+      if (s.costoEstimado != null) return `Trabajo confirmado · ${formatoPesos(s.costoFinal)}`
+      if (yaFueLaVisita(s)) return 'Visita en curso · presupuesto pendiente'
+      return s.fechaVisita ? `Visita confirmada para el ${formatoFecha(s.fechaVisita)}` : 'Visita confirmada'
     case 'presupuestado':
-      return `Esperando que el cliente acepte el presupuesto de ${formatoPesos(s.costoFinal)}`
+      return `Presupuesto enviado: ${formatoPesos(s.costoFinal)} · esperando respuesta del cliente`
     case 'contratado':
-      if (s.fechaInicio && new Date(s.fechaInicio) > new Date()) return `Trabajo contratado: ${formatoPesos(s.costoFinal)}`
-      return s.fechaPago ? `Pagado: ${formatoPesos(s.costoFinal)}` : `Trabajo en curso. El cliente paga ${formatoPesos(s.costoFinal)} por la app`
+      if (s.fechaPago) return `Trabajo pagado · ${formatoPesos(s.costoFinal)}`
+      if (s.fechaInicio && new Date(s.fechaInicio) > new Date()) return `Trabajo agendado para el ${formatoFecha(s.fechaInicio)} · ${formatoPesos(s.costoFinal)}`
+      return `Trabajo en curso · ${formatoPesos(s.costoFinal)} a cobrar`
     case 'reprogramacion':
       return s.propuestaDe === 'cliente'
-        ? 'El cliente propuso otro horario: aceptalo o rechazalo'
-        : 'Esperando que el cliente responda tu cambio de horario'
+        ? 'Cambio de horario propuesto por el cliente · esperando tu respuesta'
+        : 'Cambio de horario propuesto · esperando respuesta del cliente'
     case 'finalizado':
-      return `Cobrado: ${formatoPesos(s.costoFinal)}`
+      return `Trabajo finalizado · cobrado ${formatoPesos(s.costoFinal)}`
     case 'rechazado':
       return 'Rechazada'
     case 'cancelado':
       return 'Cancelada'
     case 'expirado':
-      return 'Venció sin respuesta'
+      return 'Vencida sin respuesta'
   }
 }
 

@@ -252,7 +252,7 @@ export class SolicitudDeServicioController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Rechazar el horario propuesto',
-    description: 'reprogramacion → vuelve al estado y al horario que tenia, como si no se hubiera propuesto nada. Solo el que no lo propuso.',
+    description: 'reprogramacion → vuelve al estado y al horario que tenia, como si no se hubiera propuesto nada. Solo el profesional, cuando el que propuso fue el cliente (si lo propuso el profesional es porque no puede en el original: el cliente acepta, propone otro o cancela).',
   })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })

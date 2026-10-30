@@ -58,7 +58,7 @@ pnpm run seed:demo   # o: npm run seed:demo
 - **Se puede correr varias veces**: busca por nombre/correo y no duplica. No modifica ni borra nada que ya exista.
 - Agrega lo que falte de: los **10 oficios** (Electricidad, Plomería, Gas, Pintura, Albañilería, Carpintería,
   Cerrajería, Climatización, Limpieza, Jardinería) con algunas habilidades cada uno, y las **zonas de Rosario**
-  (Centro, Echesortu, Norte, Sur, Oeste, Fisherton). Si no existen Santa Fe / Rosario, las crea.
+  (los 6 distritos oficiales: Centro, Norte, Noroeste, Oeste, Sudoeste y Sur). Si no existen Santa Fe / Rosario, las crea. Si encuentra las zonas viejas Echesortu o Fisherton, pasa su gente a Centro y Noroeste y las da de baja.
 - Crea **5 clientes y 9 profesionales** (con horario de trabajo, zonas, oficios y CBU).
 - Crea una vez **solicitudes de ejemplo en todos los estados** (finalizadas con reseñas, presupuesto para aceptar,
   trabajo para pagar, visita para presupuestar, nuevas para aceptar, cambio de horario...).

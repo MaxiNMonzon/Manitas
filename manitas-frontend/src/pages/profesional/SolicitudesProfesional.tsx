@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -14,7 +15,6 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
 import EventRepeatIcon from '@mui/icons-material/EventRepeat'
 import {
@@ -33,7 +33,6 @@ import { useCarga } from '../../hooks/useCarga'
 // MEDIDOR DE CARGA (desactivado, archivo local sin subir; ver NOTAS-SESION.md punto 23):
 // import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
 // import MedidorCarga from '../../components/MedidorCarga'
-import AgendarDialog from '../../components/agenda/AgendarDialog'
 import TarjetaSolicitud from '../../components/solicitudes/TarjetaSolicitud'
 import DetalleSolicitudDialog from '../../components/solicitudes/DetalleSolicitudDialog'
 import PresupuestarDialog from '../../components/solicitudes/PresupuestarDialog'
@@ -75,8 +74,8 @@ function ordenar(grupo: Grupo, lista: SolicitudResumen[]): SolicitudResumen[] {
     return copia.sort((a, b) => urgentesPrimero(a, b) || tiempo(a.fechaCambioEstado) - tiempo(b.fechaCambioEstado))
   }
   if (grupo === 'en_curso') {
-    // Las urgentes; después las que hay que coordinar, las agendadas por fecha y al final las presupuestadas
-    const prioridad = { reprogramacion: 0, en_coordinacion: 0, agendado: 1, contratado: 2, presupuestado: 3 } as Record<string, number>
+    // Las urgentes; después los cambios de horario, las agendadas por fecha y al final las presupuestadas
+    const prioridad = { reprogramacion: 0, agendado: 1, contratado: 2, presupuestado: 3 } as Record<string, number>
     return copia.sort(
       (a, b) =>
         urgentesPrimero(a, b) ||
@@ -121,8 +120,13 @@ export default function SolicitudesProfesional() {
   // Carpetas cerradas por el usuario (al entrar están todas abiertas)
   const [cerradas, setCerradas] = useState<Set<string>>(new Set())
   const [cantidadVisible, setCantidadVisible] = useState(POR_PAGINA)
-  const [detalle, setDetalle] = useState<SolicitudResumen | null>(null)
-  const [aAgendar, setAAgendar] = useState<SolicitudResumen | null>(null)
+  const [detalleElegido, setDetalleElegido] = useState<SolicitudResumen | null>(null)
+  // La que viene del Inicio se abre una sola vez: después manda lo que elija el profesional
+  const [desdeInicioUsada, setDesdeInicioUsada] = useState(false)
+  const setDetalle = (s: SolicitudResumen | null) => {
+    setDesdeInicioUsada(true)
+    setDetalleElegido(s)
+  }
   const [aPresupuestar, setAPresupuestar] = useState<SolicitudResumen | null>(null)
   const [aRechazar, setARechazar] = useState<SolicitudResumen | null>(null)
   const [aceptando, setAceptando] = useState(false)
@@ -136,6 +140,12 @@ export default function SolicitudesProfesional() {
   const [aReprogramar, setAReprogramar] = useState<SolicitudResumen | null>(null)
 
   const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
+
+  // Si viene del Inicio ("Responder"), abre esa solicitud apenas carga la lista
+  const { state } = useLocation() as { state: { abrir?: number } | null }
+  const desdeInicio =
+    !desdeInicioUsada && state?.abrir ? ((solicitudes.datos ?? []).find((s) => s.idSolicitud === state.abrir) ?? null) : null
+  const detalle = detalleElegido ?? desdeInicio
   // Para proponer otro horario hacen falta sus turnos libres (y el token no trae su id)
   const miId = useCarga('mi-id-profesional', traerMiIdProfesional)
   // En una reprogramación, el horario nuevo sale del detalle de la solicitud
@@ -167,13 +177,6 @@ export default function SolicitudesProfesional() {
   // En la tarjeta: el botón de la acción que le toca a cada estado. Las nuevas se responden en el detalle.
   // La visita de una urgente no se agenda (es en el día)
   const accionesDe = (s: SolicitudResumen) => {
-    if (s.estadoServicio === 'en_coordinacion' && !(s.urgente && s.costoEstimado == null)) {
-      return (
-        <Button size="small" variant="contained" startIcon={<EventAvailableIcon />} onClick={() => setAAgendar(s)}>
-          Agendar
-        </Button>
-      )
-    }
     // El back no deja presupuestar antes de la hora de la visita
     if (s.estadoServicio === 'agendado' && s.costoEstimado == null && yaFueLaVisita(s)) {
       return (
@@ -409,11 +412,12 @@ export default function SolicitudesProfesional() {
           ).then(urgentes.recargar)
         }}
       />
-      <AgendarDialog solicitud={aAgendar} onClose={() => setAAgendar(null)} onAgendado={solicitudes.recargar} />
       <PresupuestarDialog
         solicitud={aPresupuestar}
         onClose={() => setAPresupuestar(null)}
         onEnviado={() => {
+          // Se cierra también el detalle desde el que se mandó (ya no hay nada más que hacer ahí)
+          setDetalle(null)
           setMensaje({ texto: 'Presupuesto enviado. El cliente lo acepta o lo rechaza desde su cuenta.', tipo: 'success' })
           solicitudes.recargar()
         }}

@@ -6,13 +6,22 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import InputAdornment from '@mui/material/InputAdornment'
+import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { presupuestar } from '../../api/solicitudes'
 import type { SolicitudResumen } from '../../types'
 
-const MAX_HORAS = 200 // lo mismo que acepta el back
+// Las horas se eligen de una lista: la agenda trabaja con turnos de 1 hora, así que van enteras.
+// Hasta 7 h una por una; después, en jornadas de 8 h (el back acepta hasta 200)
+const OPCIONES_HORAS: { horas: number; texto: string }[] = [
+  ...[1, 2, 3, 4, 5, 6, 7].map((h) => ({ horas: h, texto: h === 1 ? '1 hora' : `${h} horas` })),
+  ...[1, 2, 3, 4, 5, 10, 15, 20, 25].map((dias) => ({
+    horas: dias * 8,
+    texto: `${dias * 8} horas (${dias === 1 ? '1 jornada' : `${dias} jornadas`})`,
+  })),
+]
 
 interface Props {
   solicitud: SolicitudResumen | null
@@ -30,7 +39,7 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
   const [enviando, setEnviando] = useState(false)
 
   const cambioDePrecio = solicitud?.estadoServicio === 'contratado'
-  const horasValidas = Number(horas) >= 1 && Number(horas) <= MAX_HORAS
+  const horasValidas = horas !== ''
   const listo = Number(monto) > 0 && (cambioDePrecio || horasValidas)
 
   const cerrar = () => {
@@ -81,21 +90,19 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
           />
           {!cambioDePrecio && (
             <TextField
+              select
               fullWidth
-              label="¿Cuántas horas lleva?"
+              label="¿Cuánto tiempo lleva?"
               value={horas}
-              onChange={(e) => setHoras(e.target.value.replace(/\D/g, '').slice(0, 3))}
-              error={horas !== '' && !horasValidas}
-              helperText={
-                horas !== '' && !horasValidas
-                  ? `Entre 1 y ${MAX_HORAS} horas`
-                  : 'Se reservan esas horas seguidas en tu agenda. Si es 1 hora, el cliente puede pedir que lo hagas en el momento'
-              }
-              slotProps={{
-                htmlInput: { inputMode: 'numeric' },
-                input: { endAdornment: <InputAdornment position="end">h</InputAdornment> },
-              }}
-            />
+              onChange={(e) => setHoras(e.target.value)}
+              helperText="Se reservan esas horas seguidas en tu agenda (una jornada = 8 h). Si es 1 hora, el cliente puede pedir que lo hagas en el momento"
+            >
+              {OPCIONES_HORAS.map((o) => (
+                <MenuItem key={o.horas} value={String(o.horas)}>
+                  {o.texto}
+                </MenuItem>
+              ))}
+            </TextField>
           )}
           <Typography variant="body2" color="text.secondary">
             {cambioDePrecio
