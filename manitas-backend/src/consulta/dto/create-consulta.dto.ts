@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateConsultaDto {
   @ApiProperty({ example: 'laura@gmail.com', description: 'A donde contestarle' })
@@ -19,5 +19,14 @@ export class CreateConsultaDto {
   @MaxLength(2000)
   mensaje!: string;
 
-  // El rol y el correo de la cuenta no se mandan: el back los saca del token
+  @ApiPropertyOptional({ enum: ['cliente', 'profesional', 'visitante'], example: 'cliente' })
+  @IsOptional()
+  @IsIn(['cliente', 'profesional', 'visitante'])
+  rol?: 'cliente' | 'profesional' | 'visitante';
+
+  @ApiPropertyOptional({ example: 'valeriagodoy.ros@gmail.com', description: 'El correo de su cuenta, si tiene sesion' })
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(120)
+  correoCuenta?: string;
 }

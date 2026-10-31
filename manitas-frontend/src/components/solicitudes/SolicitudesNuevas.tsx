@@ -21,18 +21,18 @@ export default function SolicitudesNuevas({ solicitudes, onResponder }: Props) {
   return (
     <Paper
       variant="outlined"
-      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'info.main', bgcolor: (t) => alpha(t.palette.info.main, 0.06) }}
+      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'primary.main', bgcolor: (t) => alpha(t.palette.primary.main, 0.06) }}
     >
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'info.main', mb: 2 }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'primary.main', mb: 2 }}>
         <NotificationsActiveIcon />
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          Solicitudes nuevas para responder
+          Solicitudes nuevas
         </Typography>
-        <Chip size="small" color="info" label={solicitudes.length} />
+        <Chip size="small" color="primary" label={solicitudes.length} />
       </Stack>
       <Stack spacing={1.5}>
         {solicitudes.map((s) => (
-          <Paper key={s.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'info.main' }}>
+          <Paper key={s.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'primary.main' }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 600 }}>
@@ -52,7 +52,7 @@ export default function SolicitudesNuevas({ solicitudes, onResponder }: Props) {
                   quedan {tiempoQueQueda(s)} para responder
                 </Typography>
               </Box>
-              <Button variant="contained" color="info" onClick={() => onResponder(s)} sx={{ flexShrink: 0 }}>
+              <Button variant="contained" color="primary" onClick={() => onResponder(s)} sx={{ flexShrink: 0 }}>
                 Responder
               </Button>
             </Stack>

@@ -15,13 +15,13 @@
 
 | Rol | Correo | Contraseña |
 | --- | --- | --- |
-| Cliente | laura.cliente@manitas.test | Manitas123 |
-| Profesional | jorge.plomero@manitas.test | Manitas123 |
+| Cliente | valeriagodoy.ros@gmail.com | Manitas123 |
+| Profesional | raulbustos.plomeria@gmail.com | Manitas123 |
 | Administrador | admin@manitas.com | tuhogarenbuenasmanos |
 
-Hay más cuentas de prueba (todas con la contraseña `Manitas123`): clientes `martin`, `sofia`, `diego` y `carla`
-(`<nombre>.cliente@manitas.test`) y profesionales `oscar.electricista`, `marta.pintora`, `lucia.carpintera`,
-`julian.gasista`, `ramon.cerrajero`, `ana.limpieza`, `pablo.jardinero` y `nicolas.clima` (`@manitas.test`).
+Valeria tiene un presupuesto para responder, un trabajo para pagar y trabajos terminados; Raúl (plomería y gas)
+tiene solicitudes nuevas para aceptar y una visita para presupuestar. Hay más clientes y un profesional por oficio,
+todos con la contraseña `Manitas123` (la lista está en [SEED.md](../manitas-backend/SEED.md)).
 Para pagar con Mercado Pago (modo prueba) se usa un usuario comprador de prueba de Mercado Pago.
 
 ## Qué usamos
@@ -29,9 +29,12 @@ Para pagar con Mercado Pago (modo prueba) se usa un usuario comprador de prueba 
 | Parte | Servicio | Detalle |
 | --- | --- | --- |
 | Base de datos | [Aiven](https://aiven.io) (MySQL 8.4, plan Free) | Servicio externo en la nube, con conexión segura (SSL verificando el certificado de Aiven) |
-| Backend | [Render](https://render.com) (Web Service, plan Free) | Rama `maxi`, carpeta `manitas-backend`. Se vuelve a publicar solo con cada `git push` |
-| Frontend | [Vercel](https://vercel.com) (plan Hobby) | Rama `maxi`, carpeta `manitas-frontend`. Se vuelve a publicar solo con cada `git push` |
+| Backend | [Render](https://render.com) (Web Service, plan Free) | Rama `main`, carpeta `manitas-backend`. Se vuelve a publicar solo con cada `git push` a `main` |
+| Frontend | [Vercel](https://vercel.com) (plan Hobby) | Rama `main`, carpeta `manitas-frontend`. Se vuelve a publicar solo con cada `git push` a `main` |
 | Datos iniciales | `pnpm run seed:georef` y `pnpm run seed:demo` | Corridos desde la compu de un integrante contra la base de Aiven |
+
+- Tres contraseñas mal seguidas bloquean esa cuenta 15 minutos (después se puede volver a probar).
+- La sesión del administrador dura 2 horas; la de clientes y profesionales, 1 día.
 
 ## Propuesta de infraestructura (todo con planes gratuitos)
 
@@ -58,7 +61,10 @@ proveedor de la base, si pide conexión segura), `JWT_SECRET` (uno nuevo, largo 
 1. Crear la base MySQL y anotar los datos de conexión.
 2. Publicar el back con sus variables. Al arrancar, TypeORM crea las tablas.
 3. Cargar datos: desde la máquina de un integrante, con un `.env` que apunte a la base publicada,
-   `pnpm run seed:georef` y `pnpm run seed:demo`.
+   `pnpm run seed:georef` y `pnpm run seed:demo`. Las solicitudes de ejemplo se crean con fechas a partir del día en
+   que se corre (visitas de los próximos días), y la seed no las vuelve a crear si ya existen: conviene correrla cerca
+   de la entrega o la defensa. Para renovarlas, borrar las solicitudes de ejemplo (y sus turnos) y volver a correr
+   `pnpm run seed:demo` (ver [SEED.md](../manitas-backend/SEED.md)).
 4. Publicar el front con `VITE_API_URL` apuntando al back.
 5. En una SPA todas las rutas tienen que servir `index.html`; si no, `/app/solicitudes` da 404 al recargar o al
    volver de Mercado Pago. Ya está resuelto en el repo: [`vercel.json`](../manitas-frontend/vercel.json) (Vercel) y

@@ -1,157 +1,151 @@
 # Manitas
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-INTEGRANTES
----------------------------------------------------------------------------------------------------------------------------------------------------
+Aplicación web que conecta a clientes con profesionales de oficios (plomería, electricidad, gas, pintura y más) para
+resolver arreglos del hogar. TP de Desarrollo de Software — UTN FRRo.
 
-56821 - Arias, Francisco Jose  
-52098 - Monzon, Maximiliano Nicolas  
-54456 - Baremboum, Micaela  
-42062 - Coria, Lautaro  
+## Integrantes
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-REPOSITORIOS
----------------------------------------------------------------------------------------------------------------------------------------------------
+| Legajo | Nombre |
+| --- | --- |
+| 56821 | Arias, Francisco José |
+| 52098 | Monzón, Maximiliano Nicolás |
+| 54456 | Baremboum, Micaela |
+| 42062 | Coria, Lautaro |
 
-Un solo repositorio con el back y el front en carpetas separadas, que se comunican por una API REST:
+## Links
 
-- [manitas-backend](manitas-backend) — API con NestJS
-- [manitas-frontend](manitas-frontend) — app web con React
+| | |
+| --- | --- |
+| App publicada | https://manitas-sigma.vercel.app |
+| API publicada | https://manitas-api-hv16.onrender.com (documentación en [`/api`](https://manitas-api-hv16.onrender.com/api)) |
+| Credenciales de prueba | [docs/deploy.md](docs/deploy.md) |
+| Video de la app funcionando | |
+| Documentación del TP | [docs/](docs/README.md) |
+| Propuesta | [docs/proposal.md](docs/proposal.md) |
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-APP PUBLICADA
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Repositorio
 
-- Pagina: https://manitas-sigma.vercel.app
-- API: https://manitas-api-hv16.onrender.com (documentacion en /api)
-- Credenciales de prueba y servicios usados: [docs/deploy.md](docs/deploy.md)
+Un solo repositorio con el back y el front en carpetas separadas, independientes entre sí, que se comunican por una
+API REST:
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-TEMA
----------------------------------------------------------------------------------------------------------------------------------------------------
+- [`manitas-backend`](manitas-backend) — API con NestJS
+- [`manitas-frontend`](manitas-frontend) — app web con React
 
-Aplicación que conecta clientes con profesionales de distintos oficios (plomería, electricidad, gas, pintura, etc.) para resolver tareas del hogar.
-El cliente busca profesionales de su zona, les pide presupuesto eligiendo un turno de su calendario, y compara los presupuestos que recibe.
-Si es algo urgente, lo pide sin elegir profesional: les aparece a todos los de ese oficio en su zona y el primero que acepta va.
-Los profesionales cargan su horario de trabajo, presupuestan después de la visita y reciben calificaciones.
-Los clientes pagan desde la app con Mercado Pago (con tarjeta de crédito, débito o saldo).
-Informa las promociones bancarias del mes: el reintegro lo hace el banco (crédito: en el resumen · débito: en la cuenta).
-Apunta a brindar rapidez, confianza y variedad de opciones.
+## Tema
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-MODELO
----------------------------------------------------------------------------------------------------------------------------------------------------
+El cliente busca profesionales de su zona, les pide presupuesto eligiendo un turno libre del calendario y compara los
+presupuestos que recibe. Si es algo urgente, lo pide sin elegir profesional: les aparece a todos los de ese oficio en
+su zona y el primero que acepta va. Los profesionales cargan su horario de trabajo, presupuestan después de la visita
+y reciben calificaciones. Los clientes pagan desde la app con Mercado Pago (tarjeta de crédito, débito o saldo), y la
+app informa las promociones bancarias del mes (el reintegro lo hace el banco). Apunta a brindar rapidez, confianza y
+variedad de opciones.
 
-<img width="1301" height="752" alt="MD - DSW-MD drawio (1)" src="https://github.com/user-attachments/assets/c6a9bd41-b077-4243-87ec-42b62b63b720" />
+## Modelo de dominio
 
-https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view
+<img width="1952" height="1460" alt="Modelo de dominio" src="https://github.com/user-attachments/assets/2a46b12c-2fc9-42fa-8c27-c8afcc278906" />
 
-Estados de la solicitud:
+[Ver el modelo en Google Drive](https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view)
 
-`solicitado` → el profesional acepta (`agendado`) o rechaza (`rechazado`) → visita → `presupuestado` → el cliente acepta (`contratado`) o rechaza (`rechazado`) → paga → `finalizado` → califica al profesional.
-Ademas: `reprogramacion` (alguno de los dos propone otro horario), `cancelado` y `expirado` (sin respuesta a tiempo).
+**Estados de la solicitud:** `solicitado` → el profesional acepta (`agendado`) o rechaza (`rechazado`) → visita →
+`presupuestado` → el cliente acepta (`contratado`) o rechaza (`rechazado`) → paga → `finalizado` → califica al
+profesional. Además: `reprogramacion` (alguno de los dos propone otro horario), `cancelado` y `expirado` (sin
+respuesta a tiempo).
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-ALCANCE FUNCIONAL
----------------------------------------------------------------------------------------------------------------------------------------------------
-Alcance Mínimo
-------------------------------------------------------------------------------
-Regularidad:
+## Alcance funcional
+
+### Regularidad
 
 | Req | Detalle |
 | :--- | :--- |
-| **CRUD simple** | 1. CRUD Usuario (Cliente y Profesional) <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago|
-| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Profesional {depende de} CRUD Especialidad|
-| **Listado + detalle** | 1. Tipo de Servicio por Especialidad <br>2. Profesional por Especialidad (y zona)|
-| **CUU/Epic** | 1. Solicitar presupuesto <br>2. Calificar profesional <br>3. Informar promociones bancarias del mes <br>4. Notificar próximas visitas|
+| **CRUD simple** | 1. CRUD Usuario (Cliente y Profesional)<br>2. CRUD Tipo de Servicio<br>3. CRUD Localidad<br>4. CRUD Método de Pago |
+| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad<br>2. CRUD Profesional {depende de} CRUD Especialidad |
+| **Listado + detalle** | 1. Tipo de Servicio por Especialidad<br>2. Profesional por Especialidad (y zona) |
+| **CUU/Epic** | 1. Solicitar presupuesto<br>2. Calificar profesional<br>3. Informar promociones bancarias del mes<br>4. Notificar próximas visitas |
 
-Adicionales para Aprobación
+### Adicionales para Aprobación
+
 | Req | Detalle |
 | :--- | :--- |
-| **CRUD** | 1. CRUD Usuario (Cliente y Profesional) <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago <br>5. CRUD Zona|
-| **CUU/Epic** | 1. Solicitar presupuesto<br>2. Coordinar visita (elegir y reprogramar turnos) <br>3. Confirmar servicio (aceptar el presupuesto)<br>4. Abonar servicio<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas|
+| **CRUD** | 1. CRUD Usuario (Cliente y Profesional)<br>2. CRUD Tipo de Servicio<br>3. CRUD Localidad<br>4. CRUD Método de Pago<br>5. CRUD Zona |
+| **CUU/Epic** | 1. Solicitar presupuesto<br>2. Coordinar visita (elegir y reprogramar turnos)<br>3. Confirmar servicio (aceptar el presupuesto)<br>4. Abonar servicio<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas |
 
-"Solicitar servicio" se unio con "Solicitar presupuesto" (el cliente siempre pide presupuesto primero) y "Calificar servicio" con "Calificar profesional".
+"Solicitar servicio" se unió con "Solicitar presupuesto" (el cliente siempre pide presupuesto primero) y "Calificar
+servicio" con "Calificar profesional".
 
-Extras que agregamos: servicio urgente, turnos con calendario, pago con Mercado Pago (sandbox), consultas desde la seccion Ayuda, login con 3 roles (cliente, profesional y administrador).
+**Extras:** servicio urgente, turnos con calendario, pago con Mercado Pago (modo prueba), consultas desde la sección
+Ayuda y login con 3 roles (cliente, profesional y administrador).
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-TECNOLOGIAS
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Tecnologías
 
-- **Back:** NestJS 11, TypeScript, TypeORM, MySQL, JWT + bcryptjs para el login, class-validator, Swagger para documentar la API, Mercado Pago (Checkout Pro). Usa **pnpm**.
-- **Front:** React 19, TypeScript, Vite, Material UI, React Router. Usa **npm**.
+- **Back:** NestJS 11, TypeScript, TypeORM, MySQL, JWT + bcryptjs, class-validator, Swagger y Mercado Pago (Checkout
+  Pro). Se instala con **pnpm**.
+- **Front:** React 19, TypeScript, Vite, Material UI y React Router. Se instala con **npm**.
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-COMO LEVANTAR EL PROYECTO
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Cómo instalar y ejecutar
 
-Hace falta Node.js, pnpm y MySQL. Crear una base vacia (por ejemplo `manitas`): las tablas las crea TypeORM solo al levantar el back.
+**Requisitos:** [Node.js](https://nodejs.org) 22 o superior, [pnpm](https://pnpm.io) (`npm install -g pnpm`) y
+[MySQL](https://dev.mysql.com/downloads/) 8 o superior con una base vacía creada (por ejemplo `manitas`). Las tablas
+se crean solas al levantar el back.
 
-**1. Back** — crear el archivo `manitas-backend/.env`:
-
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=tu_contraseña
-DB_NAME=manitas
-JWT_SECRET=un_texto_largo_y_aleatorio
-ADMIN_CORREO=admin@manitas.com
-ADMIN_CONTRASENA=una_contraseña
-# Opcional, para pagar con Mercado Pago (token TEST de una cuenta de prueba de Mercado Pago Developers)
-MERCADOPAGO_ACCESS_TOKEN=
-```
-
-El administrador no se registra: entra con el correo y la contraseña del `.env`.
+### 1. Back
 
 ```bash
 cd manitas-backend
 pnpm install
-pnpm run start:dev        # http://localhost:3000
+cp .env.example .env       # en Windows: copy .env.example .env
 ```
 
-**2. Datos de prueba** (opcional, con el back configurado):
+Completar el `.env` con los datos de MySQL, una clave para `JWT_SECRET` y el correo y la contraseña del
+administrador (cada variable está explicada en el archivo). Después:
 
 ```bash
-pnpm run seed:georef      # todas las provincias y localidades de Argentina (API Georef)
-pnpm run seed:demo        # oficios, zonas de Rosario, clientes, profesionales y solicitudes en todos los estados
+pnpm run start:dev         # API en http://localhost:3000
 ```
 
-Todas las cuentas de prueba tienen la contraseña `Manitas123` (ej: `laura.cliente@manitas.test`, `jorge.plomero@manitas.test`). Mas detalle en [SEED.md](manitas-backend/SEED.md).
+### 2. Datos de prueba (recomendado)
 
-**3. Front** (en otra terminal, con el back levantado):
+En `manitas-backend`, con el `.env` completo:
+
+```bash
+pnpm run seed:georef       # provincias y localidades de Argentina
+pnpm run seed:demo         # oficios, zonas, clientes, profesionales, solicitudes y promociones
+```
+
+Las cuentas que crea tienen la contraseña `Manitas123` (por ejemplo `valeriagodoy.ros@gmail.com` como cliente y
+`raulbustos.plomeria@gmail.com` como profesional). El administrador no se registra: entra con el correo y la
+contraseña del `.env`. Más detalle en [SEED.md](manitas-backend/SEED.md).
+
+### 3. Front
+
+En otra terminal, con el back levantado:
 
 ```bash
 cd manitas-frontend
 npm install
-npm run dev               # http://localhost:5173
+npm run dev                # app en http://localhost:5173
 ```
 
-En el login hay botones para entrar directo con las cuentas de prueba (solo en desarrollo).
+La guía completa (variables, Mercado Pago, build de producción) está en [docs/instalacion.md](docs/instalacion.md).
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-DOCUMENTACION DE LA API
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Documentación de la API
 
-Con el back levantado: **http://localhost:3000/api** (Swagger). Estan todas las rutas agrupadas, que rol puede usar cada una, de que estado a que estado pasa cada paso de la solicitud, los errores y ejemplos. Con el boton "Authorize" se pega el token del login y se pueden probar desde ahi.
+Con el back levantado: **http://localhost:3000/api** (Swagger), o la versión publicada en
+https://manitas-api-hv16.onrender.com/api. Muestra todas las rutas agrupadas, qué rol puede usar cada una, los errores
+y ejemplos; con el botón **Authorize** se pega el token del login y se pueden probar. Resumen en
+[docs/api.md](docs/api.md).
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-TESTS
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Tests
 
-```bash
-cd manitas-backend
-pnpm test                 # unitarios
-pnpm run test:e2e         # integracion
+| Comando | Carpeta | Qué corre |
+| --- | --- | --- |
+| `pnpm test` | `manitas-backend` | Tests unitarios (Jest) |
+| `pnpm run test:e2e` | `manitas-backend` | Test de integración de la API (Jest + Supertest) |
+| `npm test` | `manitas-frontend` | Test unitario de componentes (Vitest + Testing Library) |
+| `npm run test:e2e` | `manitas-frontend` | Tests end-to-end en el navegador (Playwright) |
 
-cd manitas-frontend
-npm test                  # unitarios
-npm run test:e2e          # end-to-end (Playwright)
-```
+La evidencia de la última ejecución está en [docs/evidencia-tests/](docs/tests.md).
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-DOCUMENTACION
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Documentación
 
-Toda la documentacion del TP esta en [docs/](docs/README.md): propuesta, instalacion, API, evidencia de los tests, deploy, minutas y seguimiento.
+Toda la documentación del TP está en [docs/](docs/README.md): propuesta, instalación, API, evidencia de los tests,
+deploy, minutas y seguimiento.

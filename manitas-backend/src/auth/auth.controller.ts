@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags, ApiTooManyRequestsResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateClienteDto } from '../cliente/dto/create-cliente.dto';
 import { CreateProfesionalDto } from '../profesional/dto/create-profesional.dto';
@@ -33,21 +33,24 @@ export class AuthController {
 
     @Post('login/cliente')
     @ApiOperation({ summary: 'Iniciar sesion como cliente', description: 'Devuelve el token para usar en "Authorize".' })
-    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos' })
+    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos (dice cuantos intentos quedan)' })
+    @ApiTooManyRequestsResponse({ description: '3 intentos fallidos seguidos: la cuenta queda bloqueada 15 minutos' })
     loginCliente(@Body() loginDto: LoginDto) {
         return this.authService.loginCliente(loginDto);
     }
 
     @Post('login/profesional')
     @ApiOperation({ summary: 'Iniciar sesion como profesional', description: 'Devuelve el token para usar en "Authorize".' })
-    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos' })
+    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos (dice cuantos intentos quedan)' })
+    @ApiTooManyRequestsResponse({ description: '3 intentos fallidos seguidos: la cuenta queda bloqueada 15 minutos' })
     loginProfesional(@Body() loginDto: LoginDto) {
         return this.authService.loginProfesional(loginDto);
     }
 
     @Post('login/admin')
-    @ApiOperation({ summary: 'Iniciar sesion como admin', description: 'El admin maneja los catalogos (provincias, zonas, especialidades, metodos de pago, promociones). Sus datos estan en el .env.' })
-    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos' })
+    @ApiOperation({ summary: 'Iniciar sesion como admin', description: 'El admin maneja los catalogos (provincias, zonas, especialidades, metodos de pago, promociones). Sus datos estan en el .env. Su token dura 2 horas (el de los demas, 1 dia).' })
+    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos (dice cuantos intentos quedan)' })
+    @ApiTooManyRequestsResponse({ description: '3 intentos fallidos seguidos: la cuenta queda bloqueada 15 minutos' })
     loginAdmin(@Body() loginDto: LoginDto) {
         return this.authService.loginAdmin(loginDto);
     }
