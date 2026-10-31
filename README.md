@@ -42,7 +42,8 @@ variedad de opciones.
 
 ## Modelo de dominio
 
-<img width="1962" height="1470" alt="image" src="https://github.com/user-attachments/assets/6c6fe571-fa71-443e-87f1-a1d3c2db92a0" />
+<img width="1962" height="1470" alt="image" src="https://github.com/user-attachments/assets/0026ae2d-3d67-4a93-a63d-846d71eda4fa" />
+
 
 
 [Ver el modelo en Google Drive](https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view)
