@@ -8,9 +8,9 @@ resolver arreglos del hogar.
 | Legajo | Nombre |
 | --- | --- |
 | 56821 | Arias, Francisco José |
-| 52098 | Monzón, Maximiliano Nicolás |
 | 54456 | Baremboum, Micaela |
 | 42062 | Coria, Lautaro |
+| 52098 | Monzón, Maximiliano Nicolás |
 
 ## Links
 
@@ -19,7 +19,7 @@ resolver arreglos del hogar.
 | App publicada | https://manitas-sigma.vercel.app |
 | API publicada | https://manitas-api-hv16.onrender.com (documentación en [`/api`](https://manitas-api-hv16.onrender.com/api)) |
 | Credenciales de prueba | [docs/deploy.md](docs/deploy.md) |
-| Video de la app funcionando | |
+| Video de la app funcionando | https://drive.google.com/file/d/1bY3lVukaLrSBklW50SYAPiYdt14c0BF-/view?usp=sharing |
 | Documentación del TP | [docs/](docs/README.md) |
 | Propuesta | [docs/proposal.md](docs/proposal.md) |
 
@@ -42,7 +42,8 @@ variedad de opciones.
 
 ## Modelo de dominio
 
-<img width="1952" height="1460" alt="Modelo de dominio" src="https://github.com/user-attachments/assets/2a46b12c-2fc9-42fa-8c27-c8afcc278906" />
+<img width="1962" height="1470" alt="image" src="https://github.com/user-attachments/assets/6c6fe571-fa71-443e-87f1-a1d3c2db92a0" />
+
 
 [Ver el modelo en Google Drive](https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view)
 
