@@ -1,12 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
-import Badge from '@mui/material/Badge'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
-import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
@@ -20,7 +18,6 @@ import Typography from '@mui/material/Typography'
 import EditIcon from '@mui/icons-material/Edit'
 import LockIcon from '@mui/icons-material/Lock'
 import LogoutIcon from '@mui/icons-material/Logout'
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'
 import KeyIcon from '@mui/icons-material/Key'
 import dayjs from 'dayjs'
 import { useAuth } from '../../auth/useAuth'
@@ -298,24 +295,10 @@ export default function PerfilProfesional() {
         Mi perfil
       </Typography>
 
-      {/* Encabezado: foto, nombre, especialidades y calificación */}
+      {/* Encabezado: iniciales, nombre, especialidades y calificación */}
       <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} sx={{ alignItems: 'center' }}>
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            badgeContent={
-              <Tooltip title="Subir foto: próximamente">
-                <span>
-                  <IconButton size="small" disabled sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', '&.Mui-disabled': { bgcolor: 'background.paper' } }}>
-                    <PhotoCameraIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            }
-          >
-            <AvatarPersona nombre={p.nombre} apellido={p.apellido} tamaño={96} />
-          </Badge>
+          <AvatarPersona nombre={p.nombre} apellido={p.apellido} tamaño={96} />
           <Box sx={{ flexGrow: 1, textAlign: { xs: 'center', sm: 'left' } }}>
             <Typography variant="h5" sx={{ fontWeight: 700 }}>
               {p.nombre} {p.apellido}
