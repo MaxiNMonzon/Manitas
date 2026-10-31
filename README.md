@@ -81,71 +81,10 @@ Ayuda y login con 3 roles (cliente, profesional y administrador).
   Pro). Se instala con **pnpm**.
 - **Front:** React 19, TypeScript, Vite, Material UI y React Router. Se instala con **npm**.
 
-## Cómo instalar y ejecutar
-
-**Requisitos:** [Node.js](https://nodejs.org) 22 o superior, [pnpm](https://pnpm.io) (`npm install -g pnpm`) y
-[MySQL](https://dev.mysql.com/downloads/) 8 o superior con una base vacía creada (por ejemplo `manitas`). Las tablas
-se crean solas al levantar el back.
-
-### 1. Back
-
-```bash
-cd manitas-backend
-pnpm install
-cp .env.example .env       # en Windows: copy .env.example .env
-```
-
-Completar el `.env` con los datos de MySQL, una clave para `JWT_SECRET` y el correo y la contraseña del
-administrador (cada variable está explicada en el archivo). Después:
-
-```bash
-pnpm run start:dev         # API en http://localhost:3000
-```
-
-### 2. Datos de prueba (recomendado)
-
-En `manitas-backend`, con el `.env` completo:
-
-```bash
-pnpm run seed:georef       # provincias y localidades de Argentina
-pnpm run seed:demo         # oficios, zonas, clientes, profesionales, solicitudes y promociones
-```
-
-Las cuentas que crea tienen la contraseña `Manitas123` (por ejemplo `valeriagodoy.ros@gmail.com` como cliente y
-`raulbustos.plomeria@gmail.com` como profesional). El administrador no se registra: entra con el correo y la
-contraseña del `.env`. Más detalle en [SEED.md](manitas-backend/SEED.md).
-
-### 3. Front
-
-En otra terminal, con el back levantado:
-
-```bash
-cd manitas-frontend
-npm install
-npm run dev                # app en http://localhost:5173
-```
-
-La guía completa (variables, Mercado Pago, build de producción) está en [docs/instalacion.md](docs/instalacion.md).
-
-## Documentación de la API
-
-Con el back levantado: **http://localhost:3000/api** (Swagger), o la versión publicada en
-https://manitas-api-hv16.onrender.com/api. Muestra todas las rutas agrupadas, qué rol puede usar cada una, los errores
-y ejemplos; con el botón **Authorize** se pega el token del login y se pueden probar. Resumen en
-[docs/api.md](docs/api.md).
-
-## Tests
-
-| Comando | Carpeta | Qué corre |
-| --- | --- | --- |
-| `pnpm test` | `manitas-backend` | Tests unitarios (Jest) |
-| `pnpm run test:e2e` | `manitas-backend` | Test de integración de la API (Jest + Supertest) |
-| `npm test` | `manitas-frontend` | Test unitario de componentes (Vitest + Testing Library) |
-| `npm run test:e2e` | `manitas-frontend` | Tests end-to-end en el navegador (Playwright) |
-
-La evidencia de la última ejecución está en [docs/evidencia-tests/](docs/tests.md).
-
 ## Documentación
 
-Toda la documentación del TP está en [docs/](docs/README.md): propuesta, instalación, API, evidencia de los tests,
-deploy, minutas y seguimiento.
+- [Cómo instalar y ejecutar](docs/instalacion.md)
+- [Documentación de la API](docs/api.md) · Swagger: https://manitas-api-hv16.onrender.com/api
+- [Tests y evidencia](docs/tests.md)
+- [Deploy y credenciales](docs/deploy.md)
+- [Todo el TP (propuesta, minutas, seguimiento)](docs/README.md)
