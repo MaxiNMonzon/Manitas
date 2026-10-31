@@ -18,6 +18,9 @@
 
 (Las cuentas de cliente y profesional las crea `pnpm run seed:demo` contra la base publicada.)
 
+- Tres contraseñas mal seguidas bloquean esa cuenta 15 minutos (después se puede volver a probar).
+- La sesión del administrador dura 2 horas; la de clientes y profesionales, 1 día.
+
 ## Propuesta de infraestructura (todo con planes gratuitos)
 
 La cátedra pide que la base de datos sea un servicio externo y **no requiera ejecutarse en local**.
@@ -43,7 +46,10 @@ proveedor de la base, si pide conexión segura), `JWT_SECRET` (uno nuevo, largo 
 1. Crear la base MySQL y anotar los datos de conexión.
 2. Publicar el back con sus variables. Al arrancar, TypeORM crea las tablas.
 3. Cargar datos: desde la máquina de un integrante, con un `.env` que apunte a la base publicada,
-   `pnpm run seed:georef` y `pnpm run seed:demo`.
+   `pnpm run seed:georef` y `pnpm run seed:demo`. Las solicitudes de ejemplo se crean con fechas a partir del día en
+   que se corre (visitas de los próximos días), y la seed no las vuelve a crear si ya existen: conviene correrla cerca
+   de la entrega o la defensa. Para renovarlas, borrar las solicitudes (y sus turnos) de las cuentas `@manitas.test`
+   y volver a correr `pnpm run seed:demo`.
 4. Publicar el front con `VITE_API_URL` apuntando al back.
 5. En una SPA todas las rutas tienen que servir `index.html`; si no, `/app/solicitudes` da 404 al recargar o al
    volver de Mercado Pago. Ya está resuelto en el repo: [`vercel.json`](../manitas-frontend/vercel.json) (Vercel) y
