@@ -13,7 +13,7 @@ Punto de entrada de la documentación del TP (formato pedido por la cátedra en
 | Documentación de la API | [api.md](api.md) · [openapi.json](api/openapi.json) · Swagger en `/api` | ✅ |
 | Evidencia de ejecución de tests automáticos | [tests.md](tests.md) · [evidencia-tests/](evidencia-tests/) | ✅ |
 | Demo de la app en video | _(link al video)_ | ⬜ grabar |
-| Deploy (links y credenciales) | [deploy.md](deploy.md) | ⬜ publicar |
+| Deploy (links y credenciales) | [deploy.md](deploy.md) | ✅ |
 
 ## Cumplimiento de requisitos para Aprobación Directa
 
@@ -70,6 +70,6 @@ Requisitos del [enunciado](https://github.com/utnfrrodsw/tp/blob/main/README.md)
 | ✅ Evidencia de los tests | [tests.md](tests.md) |
 | ⬜ Proposal con links a los PR | Abrir los PR al repo de la cátedra y completar [proposal.md](proposal.md) |
 | ✅ README con instrucciones de instalación | [instalacion.md](instalacion.md), enlazado desde el README del proyecto |
-| ⬜ Links de deploy y credenciales | [deploy.md](deploy.md) |
+| ✅ Links de deploy y credenciales | [deploy.md](deploy.md) |
 | ⬜ Contacto para coordinar la defensa | Completar en el formulario de entrega |
 | ⬜ Minutas y tracking | [minutas.md](minutas.md), [tracking.md](tracking.md) |

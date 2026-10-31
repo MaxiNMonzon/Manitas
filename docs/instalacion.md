@@ -39,7 +39,7 @@ pnpm run seed:georef       # provincias y localidades de Argentina (API Georef d
 pnpm run seed:demo         # oficios, zonas, clientes, profesionales, solicitudes y promociones de prueba
 ```
 
-`seed:demo` crea cuentas de prueba con contraseña **`Manitas123`** (detalle en [`SEED.md`](../manitas-backend/SEED.md)).
+`seed:demo` crea clientes y profesionales con contraseña **`Manitas123`** (detalle en [`SEED.md`](../manitas-backend/SEED.md)).
 Se puede correr varias veces: no duplica ni modifica lo que ya existe.
 
 ## 2. Frontend
@@ -51,8 +51,8 @@ cp .env.example .env      # opcional: por defecto usa http://localhost:3000
 npm run dev               # http://localhost:5173
 ```
 
-En la pantalla de login (modo desarrollo) hay botones para entrar directo con las cuentas de prueba, y una
-**sesión demo** que funciona sin back (con datos de ejemplo).
+Para entrar, usar las cuentas que crea `seed:demo` (contraseña `Manitas123`). En modo desarrollo, la pantalla de
+login tiene además una **sesión demo** que funciona sin back (con datos de ejemplo).
 
 ## 3. Tests
 

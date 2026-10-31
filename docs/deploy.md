@@ -1,22 +1,37 @@
 # Deploy
 
-> **Estado:** pendiente. Completar los links y credenciales cuando esté publicado.
+> **Estado:** publicado (30/10/2026).
 
 | Qué | Link |
 | --- | --- |
-| Frontend | _(completar)_ |
-| Backend (API) | _(completar)_ |
-| Documentación de la API (Swagger) | _(completar)_/api |
+| Frontend (la página) | https://manitas-sigma.vercel.app |
+| Backend (API) | https://manitas-api-hv16.onrender.com |
+| Documentación de la API (Swagger) | https://manitas-api-hv16.onrender.com/api |
+
+> El back está en el plan gratis de Render: si nadie lo usa por un rato se apaga, y la primera consulta
+> después tarda alrededor de un minuto en responder. Conviene abrir la página un minuto antes de probarla.
 
 ### Credenciales para probar la app publicada
 
 | Rol | Correo | Contraseña |
 | --- | --- | --- |
-| Cliente | laura.cliente@manitas.test | Manitas123 |
-| Profesional | jorge.plomero@manitas.test | Manitas123 |
-| Administrador | _(el ADMIN_CORREO del servidor)_ | _(el ADMIN_CONTRASENA del servidor)_ |
+| Cliente | valeriagodoy.ros@gmail.com | Manitas123 |
+| Profesional | raulbustos.plomeria@gmail.com | Manitas123 |
+| Administrador | admin@manitas.com | tuhogarenbuenasmanos |
 
-(Las cuentas de cliente y profesional las crea `pnpm run seed:demo` contra la base publicada.)
+Valeria tiene un presupuesto para responder, un trabajo para pagar y trabajos terminados; Raúl (plomería y gas)
+tiene solicitudes nuevas para aceptar y una visita para presupuestar. Hay más clientes y un profesional por oficio,
+todos con la contraseña `Manitas123` (la lista está en [SEED.md](../manitas-backend/SEED.md)).
+Para pagar con Mercado Pago (modo prueba) se usa un usuario comprador de prueba de Mercado Pago.
+
+## Qué usamos
+
+| Parte | Servicio | Detalle |
+| --- | --- | --- |
+| Base de datos | [Aiven](https://aiven.io) (MySQL 8.4, plan Free) | Servicio externo en la nube, con conexión segura (SSL verificando el certificado de Aiven) |
+| Backend | [Render](https://render.com) (Web Service, plan Free) | Rama `maxi`, carpeta `manitas-backend`. Se vuelve a publicar solo con cada `git push` |
+| Frontend | [Vercel](https://vercel.com) (plan Hobby) | Rama `maxi`, carpeta `manitas-frontend`. Se vuelve a publicar solo con cada `git push` |
+| Datos iniciales | `pnpm run seed:georef` y `pnpm run seed:demo` | Corridos desde la compu de un integrante contra la base de Aiven |
 
 - Tres contraseñas mal seguidas bloquean esa cuenta 15 minutos (después se puede volver a probar).
 - La sesión del administrador dura 2 horas; la de clientes y profesionales, 1 día.
@@ -28,7 +43,7 @@ La cátedra pide que la base de datos sea un servicio externo y **no requiera ej
 | Parte | Servicio sugerido | Notas |
 | --- | --- | --- |
 | Base de datos MySQL | [Railway](https://railway.app), [Aiven](https://aiven.io/mysql) o [Clever Cloud](https://www.clever-cloud.com) | Crear la base y copiar host, puerto, usuario, contraseña y nombre |
-| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `corepack enable && pnpm install --frozen-lockfile && pnpm run build` · Start: `pnpm run start:prod` |
+| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `corepack pnpm install --frozen-lockfile && corepack pnpm run build` · Start: `node dist/main` · variable `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` (en Render no se puede usar `corepack enable`: la carpeta del sistema es de solo lectura) |
 | Frontend | [Vercel](https://vercel.com) o [Netlify](https://netlify.com) | Root: `manitas-frontend` · Build: `npm run build` · Output: `dist` |
 
 ### Variables de entorno
@@ -48,8 +63,8 @@ proveedor de la base, si pide conexión segura), `JWT_SECRET` (uno nuevo, largo 
 3. Cargar datos: desde la máquina de un integrante, con un `.env` que apunte a la base publicada,
    `pnpm run seed:georef` y `pnpm run seed:demo`. Las solicitudes de ejemplo se crean con fechas a partir del día en
    que se corre (visitas de los próximos días), y la seed no las vuelve a crear si ya existen: conviene correrla cerca
-   de la entrega o la defensa. Para renovarlas, borrar las solicitudes (y sus turnos) de las cuentas `@manitas.test`
-   y volver a correr `pnpm run seed:demo`.
+   de la entrega o la defensa. Para renovarlas, borrar las solicitudes de ejemplo (y sus turnos) y volver a correr
+   `pnpm run seed:demo` (ver [SEED.md](../manitas-backend/SEED.md)).
 4. Publicar el front con `VITE_API_URL` apuntando al back.
 5. En una SPA todas las rutas tienen que servir `index.html`; si no, `/app/solicitudes` da 404 al recargar o al
    volver de Mercado Pago. Ya está resuelto en el repo: [`vercel.json`](../manitas-frontend/vercel.json) (Vercel) y

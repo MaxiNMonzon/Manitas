@@ -1,12 +1,13 @@
-// Seed de DATOS DE PRUEBA: oficios, zonas, clientes, profesionales y solicitudes en todos los
-// estados, para poder probar el sistema de punta a punta (pedir, aceptar, presupuestar, pagar...).
+// Seed de DATOS INICIALES: oficios, zonas, clientes, profesionales y solicitudes en todos los
+// estados, para poder mostrar el sistema de punta a punta (pedir, aceptar, presupuestar, pagar...).
 //
-// Uso:  npm run seed:demo   (ver manitas-backend/SEED.md)
+// Uso:  pnpm run seed:demo   (ver manitas-backend/SEED.md)
 //
 // - Se puede correr varias veces: busca por nombre / correo y no duplica.
 // - No modifica nada que ya exista (usuarios, oficios ni zonas): solo agrega lo que falta.
-// - Las solicitudes de ejemplo se crean una sola vez (si la clienta de prueba no tiene ninguna).
-// - Todas las cuentas de prueba usan la contraseña CONTRASEÑA (abajo) y correos @manitas.test.
+// - Las solicitudes de ejemplo se crean una sola vez (si Maxi no tiene ninguna).
+// - Todas las cuentas usan la contraseña CONTRASEÑA (abajo), menos la de Maxi, que sale del .env
+//   (SEED_CONTRASENA_MAXI; si no está, usa CONTRASEÑA).
 import { NestFactory } from '@nestjs/core';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -102,6 +103,8 @@ const ZONAS_VIEJAS: Record<string, string> = { Echesortu: 'Centro', Fisherton: '
 
 interface ClienteSeed {
   correo: string;
+  // Si no viene, usa CONTRASEÑA
+  contraseña?: string;
   nombre: string;
   apellido: string;
   dni: number;
@@ -113,12 +116,16 @@ interface ClienteSeed {
   zona: string;
 }
 
+// La cuenta de Maxi: su contraseña NO va en el código (el repo es público), sale del .env
+const MAXI = 'maxi.rp002@gmail.com';
+
 const CLIENTES: ClienteSeed[] = [
-  { correo: 'laura.cliente@manitas.test', nombre: 'Laura', apellido: 'Méndez', dni: 30111222, telefono: '3415551001', calle: 'Zeballos', altura: 1451, piso: '3', depto: 'B', zona: 'Centro' },
-  { correo: 'martin.cliente@manitas.test', nombre: 'Martín', apellido: 'Suárez', dni: 31222333, telefono: '3415551002', calle: 'Mendoza', altura: 3200, zona: 'Oeste' },
-  { correo: 'sofia.cliente@manitas.test', nombre: 'Sofía', apellido: 'Paz', dni: 32333444, telefono: '3415551003', calle: 'Alberdi', altura: 850, zona: 'Norte' },
-  { correo: 'diego.cliente@manitas.test', nombre: 'Diego', apellido: 'Ramos', dni: 33444555, telefono: '3415551004', calle: 'Uriburu', altura: 1200, zona: 'Sur' },
-  { correo: 'carla.cliente@manitas.test', nombre: 'Carla', apellido: 'Funes', dni: 34555666, telefono: '3415551005', calle: 'Eva Perón', altura: 7800, zona: 'Noroeste' },
+  { correo: MAXI, contraseña: process.env.SEED_CONTRASENA_MAXI, nombre: 'Maximiliano', apellido: 'Monzón', dni: 40123456, telefono: '3415550101', calle: 'Corrientes', altura: 950, piso: '4', depto: 'C', zona: 'Centro' },
+  { correo: 'valeriagodoy.ros@gmail.com', nombre: 'Valeria', apellido: 'Godoy', dni: 31222333, telefono: '3415550102', calle: 'Mendoza', altura: 3240, zona: 'Oeste' },
+  { correo: 'fede.ibarra88@gmail.com', nombre: 'Federico', apellido: 'Ibarra', dni: 33444555, telefono: '3415550103', calle: 'Alberdi', altura: 850, zona: 'Norte' },
+  { correo: 'camirossi.95@gmail.com', nombre: 'Camila', apellido: 'Rossi', dni: 38777888, telefono: '3415550104', calle: 'Paraguay', altura: 1120, piso: '5', depto: 'A', zona: 'Centro' },
+  { correo: 'gusmolina.rosario@gmail.com', nombre: 'Gustavo', apellido: 'Molina', dni: 27555666, telefono: '3415550105', calle: 'Uriburu', altura: 1240, zona: 'Sur' },
+  { correo: 'nati.herrera.82@gmail.com', nombre: 'Natalia', apellido: 'Herrera', dni: 29888999, telefono: '3415550106', calle: 'Eva Perón', altura: 7810, zona: 'Noroeste' },
 ];
 
 interface ProfesionalSeed {
@@ -141,15 +148,15 @@ const LUNES_A_VIERNES = (desde: number, hasta: number): [number, number, number]
   [1, 2, 3, 4, 5].map((d) => [d, desde, hasta]);
 
 const PROFESIONALES: ProfesionalSeed[] = [
-  { correo: 'jorge.plomero@manitas.test', nombre: 'Jorge', apellido: 'Díaz', dni: 25111222, telefono: '3416662001', oficios: ['Plomería', 'Gas'], zonas: ['Centro', 'Norte', 'Oeste'], costoVisita: 5000, descripcion: 'Plomero y gasista con 20 años de experiencia. Pérdidas, destapaciones, termotanques y calefones.', cbu: '0110599520000001234561', matricula: { oficio: 'Gas', numero: 'MG-4521', descripcion: 'Gasista de 2da categoría - Litoral Gas' }, horario: [...LUNES_A_VIERNES(8, 17), [6, 9, 13]] },
-  { correo: 'oscar.electricista@manitas.test', nombre: 'Oscar', apellido: 'Gómez', dni: 26222333, telefono: '3416662002', oficios: ['Electricidad'], zonas: ['Centro', 'Sur', 'Oeste', 'Sudoeste'], costoVisita: 4500, descripcion: 'Electricista matriculado. Instalaciones nuevas, tableros, disyuntores y reparaciones.', cbu: '0170099220000067890123', matricula: { oficio: 'Electricidad', numero: 'ME-1187', descripcion: 'Colegio de Técnicos de Santa Fe' }, horario: LUNES_A_VIERNES(9, 18) },
-  { correo: 'marta.pintora@manitas.test', nombre: 'Marta', apellido: 'Ríos', dni: 27333444, telefono: '3416662003', oficios: ['Pintura', 'Albañilería'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Pintura de interiores y exteriores, reparación de paredes y humedad. Presupuesto sin cargo.', cbu: '0720000788000012345678', horario: [...LUNES_A_VIERNES(8, 13), ...LUNES_A_VIERNES(15, 19)] },
-  { correo: 'lucia.carpintera@manitas.test', nombre: 'Lucía', apellido: 'Fernández', dni: 28444555, telefono: '3416662004', oficios: ['Carpintería'], zonas: ['Centro', 'Oeste', 'Noroeste'], costoVisita: 5000, descripcion: 'Muebles a medida, placares y arreglos de aberturas de madera.', cbu: '0140999801200012345671', horario: LUNES_A_VIERNES(9, 17) },
-  { correo: 'julian.gasista@manitas.test', nombre: 'Julián', apellido: 'Pereyra', dni: 29555666, telefono: '3416662005', oficios: ['Gas', 'Climatización'], zonas: ['Norte', 'Sur', 'Noroeste', 'Sudoeste'], costoVisita: 6000, descripcion: 'Gasista matriculado e instalador de aires acondicionados.', cbu: '0150501102000123456789', matricula: { oficio: 'Gas', numero: 'MG-7730', descripcion: 'Gasista de 1ra categoría - ENARGAS' }, horario: [...LUNES_A_VIERNES(8, 16), [6, 8, 12]] },
-  { correo: 'ramon.cerrajero@manitas.test', nombre: 'Ramón', apellido: 'Acosta', dni: 24666777, telefono: '3416662006', oficios: ['Cerrajería'], zonas: ['Centro', 'Norte', 'Noroeste', 'Oeste', 'Sudoeste', 'Sur'], costoVisita: 3500, descripcion: 'Cerrajería las 24 horas. Aperturas, cambio de cerraduras y combinaciones.', cbu: '0340040108400012345675', horario: [0, 1, 2, 3, 4, 5, 6].map((d) => [d, 8, 22] as [number, number, number]) },
-  { correo: 'ana.limpieza@manitas.test', nombre: 'Ana', apellido: 'Benítez', dni: 30777888, telefono: '3416662007', oficios: ['Limpieza'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Limpieza de casas, departamentos y final de obra.', cbu: '0070999030004012345671', horario: [...LUNES_A_VIERNES(8, 14), [6, 8, 12]] },
-  { correo: 'pablo.jardinero@manitas.test', nombre: 'Pablo', apellido: 'Sosa', dni: 31888999, telefono: '3416662008', oficios: ['Jardinería'], zonas: ['Noroeste', 'Oeste', 'Norte'], costoVisita: 3000, descripcion: 'Corte de césped, poda y mantenimiento de jardines.', cbu: '2850590940090412345671', horario: [[2, 8, 16], [4, 8, 16], [6, 8, 14]] },
-  { correo: 'nicolas.clima@manitas.test', nombre: 'Nicolás', apellido: 'Vera', dni: 32999000, telefono: '3416662009', oficios: ['Climatización', 'Electricidad'], zonas: ['Centro', 'Sur', 'Sudoeste'], costoVisita: 5500, descripcion: 'Instalación y service de aires acondicionados split. También electricidad domiciliaria.', cbu: '0720168520000001234567', horario: LUNES_A_VIERNES(10, 19) },
+  { correo: 'raulbustos.plomeria@gmail.com', nombre: 'Raúl', apellido: 'Bustos', dni: 25111222, telefono: '3416662001', oficios: ['Plomería', 'Gas'], zonas: ['Centro', 'Norte', 'Oeste'], costoVisita: 5000, descripcion: 'Plomero y gasista con 20 años de experiencia. Pérdidas, destapaciones, termotanques y calefones.', cbu: '0110599520000001234561', matricula: { oficio: 'Gas', numero: 'MG-4521', descripcion: 'Gasista de 2da categoría - Litoral Gas' }, horario: [...LUNES_A_VIERNES(8, 17), [6, 9, 13]] },
+  { correo: 'sergioledesma.electricista@gmail.com', nombre: 'Sergio', apellido: 'Ledesma', dni: 26222333, telefono: '3416662002', oficios: ['Electricidad'], zonas: ['Centro', 'Sur', 'Oeste', 'Sudoeste'], costoVisita: 4500, descripcion: 'Electricista matriculado. Instalaciones nuevas, tableros, disyuntores y reparaciones.', cbu: '0170099220000067890123', matricula: { oficio: 'Electricidad', numero: 'ME-1187', descripcion: 'Colegio de Técnicos de Santa Fe' }, horario: LUNES_A_VIERNES(9, 18) },
+  { correo: 'silviaortiz.pinturas@gmail.com', nombre: 'Silvia', apellido: 'Ortiz', dni: 27333444, telefono: '3416662003', oficios: ['Pintura', 'Albañilería'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Pintura de interiores y exteriores, reparación de paredes y humedad. Presupuesto sin cargo.', cbu: '0720000788000012345678', horario: [...LUNES_A_VIERNES(8, 13), ...LUNES_A_VIERNES(15, 19)] },
+  { correo: 'damianaguirre.carpinteria@gmail.com', nombre: 'Damián', apellido: 'Aguirre', dni: 28444555, telefono: '3416662004', oficios: ['Carpintería'], zonas: ['Centro', 'Oeste', 'Noroeste'], costoVisita: 5000, descripcion: 'Muebles a medida, placares y arreglos de aberturas de madera.', cbu: '0140999801200012345671', horario: LUNES_A_VIERNES(9, 17) },
+  { correo: 'marceloquiroga.gasista@gmail.com', nombre: 'Marcelo', apellido: 'Quiroga', dni: 29555666, telefono: '3416662005', oficios: ['Gas', 'Climatización'], zonas: ['Norte', 'Sur', 'Noroeste', 'Sudoeste'], costoVisita: 6000, descripcion: 'Gasista matriculado e instalador de aires acondicionados.', cbu: '0150501102000123456789', matricula: { oficio: 'Gas', numero: 'MG-7730', descripcion: 'Gasista de 1ra categoría - ENARGAS' }, horario: [...LUNES_A_VIERNES(8, 16), [6, 8, 12]] },
+  { correo: 'cerrajeriavillalba@gmail.com', nombre: 'Héctor', apellido: 'Villalba', dni: 24666777, telefono: '3416662006', oficios: ['Cerrajería'], zonas: ['Centro', 'Norte', 'Noroeste', 'Oeste', 'Sudoeste', 'Sur'], costoVisita: 3500, descripcion: 'Cerrajería las 24 horas. Aperturas, cambio de cerraduras y combinaciones.', cbu: '0340040108400012345675', horario: [0, 1, 2, 3, 4, 5, 6].map((d) => [d, 8, 22] as [number, number, number]) },
+  { correo: 'graciela.romero.limpieza@gmail.com', nombre: 'Graciela', apellido: 'Romero', dni: 30777888, telefono: '3416662007', oficios: ['Limpieza'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Limpieza de casas, departamentos y final de obra.', cbu: '0070999030004012345671', horario: [...LUNES_A_VIERNES(8, 14), [6, 8, 12]] },
+  { correo: 'ezequieltoledo.jardines@gmail.com', nombre: 'Ezequiel', apellido: 'Toledo', dni: 31888999, telefono: '3416662008', oficios: ['Jardinería'], zonas: ['Noroeste', 'Oeste', 'Norte'], costoVisita: 3000, descripcion: 'Corte de césped, poda y mantenimiento de jardines.', cbu: '2850590940090412345671', horario: [[2, 8, 16], [4, 8, 16], [6, 8, 14]] },
+  { correo: 'leandrocabrera.clima@gmail.com', nombre: 'Leandro', apellido: 'Cabrera', dni: 32999000, telefono: '3416662009', oficios: ['Climatización', 'Electricidad'], zonas: ['Centro', 'Sur', 'Sudoeste'], costoVisita: 5500, descripcion: 'Instalación y service de aires acondicionados split. También electricidad domiciliaria.', cbu: '0720168520000001234567', horario: LUNES_A_VIERNES(10, 19) },
 ];
 
 // ---------- Ayudas ----------
@@ -280,9 +287,14 @@ async function seedUsuarios(ds: DataSource, turnos: TurnoService, catalogo: Awai
   for (const c of CLIENTES) {
     let cliente = await clientesRepo.findOne({ where: { correo: c.correo }, relations: { zonaResidencia: true }, withDeleted: true });
     if (!cliente) {
-      const { zona, ...datos } = c;
+      const { zona, contraseña, ...datos } = c;
       cliente = await clientesRepo.save(
-        clientesRepo.create({ ...datos, fechaNacimiento: new Date('1990-05-10'), contraseña: hash, zonaResidencia: catalogo.mapaZonas.get(zona) }),
+        clientesRepo.create({
+          ...datos,
+          fechaNacimiento: new Date('1990-05-10'),
+          contraseña: contraseña ? await bcrypt.hash(contraseña, 10) : hash,
+          zonaResidencia: catalogo.mapaZonas.get(zona),
+        }),
       );
       console.log(`  + cliente ${c.correo}`);
     } else if (cliente.zonaResidencia?.idZona !== catalogo.mapaZonas.get(c.zona)!.idZona) {
@@ -355,15 +367,17 @@ async function seedSolicitudes(
   catalogo: Awaited<ReturnType<typeof seedCatalogo>>,
 ) {
   const repo = ds.getRepository(SolicitudDeServicio);
-  const laura = usuarios.clientes.get('laura.cliente@manitas.test')!;
-  const yaTiene = await repo.count({ where: { cliente: { idUsuario: laura.idUsuario } } });
+  const maxi = usuarios.clientes.get(MAXI)!;
+  const yaTiene = await repo.count({ where: { cliente: { idUsuario: maxi.idUsuario } } });
   if (yaTiene > 0) {
     console.log('  (las solicitudes de ejemplo ya estaban creadas)');
     return;
   }
 
-  const cli = (correo: string) => usuarios.clientes.get(`${correo}@manitas.test`)!;
-  const pro = (correo: string) => usuarios.profesionales.get(`${correo}@manitas.test`)!;
+  // Se busca por el principio del correo (ej: 'raulbustos' → raulbustos.plomeria@gmail.com)
+  const buscar = <T>(mapa: Map<string, T>, inicio: string) => [...mapa.entries()].find(([correo]) => correo.startsWith(inicio))![1];
+  const cli = (inicio: string) => buscar(usuarios.clientes, inicio);
+  const pro = (inicio: string) => buscar(usuarios.profesionales, inicio);
   const oficio = (nombre: string) => catalogo.mapaOficios.get(nombre)!;
   const comoProfesional = (p: Profesional) => ({ sub: p.idUsuario, correo: p.correo, rol: Rol.PROFESIONAL });
 
@@ -373,17 +387,17 @@ async function seedSolicitudes(
 
   // Finalizadas y calificadas (dan las estrellas y reseñas de los profesionales)
   const finalizadas: [string, string, string, string, number, number, string | null][] = [
-    ['martin.cliente', 'jorge.plomero', 'Plomería', 'Destapación de la cloaca del patio.', 22000, 5, 'Rapidísimo y muy prolijo. Lo recomiendo.'],
-    ['sofia.cliente', 'jorge.plomero', 'Plomería', 'Cambio del flotante del tanque.', 18000, 4, 'Buen trabajo, llegó puntual.'],
-    ['diego.cliente', 'oscar.electricista', 'Electricidad', 'Instalar un ventilador de techo.', 30000, 5, 'Excelente, explicó todo.'],
-    ['carla.cliente', 'oscar.electricista', 'Electricidad', 'Cambiar el disyuntor del tablero.', 45000, 3, 'Cumplió, pero tardó más de lo que dijo.'],
-    ['martin.cliente', 'marta.pintora', 'Pintura', 'Pintar dos dormitorios.', 160000, 5, 'Impecable, dejó todo limpio.'],
-    ['sofia.cliente', 'lucia.carpintera', 'Carpintería', 'Arreglar la puerta del placard.', 25000, 4, null],
-    ['carla.cliente', 'julian.gasista', 'Gas', 'Revisión de la instalación de gas.', 35000, 5, 'Muy profesional, matriculado.'],
-    ['diego.cliente', 'ramon.cerrajero', 'Cerrajería', 'Apertura de puerta, me quedé afuera.', 15000, 5, 'Vino en 20 minutos un domingo.'],
-    ['laura.cliente', 'ana.limpieza', 'Limpieza', 'Limpieza final de obra del departamento.', 40000, 4, 'Muy detallista.'],
-    ['carla.cliente', 'pablo.jardinero', 'Jardinería', 'Corte de césped y poda del frente.', 20000, 5, null],
-    ['martin.cliente', 'nicolas.clima', 'Climatización', 'Service del aire acondicionado.', 28000, 4, 'Bien, recomendable.'],
+    ['valeriagodoy', 'raulbustos', 'Plomería', 'Destapación de la cloaca del patio.', 22000, 5, 'Rapidísimo y muy prolijo. Lo recomiendo.'],
+    ['fede.ibarra', 'raulbustos', 'Plomería', 'Cambio del flotante del tanque.', 18000, 4, 'Buen trabajo, llegó puntual.'],
+    ['gusmolina', 'sergioledesma', 'Electricidad', 'Instalar un ventilador de techo.', 30000, 5, 'Excelente, explicó todo.'],
+    ['nati.herrera', 'sergioledesma', 'Electricidad', 'Cambiar el disyuntor del tablero.', 45000, 3, 'Cumplió, pero tardó más de lo que dijo.'],
+    ['valeriagodoy', 'silviaortiz', 'Pintura', 'Pintar dos dormitorios.', 160000, 5, 'Impecable, dejó todo limpio.'],
+    ['fede.ibarra', 'damianaguirre', 'Carpintería', 'Arreglar la puerta del placard.', 25000, 4, null],
+    ['nati.herrera', 'marceloquiroga', 'Gas', 'Revisión de la instalación de gas.', 35000, 5, 'Muy profesional, matriculado.'],
+    ['gusmolina', 'cerrajeriavillalba', 'Cerrajería', 'Apertura de puerta, me quedé afuera.', 15000, 5, 'Vino en 20 minutos un domingo.'],
+    ['camirossi', 'graciela.romero', 'Limpieza', 'Limpieza final de obra del departamento.', 40000, 4, 'Muy detallista.'],
+    ['nati.herrera', 'ezequieltoledo', 'Jardinería', 'Corte de césped y poda del frente.', 20000, 5, null],
+    ['valeriagodoy', 'leandrocabrera', 'Climatización', 'Service del aire acondicionado.', 28000, 4, 'Bien, recomendable.'],
   ];
   for (const [i, [c, p, o, desc, costo, estrellas, reseña]] of finalizadas.entries()) {
     const visita = dia(-(20 + i), 10);
@@ -409,12 +423,12 @@ async function seedSolicitudes(
     });
   }
 
-  // Laura: terminada y pagada, falta calificar
+  // Maxi: terminada y pagada, falta calificar
   await pasada({
     estadoServicio: EstadoSolicitud.FINALIZADO,
     descripcionProblema: 'Cambio de cerradura de la puerta de entrada.',
-    cliente: laura,
-    profesional: pro('ramon.cerrajero'),
+    cliente: maxi,
+    profesional: pro('cerrajeriavillalba'),
     especialidad: oficio('Cerrajería'),
     fechaVisita: dia(-4, 11),
     fechaInicio: dia(-4, 11),
@@ -426,12 +440,12 @@ async function seedSolicitudes(
     horasTrabajo: 1,
   });
 
-  // Laura: presupuesto recibido, para aceptar o rechazar
+  // Maxi: presupuesto recibido, para aceptar o rechazar
   await pasada({
     estadoServicio: EstadoSolicitud.PRESUPUESTADO,
     descripcionProblema: 'Instalar un calefón nuevo en la cocina.',
-    cliente: laura,
-    profesional: pro('julian.gasista'),
+    cliente: maxi,
+    profesional: pro('marceloquiroga'),
     especialidad: oficio('Gas'),
     fechaVisita: dia(-1, 10),
     fechaFinEstimada: dia(-1, 11),
@@ -442,12 +456,12 @@ async function seedSolicitudes(
     fechaCambioEstado: hace(5),
   });
 
-  // Laura: trabajo contratado que ya empezó, para PAGAR con Mercado Pago
+  // Maxi: trabajo contratado que ya empezó, para PAGAR con Mercado Pago
   await pasada({
     estadoServicio: EstadoSolicitud.CONTRATADO,
     descripcionProblema: 'Cambiar los tomas de la cocina.',
-    cliente: laura,
-    profesional: pro('oscar.electricista'),
+    cliente: maxi,
+    profesional: pro('sergioledesma'),
     especialidad: oficio('Electricidad'),
     fechaVisita: dia(-4, 9),
     fechaInicio: dia(-2, 9),
@@ -460,12 +474,12 @@ async function seedSolicitudes(
     fechaCambioEstado: dia(-3, 18),
   });
 
-  // Laura: rechazó el presupuesto, queda por pagar la visita
+  // Maxi: rechazó el presupuesto, queda por pagar la visita
   await pasada({
     estadoServicio: EstadoSolicitud.RECHAZADO,
     descripcionProblema: 'Hacer un mueble para el living.',
-    cliente: laura,
-    profesional: pro('lucia.carpintera'),
+    cliente: maxi,
+    profesional: pro('damianaguirre'),
     especialidad: oficio('Carpintería'),
     fechaVisita: dia(-6, 15),
     costoVisita: 5000,
@@ -473,12 +487,12 @@ async function seedSolicitudes(
     fechaCambioEstado: hace(48),
   });
 
-  // Martín → Jorge: ya fue la visita, el profesional tiene que mandar el presupuesto
+  // Valeria → Raúl: ya fue la visita, el profesional tiene que mandar el presupuesto
   await pasada({
     estadoServicio: EstadoSolicitud.AGENDADO,
     descripcionProblema: 'Pierde agua el inodoro.',
-    cliente: cli('martin.cliente'),
-    profesional: pro('jorge.plomero'),
+    cliente: cli('valeriagodoy'),
+    profesional: pro('raulbustos'),
     especialidad: oficio('Plomería'),
     fechaVisita: dia(-1, 11),
     fechaFinEstimada: dia(-1, 12),
@@ -486,38 +500,70 @@ async function seedSolicitudes(
     fechaCambioEstado: hace(30),
   });
 
+  // Valeria (la cuenta de cliente para el profe): un presupuesto para responder y un trabajo para pagar
+  await pasada({
+    estadoServicio: EstadoSolicitud.PRESUPUESTADO,
+    descripcionProblema: 'Hacer un placard a medida en el dormitorio.',
+    cliente: cli('valeriagodoy'),
+    profesional: pro('damianaguirre'),
+    especialidad: oficio('Carpintería'),
+    fechaVisita: dia(-2, 10),
+    fechaFinEstimada: dia(-2, 11),
+    costoVisita: 5000,
+    costoEstimado: 180000,
+    costoFinal: 180000,
+    horasTrabajo: 16,
+    fechaCambioEstado: hace(20),
+  });
+  await pasada({
+    estadoServicio: EstadoSolicitud.CONTRATADO,
+    descripcionProblema: 'Agregar dos tomas en el living.',
+    cliente: cli('valeriagodoy'),
+    profesional: pro('sergioledesma'),
+    especialidad: oficio('Electricidad'),
+    fechaVisita: dia(-5, 14),
+    fechaInicio: dia(-1, 14),
+    fechaFinEstimada: dia(-1, 16),
+    fechaAceptacion: dia(-4, 19),
+    costoVisita: 4500,
+    costoEstimado: 32000,
+    costoFinal: 32000,
+    horasTrabajo: 2,
+    fechaCambioEstado: dia(-4, 19),
+  });
+
   // --- Con fechas futuras: se crean con los servicios (validan y reservan los turnos) ---
 
-  // Laura → Jorge: nueva, esperando que la acepte
+  // Maxi → Raúl: nueva, esperando que la acepte
   await servicio.create(
-    { idProfesional: pro('jorge.plomero').idUsuario, idEspecialidad: oficio('Plomería').idEspecialidad, descripcionProblema: 'Reparación de cañería del baño, hay humedad en la pared.', inicioTurno: local(await turnoLibre(turnos, pro('jorge.plomero').idUsuario, 2)) },
-    laura.idUsuario,
+    { idProfesional: pro('raulbustos').idUsuario, idEspecialidad: oficio('Plomería').idEspecialidad, descripcionProblema: 'Reparación de cañería del baño, hay humedad en la pared.', inicioTurno: local(await turnoLibre(turnos, pro('raulbustos').idUsuario, 2)) },
+    maxi.idUsuario,
   );
 
-  // Laura → Marta: visita confirmada (aceptada)
+  // Maxi → Silvia: visita confirmada (aceptada)
   const confirmada = await servicio.create(
-    { idProfesional: pro('marta.pintora').idUsuario, idEspecialidad: oficio('Pintura').idEspecialidad, descripcionProblema: 'Pintar el living y el pasillo.', inicioTurno: local(await turnoLibre(turnos, pro('marta.pintora').idUsuario, 2)) },
-    laura.idUsuario,
+    { idProfesional: pro('silviaortiz').idUsuario, idEspecialidad: oficio('Pintura').idEspecialidad, descripcionProblema: 'Pintar el living y el pasillo.', inicioTurno: local(await turnoLibre(turnos, pro('silviaortiz').idUsuario, 2)) },
+    maxi.idUsuario,
   );
-  await servicio.aceptar(confirmada!.idSolicitud, {}, comoProfesional(pro('marta.pintora')));
+  await servicio.aceptar(confirmada!.idSolicitud, {}, comoProfesional(pro('silviaortiz')));
 
-  // Laura → Nicolás: aceptada y el profesional propuso otro horario (Laura tiene que contestar)
-  const nicolas = pro('nicolas.clima');
+  // Maxi → Leandro: aceptada y el profesional propuso otro horario (Maxi tiene que contestar)
+  const leandro = pro('leandrocabrera');
   const aMover = await servicio.create(
-    { idProfesional: nicolas.idUsuario, idEspecialidad: oficio('Climatización').idEspecialidad, descripcionProblema: 'Instalar un aire split en el dormitorio.', inicioTurno: local(await turnoLibre(turnos, nicolas.idUsuario, 3)) },
-    laura.idUsuario,
+    { idProfesional: leandro.idUsuario, idEspecialidad: oficio('Climatización').idEspecialidad, descripcionProblema: 'Instalar un aire split en el dormitorio.', inicioTurno: local(await turnoLibre(turnos, leandro.idUsuario, 3)) },
+    maxi.idUsuario,
   );
-  await servicio.aceptar(aMover!.idSolicitud, {}, comoProfesional(nicolas));
-  await servicio.reprogramar(aMover!.idSolicitud, { inicio: local(await turnoLibre(turnos, nicolas.idUsuario, 5, 2)) }, comoProfesional(nicolas));
+  await servicio.aceptar(aMover!.idSolicitud, {}, comoProfesional(leandro));
+  await servicio.reprogramar(aMover!.idSolicitud, { inicio: local(await turnoLibre(turnos, leandro.idUsuario, 5, 2)) }, comoProfesional(leandro));
 
-  // Sofía → Jorge y Diego → Oscar: nuevas, para que los profesionales las respondan
+  // Federico → Raúl y Gustavo → Sergio: nuevas, para que los profesionales las respondan
   await servicio.create(
-    { idProfesional: pro('jorge.plomero').idUsuario, idEspecialidad: oficio('Gas').idEspecialidad, descripcionProblema: 'Olor a gas cerca de la cocina.', inicioTurno: local(await turnoLibre(turnos, pro('jorge.plomero').idUsuario, 1)) },
-    cli('sofia.cliente').idUsuario,
+    { idProfesional: pro('raulbustos').idUsuario, idEspecialidad: oficio('Gas').idEspecialidad, descripcionProblema: 'Olor a gas cerca de la cocina.', inicioTurno: local(await turnoLibre(turnos, pro('raulbustos').idUsuario, 1)) },
+    cli('fede.ibarra').idUsuario,
   );
   await servicio.create(
-    { idProfesional: pro('oscar.electricista').idUsuario, idEspecialidad: oficio('Electricidad').idEspecialidad, descripcionProblema: 'Se corta la luz cuando prendo el horno.', inicioTurno: local(await turnoLibre(turnos, pro('oscar.electricista').idUsuario, 2)) },
-    cli('diego.cliente').idUsuario,
+    { idProfesional: pro('sergioledesma').idUsuario, idEspecialidad: oficio('Electricidad').idEspecialidad, descripcionProblema: 'Se corta la luz cuando prendo el horno.', inicioTurno: local(await turnoLibre(turnos, pro('sergioledesma').idUsuario, 2)) },
+    cli('gusmolina').idUsuario,
   );
 
   console.log('  + solicitudes de ejemplo en todos los estados');
@@ -587,14 +633,14 @@ async function main() {
     const ds = app.get(DataSource);
     console.log('Catálogo (oficios, habilidades y zonas de Rosario)...');
     const catalogo = await seedCatalogo(ds);
-    console.log('Usuarios de prueba...');
+    console.log('Clientes y profesionales...');
     const usuarios = await seedUsuarios(ds, app.get(TurnoService), catalogo);
     console.log('Solicitudes de ejemplo...');
     await seedSolicitudes(ds, app.get(SolicitudDeServicioService), app.get(TurnoService), usuarios, catalogo);
     console.log('Métodos de pago y promociones del mes...');
     await seedPromociones(ds);
 
-    console.log(`\nListo. Contraseña de todas las cuentas de prueba: ${CONTRASEÑA}`);
+    console.log(`\nListo. Contraseña de las cuentas (menos la de Maxi): ${CONTRASEÑA}`);
     console.log('Clientes:      ' + CLIENTES.map((c) => c.correo).join(', '));
     console.log('Profesionales: ' + PROFESIONALES.map((p) => p.correo).join(', '));
   } finally {

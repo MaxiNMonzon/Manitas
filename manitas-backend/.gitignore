@@ -39,6 +39,7 @@ lerna-debug.log*
 .env
 # El de la base publicada (para correr los seeds contra el servidor)
 .env.produccion
+ca.pem
 .env.development.local
 .env.test.local
 .env.production.local
