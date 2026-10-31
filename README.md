@@ -31,6 +31,15 @@ API REST:
 - [`manitas-backend`](manitas-backend) — API con NestJS
 - [`manitas-frontend`](manitas-frontend) — app web con React
 
+## Tema
+
+El cliente busca profesionales de su zona, les pide presupuesto eligiendo un turno libre del calendario y compara los
+presupuestos que recibe. Si es algo urgente, lo pide sin elegir profesional: les aparece a todos los de ese oficio en
+su zona y el primero que acepta va. Los profesionales cargan su horario de trabajo, presupuestan después de la visita
+y reciben calificaciones. Los clientes pagan desde la app con Mercado Pago (tarjeta de crédito, débito o saldo), y la
+app informa las promociones bancarias del mes (el reintegro lo hace el banco). Apunta a brindar rapidez, confianza y
+variedad de opciones.
+
 ## Modelo de dominio
 
 <img width="1952" height="1460" alt="Modelo de dominio" src="https://github.com/user-attachments/assets/2a46b12c-2fc9-42fa-8c27-c8afcc278906" />
