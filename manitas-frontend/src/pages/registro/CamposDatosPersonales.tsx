@@ -1,6 +1,6 @@
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
-import type { DatosPersonales } from './datosPersonales';
+import type { DatosPersonales } from './datosPersonales'
 
 // Props de un TextField controlado (valor, onChange y error), las arma cada formulario
 export type PropsCampo = (nombre: keyof DatosPersonales) => {

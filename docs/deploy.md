@@ -46,7 +46,7 @@ La cátedra pide que la base de datos sea un servicio externo y **no requiera ej
 | Parte | Servicio sugerido | Notas |
 | --- | --- | --- |
 | Base de datos MySQL | [Railway](https://railway.app), [Aiven](https://aiven.io/mysql) o [Clever Cloud](https://www.clever-cloud.com) | Crear la base y copiar host, puerto, usuario, contraseña y nombre |
-| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `corepack pnpm install --frozen-lockfile && corepack pnpm run build` · Start: `node dist/main` · variable `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` (en Render no se puede usar `corepack enable`: la carpeta del sistema es de solo lectura) |
+| Backend | [Render](https://render.com) (Web Service) o Railway | Root: `manitas-backend` · Build: `corepack pnpm install --frozen-lockfile && corepack pnpm run build` · Start: `node dist/main` · variable `COREPACK_ENABLE_DOWNLOAD_PROMPT=0` (en Render no se puede usar `corepack enable`: la carpeta del sistema es de solo lectura) · variable `TZ=America/Argentina/Buenos_Aires` (los servidores están en hora UTC y los turnos se arman con la hora de Argentina) |
 | Frontend | [Vercel](https://vercel.com) o [Netlify](https://netlify.com) | Root: `manitas-frontend` · Build: `npm run build` · Output: `dist` |
 
 ### Variables de entorno
@@ -55,7 +55,10 @@ La cátedra pide que la base de datos sea un servicio externo y **no requiera ej
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`, `DB_SSL=true` y `DB_SSL_CA` (el certificado CA del
 proveedor de la base, si pide conexión segura), `JWT_SECRET` (uno nuevo, largo y aleatorio),
 `ADMIN_CORREO`, `ADMIN_CONTRASENA`, `MERCADOPAGO_ACCESS_TOKEN` y
-`MERCADOPAGO_VUELTA_URL=https://<dominio-del-front>/app/solicitudes`.
+`MERCADOPAGO_VUELTA_URL=https://<dominio-del-front>/app/solicitudes`, `TZ=America/Argentina/Buenos_Aires`, y para
+"Olvidé mi contraseña" `BREVO_API_KEY`, `CORREO_REMITENTE` (un correo verificado en [Brevo](https://www.brevo.com)) y
+`FRONT_URL=https://<dominio-del-front>`. Los mails se mandan por la API web de Brevo porque Render, en el plan gratis,
+no deja mandar por SMTP.
 
 **Frontend:** `VITE_API_URL=https://<dominio-del-back>` (se usa al compilar).
 

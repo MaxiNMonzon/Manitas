@@ -19,6 +19,8 @@ import RegistroProfesional from './pages/RegistroProfesional'
 import Pagos from './pages/Pagos'
 import Ayuda from './pages/Ayuda'
 import ResultadoPago from './pages/ResultadoPago'
+import OlvideContrasena from './pages/OlvideContrasena'
+import RestablecerContrasena from './pages/RestablecerContrasena'
 
 export default function App() {
   return (
@@ -27,6 +29,8 @@ export default function App() {
         <Routes>
           <Route index element={<Bienvenida />} />
           <Route path="login" element={<Login />} />
+          <Route path="olvide-contrasena" element={<OlvideContrasena />} />
+          <Route path="restablecer-contrasena" element={<RestablecerContrasena />} />
           <Route path="registro/cliente" element={<RegistroCliente />} />
           <Route path="registro/profesional" element={<RegistroProfesional />} />
           {/* Vuelta de Mercado Pago si el .env apunta a /solicitudes (sin /app): se reenvía con los datos del pago */}

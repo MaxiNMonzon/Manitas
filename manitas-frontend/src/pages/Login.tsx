@@ -29,7 +29,6 @@ export default function Login() {
   const [contraseña, setContraseña] = useState('')
   const [verContraseña, setVerContraseña] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [aviso, setAviso] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   const onSubmit = async (e: FormEvent) => {
@@ -119,19 +118,11 @@ export default function Login() {
           Continuar
         </Button>
 
-        <Link
-          component="button"
-          type="button"
-          variant="body2"
-          onClick={() => setAviso('La recuperación de contraseña todavía no está disponible.')}
-          sx={{ alignSelf: 'center' }}
-        >
-          ¿Olvidaste tu contraseña?
-        </Link>
-        {aviso && (
-          <Alert severity="info" onClose={() => setAviso(null)}>
-            {aviso}
-          </Alert>
+        {/* El admin no tiene recuperación: su contraseña está en el .env del back */}
+        {rol !== 'admin' && (
+          <Link component={RouterLink} to={`/olvide-contrasena?rol=${rol}`} variant="body2" sx={{ alignSelf: 'center' }}>
+            ¿Olvidaste tu contraseña?
+          </Link>
         )}
       </Stack>
 

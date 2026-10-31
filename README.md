@@ -8,9 +8,9 @@ resolver arreglos del hogar.
 | Legajo | Nombre |
 | --- | --- |
 | 56821 | Arias, Francisco José |
-| 52098 | Monzón, Maximiliano Nicolás |
 | 54456 | Baremboum, Micaela |
 | 42062 | Coria, Lautaro |
+| 52098 | Monzón, Maximiliano Nicolás |
 
 ## Links
 
@@ -19,7 +19,7 @@ resolver arreglos del hogar.
 | App publicada | https://manitas-sigma.vercel.app |
 | API publicada | https://manitas-api-hv16.onrender.com (documentación en [`/api`](https://manitas-api-hv16.onrender.com/api)) |
 | Credenciales de prueba | [docs/deploy.md](docs/deploy.md) |
-| Video de la app funcionando | |
+| Video de la app funcionando | https://drive.google.com/file/d/1bY3lVukaLrSBklW50SYAPiYdt14c0BF-/view?usp=sharing |
 | Documentación del TP | [docs/](docs/README.md) |
 | Propuesta | [docs/proposal.md](docs/proposal.md) |
 
@@ -31,9 +31,20 @@ API REST:
 - [`manitas-backend`](manitas-backend) — API con NestJS
 - [`manitas-frontend`](manitas-frontend) — app web con React
 
+## Tema
+
+El cliente busca profesionales de su zona, les pide presupuesto eligiendo un turno libre del calendario y compara los
+presupuestos que recibe. Si es algo urgente, lo pide sin elegir profesional: les aparece a todos los de ese oficio en
+su zona y el primero que acepta va. Los profesionales cargan su horario de trabajo, presupuestan después de la visita
+y reciben calificaciones. Los clientes pagan desde la app con Mercado Pago (tarjeta de crédito, débito o saldo), y la
+app informa las promociones bancarias del mes (el reintegro lo hace el banco). Apunta a brindar rapidez, confianza y
+variedad de opciones.
+
 ## Modelo de dominio
 
-<img width="1952" height="1460" alt="Modelo de dominio" src="https://github.com/user-attachments/assets/2a46b12c-2fc9-42fa-8c27-c8afcc278906" />
+<img width="1962" height="1470" alt="image" src="https://github.com/user-attachments/assets/0026ae2d-3d67-4a93-a63d-846d71eda4fa" />
+
+
 
 [Ver el modelo en Google Drive](https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view)
 
