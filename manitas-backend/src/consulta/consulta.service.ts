@@ -1,21 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Consulta } from './entities/consulta.entity';
 import { CreateConsultaDto } from './dto/create-consulta.dto';
+import { Rol } from '../common/enums/rol.enum';
+import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
 
 @Injectable()
 export class ConsultaService {
   constructor(@InjectRepository(Consulta) private readonly consultaRepository: Repository<Consulta>) {}
 
-  async create(dto: CreateConsultaDto) {
+  // Quién la manda sale del token (no del cuerpo del pedido), así nadie se hace pasar por otro
+  async create(dto: CreateConsultaDto, usuario: UsuarioActivoInterface) {
+    if (usuario.rol !== Rol.CLIENTE && usuario.rol !== Rol.PROFESIONAL) {
+      throw new ForbiddenException('Solo los clientes y los profesionales envian consultas');
+    }
     const guardada = await this.consultaRepository.save(
       this.consultaRepository.create({
         correo: dto.correo.trim(),
         tema: dto.tema.trim(),
         mensaje: dto.mensaje.trim(),
-        rol: dto.rol ?? 'visitante',
-        correoCuenta: dto.correoCuenta ?? null,
+        rol: usuario.rol,
+        correoCuenta: usuario.correo,
       }),
     );
     return { idConsulta: guardada.idConsulta, mensaje: 'Recibimos tu consulta. Te vamos a responder por correo.' };

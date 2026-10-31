@@ -74,8 +74,6 @@ export default function Ayuda() {
         correo: correo.trim(),
         tema,
         mensaje: mensaje.trim(),
-        rol: sesion?.rol === 'cliente' || sesion?.rol === 'profesional' ? sesion.rol : 'visitante',
-        correoCuenta: sesion?.correo,
       })
       setResultado({ tipo: 'success', texto: `¡Gracias! Recibimos tu consulta y te vamos a responder a ${correo.trim()}.` })
       setMensaje('')
