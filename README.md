@@ -1,7 +1,7 @@
 # Manitas
 
 Aplicación web que conecta a clientes con profesionales de oficios (plomería, electricidad, gas, pintura y más) para
-resolver arreglos del hogar. TP de Desarrollo de Software — UTN FRRo.
+resolver arreglos del hogar.
 
 ## Integrantes
 
@@ -31,25 +31,11 @@ API REST:
 - [`manitas-backend`](manitas-backend) — API con NestJS
 - [`manitas-frontend`](manitas-frontend) — app web con React
 
-## Tema
-
-El cliente busca profesionales de su zona, les pide presupuesto eligiendo un turno libre del calendario y compara los
-presupuestos que recibe. Si es algo urgente, lo pide sin elegir profesional: les aparece a todos los de ese oficio en
-su zona y el primero que acepta va. Los profesionales cargan su horario de trabajo, presupuestan después de la visita
-y reciben calificaciones. Los clientes pagan desde la app con Mercado Pago (tarjeta de crédito, débito o saldo), y la
-app informa las promociones bancarias del mes (el reintegro lo hace el banco). Apunta a brindar rapidez, confianza y
-variedad de opciones.
-
 ## Modelo de dominio
 
 <img width="1952" height="1460" alt="Modelo de dominio" src="https://github.com/user-attachments/assets/2a46b12c-2fc9-42fa-8c27-c8afcc278906" />
 
 [Ver el modelo en Google Drive](https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view)
-
-**Estados de la solicitud:** `solicitado` → el profesional acepta (`agendado`) o rechaza (`rechazado`) → visita →
-`presupuestado` → el cliente acepta (`contratado`) o rechaza (`rechazado`) → paga → `finalizado` → califica al
-profesional. Además: `reprogramacion` (alguno de los dos propone otro horario), `cancelado` y `expirado` (sin
-respuesta a tiempo).
 
 ## Alcance funcional
 
@@ -68,12 +54,6 @@ respuesta a tiempo).
 | :--- | :--- |
 | **CRUD** | 1. CRUD Usuario (Cliente y Profesional)<br>2. CRUD Tipo de Servicio<br>3. CRUD Localidad<br>4. CRUD Método de Pago<br>5. CRUD Zona |
 | **CUU/Epic** | 1. Solicitar presupuesto<br>2. Coordinar visita (elegir y reprogramar turnos)<br>3. Confirmar servicio (aceptar el presupuesto)<br>4. Abonar servicio<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas |
-
-"Solicitar servicio" se unió con "Solicitar presupuesto" (el cliente siempre pide presupuesto primero) y "Calificar
-servicio" con "Calificar profesional".
-
-**Extras:** servicio urgente, turnos con calendario, pago con Mercado Pago (modo prueba), consultas desde la sección
-Ayuda y login con 3 roles (cliente, profesional y administrador).
 
 ## Tecnologías
 
