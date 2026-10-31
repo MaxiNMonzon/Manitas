@@ -55,7 +55,10 @@ La cátedra pide que la base de datos sea un servicio externo y **no requiera ej
 `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`, `DB_SSL=true` y `DB_SSL_CA` (el certificado CA del
 proveedor de la base, si pide conexión segura), `JWT_SECRET` (uno nuevo, largo y aleatorio),
 `ADMIN_CORREO`, `ADMIN_CONTRASENA`, `MERCADOPAGO_ACCESS_TOKEN` y
-`MERCADOPAGO_VUELTA_URL=https://<dominio-del-front>/app/solicitudes`.
+`MERCADOPAGO_VUELTA_URL=https://<dominio-del-front>/app/solicitudes`, `TZ=America/Argentina/Buenos_Aires`, y para
+"Olvidé mi contraseña" `BREVO_API_KEY`, `CORREO_REMITENTE` (un correo verificado en [Brevo](https://www.brevo.com)) y
+`FRONT_URL=https://<dominio-del-front>`. Los mails se mandan por la API web de Brevo porque Render, en el plan gratis,
+no deja mandar por SMTP.
 
 **Frontend:** `VITE_API_URL=https://<dominio-del-back>` (se usa al compilar).
 
