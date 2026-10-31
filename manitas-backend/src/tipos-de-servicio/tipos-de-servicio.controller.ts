@@ -26,9 +26,12 @@ export class TiposDeServicioController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Ver un tipo de servicio', description: 'Con su especialidad y los profesionales que la hacen. Publico.' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.tiposDeServicioService.findOne(id);
+  @ApiOperation({ summary: 'Ver un tipo de servicio', description: 'Con su especialidad y los profesionales que la hacen (solo id y nombre). Publico.' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const tipo = await this.tiposDeServicioService.findOne(id);
+    // Es público: de cada profesional solo se muestra quién es, nunca sus datos personales
+    const profesionales = (tipo.especialidad?.profesionales ?? []).map(({ idUsuario, nombre, apellido }) => ({ idUsuario, nombre, apellido }));
+    return { ...tipo, especialidad: tipo.especialidad && { ...tipo.especialidad, profesionales } };
   }
 
   @Patch(':id')

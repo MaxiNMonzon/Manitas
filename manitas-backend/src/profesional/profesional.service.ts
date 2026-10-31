@@ -97,6 +97,14 @@ export class ProfesionalService {
     return await query.getMany();
   }
 
+  // Lo que cualquiera puede ver de un profesional (las búsquedas son públicas):
+  // sin contraseña, DNI, fecha de nacimiento, correo, teléfono ni CBU
+  vistaPublica(profesional: Profesional) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { dni, fechaNacimiento, correo, telefono, cbu, contraseña, deleteAt, ...publico } = profesional;
+    return publico;
+  }
+
   async findOneByEmail(correo: string) {
     return await this.profesionalRepository.findOneBy({ correo });
   }
