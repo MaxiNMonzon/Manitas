@@ -26,7 +26,7 @@ export default function SolicitudesNuevas({ solicitudes, onResponder }: Props) {
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'info.main', mb: 2 }}>
         <NotificationsActiveIcon />
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          Solicitudes nuevas para responder
+          Solicitudes nuevas
         </Typography>
         <Chip size="small" color="info" label={solicitudes.length} />
       </Stack>
