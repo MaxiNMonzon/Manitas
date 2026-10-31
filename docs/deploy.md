@@ -17,7 +17,10 @@
 | --- | --- | --- |
 | Cliente | valeriagodoy.ros@gmail.com | Manitas123 |
 | Profesional | raulbustos.plomeria@gmail.com | Manitas123 |
-| Administrador | admin@manitas.com | tuhogarenbuenasmanos |
+| Administrador | se la pasamos a los profesores por privado | |
+
+La cuenta del administrador puede cambiar todos los catálogos (oficios, zonas, promociones), por eso no se publica
+en el repositorio.
 
 Valeria tiene un presupuesto para responder, un trabajo para pagar y trabajos terminados; Raúl (plomería y gas)
 tiene solicitudes nuevas para aceptar y una visita para presupuestar. Hay más clientes y un profesional por oficio,
