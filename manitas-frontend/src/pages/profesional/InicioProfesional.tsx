@@ -95,7 +95,7 @@ function TarjetaDato({ icono, titulo, valor, detalle, children, color, onClick }
   )
 }
 
-const PROXIMOS_VISIBLES = 5
+const PROXIMOS_VISIBLES = 2
 
 // Pantalla principal del profesional
 export default function InicioProfesional() {
@@ -112,7 +112,8 @@ export default function InicioProfesional() {
   const proximos = useCarga(`proximos-${hoy}`, async () => {
     const manana = dayjs().add(1, 'day').format('YYYY-MM-DD')
     const enUnMes = dayjs().add(30, 'day').format('YYYY-MM-DD')
-    return (await traerAgenda(manana, enUnMes)).slice(0, PROXIMOS_VISIBLES)
+    // Uno más de los que se muestran, para saber si va el "Ver más"
+    return (await traerAgenda(manana, enUnMes)).slice(0, PROXIMOS_VISIBLES + 1)
   })
   const sinNadaHoy = !agendaHoy.cargando && (agendaHoy.datos ?? []).length === 0
   const calificacion = useCarga('mi-calificacion', traerMiCalificacion)
@@ -238,14 +239,24 @@ export default function InicioProfesional() {
         {/* Próximas: solo cuando hoy no hay nada */}
         {sinNadaHoy && (
           <Grid size={{ xs: 12 }}>
-            <SeccionTarjeta titulo="Próximas visitas y trabajos">
+            <SeccionTarjeta
+              titulo="Próximas visitas y trabajos"
+              extra={
+                // Se muestran 2; si hay más, el resto está en Solicitudes
+                (proximos.datos ?? []).length > PROXIMOS_VISIBLES && (
+                  <Button component={RouterLink} to="/app/solicitudes" size="small">
+                    Ver más
+                  </Button>
+                )
+              }
+            >
               {proximos.cargando ? (
                 <Skeleton variant="rounded" height={110} />
               ) : (proximos.datos ?? []).length === 0 ? (
                 <Typography color="text.secondary">Por ahora no tenés nada agendado para los próximos 30 días.</Typography>
               ) : (
                 <Stack spacing={1.5}>
-                  {(proximos.datos ?? []).map((ev) => (
+                  {(proximos.datos ?? []).slice(0, PROXIMOS_VISIBLES).map((ev) => (
                     <ItemAgenda key={`${ev.idSolicitud}-${ev.tipo}-${ev.inicio.getTime()}`} evento={ev} mostrarFecha />
                   ))}
                 </Stack>
