@@ -27,6 +27,12 @@ APP PUBLICADA
 - Credenciales de prueba y servicios usados: [docs/deploy.md](docs/deploy.md)
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
+VIDEO
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+- Demo de la app funcionando: _(link pendiente, se agrega la semana próxima)_
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
 TEMA
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -42,7 +48,7 @@ Apunta a brindar rapidez, confianza y variedad de opciones.
 MODELO
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-<img width="1301" height="752" alt="MD - DSW-MD drawio (1)" src="https://github.com/user-attachments/assets/c6a9bd41-b077-4243-87ec-42b62b63b720" />
+<img width="1952" height="1460" alt="Modelo de dominio" src="https://github.com/user-attachments/assets/2a46b12c-2fc9-42fa-8c27-c8afcc278906" />
 
 https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view
 
