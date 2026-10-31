@@ -1,8 +1,7 @@
 import type { ReactElement, ReactNode } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
+import ButtonBase from '@mui/material/ButtonBase'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
@@ -18,7 +17,7 @@ import PlaceIcon from '@mui/icons-material/Place'
 import PaymentsIcon from '@mui/icons-material/Payments'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import HandshakeIcon from '@mui/icons-material/Handshake'
-import Marca from '../Marca'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 
 // Lo que se ve al bajar en la pantalla de bienvenida: qué es Manitas, y cómo funciona.
 // Es para alguien que llega sin saber nada de la app
@@ -242,9 +241,6 @@ export default function SobreManitas() {
               Manitas te ayuda a conseguir clientes cerca tuyo y a ordenar el día a día: pedidos, visitas, presupuestos y cobros, todo en el
               mismo lugar. Vos ponés tus precios y tus horarios.
             </Typography>
-            <Button variant="contained" color="secondary" component={RouterLink} to="/registro/profesional">
-              Quiero ofrecer mis servicios
-            </Button>
           </Grid>
           <Grid size={{ xs: 12, md: 7 }}>
             <Grid container spacing={2}>
@@ -261,45 +257,28 @@ export default function SobreManitas() {
         </Grid>
       </Seccion>
 
-      {/* Cierre */}
-      <Box
-        component="section"
-        sx={{
-          py: { xs: 7, md: 9 },
-          color: 'common.white',
-          textAlign: 'center',
-          background: (t) => `linear-gradient(135deg, ${t.palette.primary.dark} 0%, ${t.palette.primary.main} 70%)`,
-        }}
-      >
-        <Container maxWidth="sm">
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <Marca variante="blanco" alto={{ xs: 48, sm: 60 }} />
-          </Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
-            ¿Listo para empezar?
+      {/* Volver arriba, a ingresar o registrarse */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', pb: { xs: 5, md: 7 } }}>
+        <ButtonBase
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Volver arriba"
+          sx={{
+            flexDirection: 'column',
+            px: 2,
+            py: 0.5,
+            borderRadius: 3,
+            color: 'primary.main',
+            bgcolor: 'rgba(255,255,255,0.9)',
+            boxShadow: 2,
+            '@keyframes subir': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-5px)' } },
+            '& svg': { animation: 'subir 1.6s ease-in-out infinite' },
+          }}
+        >
+          <KeyboardArrowUpIcon />
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Volver arriba
           </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'center' }}>
-            <Button variant="contained" color="secondary" size="large" component={RouterLink} to="/registro/cliente">
-              Necesito un arreglo
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              component={RouterLink}
-              to="/login"
-              sx={{
-                color: 'common.white',
-                borderColor: 'rgba(255,255,255,0.6)',
-                '&:hover': { borderColor: 'common.white' },
-              }}
-            >
-              Ya tengo cuenta
-            </Button>
-          </Stack>
-          <Typography variant="caption" sx={{ display: 'block', mt: 5, opacity: 0.7 }}>
-            © 2026 Manitas · Tu hogar en buenas manos
-          </Typography>
-        </Container>
+        </ButtonBase>
       </Box>
     </>
   )
