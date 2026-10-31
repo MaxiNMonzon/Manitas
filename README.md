@@ -19,7 +19,7 @@ resolver arreglos del hogar. TP de Desarrollo de Software — UTN FRRo.
 | App publicada | https://manitas-sigma.vercel.app |
 | API publicada | https://manitas-api-hv16.onrender.com (documentación en [`/api`](https://manitas-api-hv16.onrender.com/api)) |
 | Credenciales de prueba | [docs/deploy.md](docs/deploy.md) |
-| Video de la app funcionando | _(pendiente)_ |
+| Video de la app funcionando | |
 | Documentación del TP | [docs/](docs/README.md) |
 | Propuesta | [docs/proposal.md](docs/proposal.md) |
 
