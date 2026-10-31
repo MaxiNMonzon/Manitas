@@ -77,7 +77,7 @@ export default function AgendaProfesional() {
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, '&::first-letter': { textTransform: 'uppercase' } }}>
               {diaElegido.format('dddd D [de] MMMM')}
             </Typography>
-            <ListaDeEventos eventos={delDia} cargando={agendaMes.cargando} vacio="Día libre." />
+            <ListaDeEventos eventos={delDia} cargando={agendaMes.cargando} vacio="Sin visitas ni trabajos." />
           </Grid>
         </Grid>
       </SeccionTarjeta>
