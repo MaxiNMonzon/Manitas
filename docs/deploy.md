@@ -29,8 +29,8 @@ Para pagar con Mercado Pago (modo prueba) se usa un usuario comprador de prueba 
 | Parte | Servicio | Detalle |
 | --- | --- | --- |
 | Base de datos | [Aiven](https://aiven.io) (MySQL 8.4, plan Free) | Servicio externo en la nube, con conexión segura (SSL verificando el certificado de Aiven) |
-| Backend | [Render](https://render.com) (Web Service, plan Free) | Rama `maxi`, carpeta `manitas-backend`. Se vuelve a publicar solo con cada `git push` |
-| Frontend | [Vercel](https://vercel.com) (plan Hobby) | Rama `maxi`, carpeta `manitas-frontend`. Se vuelve a publicar solo con cada `git push` |
+| Backend | [Render](https://render.com) (Web Service, plan Free) | Rama `main`, carpeta `manitas-backend`. Se vuelve a publicar solo con cada `git push` a `main` |
+| Frontend | [Vercel](https://vercel.com) (plan Hobby) | Rama `main`, carpeta `manitas-frontend`. Se vuelve a publicar solo con cada `git push` a `main` |
 | Datos iniciales | `pnpm run seed:georef` y `pnpm run seed:demo` | Corridos desde la compu de un integrante contra la base de Aiven |
 
 - Tres contraseñas mal seguidas bloquean esa cuenta 15 minutos (después se puede volver a probar).
