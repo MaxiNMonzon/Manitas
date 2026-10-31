@@ -43,7 +43,7 @@ export default function OlvideContrasena() {
             ¿Olvidaste tu contraseña?
           </Typography>
           <Typography color="text.secondary">
-            Poné el email de tu cuenta y te mandamos un link para crear una nueva.
+            Ingresá el email con el que te registraste.
           </Typography>
         </div>
 
@@ -76,7 +76,7 @@ export default function OlvideContrasena() {
             />
 
             <Button type="submit" variant="contained" size="large" fullWidth loading={enviando} disabled={!correoValido}>
-              Mandarme el link
+              Enviar
             </Button>
           </>
         )}
