@@ -47,9 +47,9 @@ Con `synchronize: true`, TypeORM aplica estos cambios solo al levantar el back o
 
 ---
 
-# Seed de datos de prueba (`seed:demo`)
+# Seed de datos iniciales (`seed:demo`)
 
-Carga datos para probar el sistema de punta a punta. El script está en `src/seeds/demo.seed.ts`.
+Carga datos para mostrar el sistema de punta a punta. El script está en `src/seeds/demo.seed.ts`.
 
 ```bash
 pnpm run seed:demo   # o: npm run seed:demo
@@ -59,18 +59,30 @@ pnpm run seed:demo   # o: npm run seed:demo
 - Agrega lo que falte de: los **10 oficios** (Electricidad, Plomería, Gas, Pintura, Albañilería, Carpintería,
   Cerrajería, Climatización, Limpieza, Jardinería) con algunas habilidades cada uno, y las **zonas de Rosario**
   (los 6 distritos oficiales: Centro, Norte, Noroeste, Oeste, Sudoeste y Sur). Si no existen Santa Fe / Rosario, las crea. Si encuentra las zonas viejas Echesortu o Fisherton, pasa su gente a Centro y Noroeste y las da de baja.
-- Crea **5 clientes y 9 profesionales** (con horario de trabajo, zonas, oficios y CBU).
+- Crea **6 clientes y 9 profesionales** (con horario de trabajo, zonas, oficios y CBU).
 - Crea una vez **solicitudes de ejemplo en todos los estados** (finalizadas con reseñas, presupuesto para aceptar,
   trabajo para pagar, visita para presupuestar, nuevas para aceptar, cambio de horario...).
 
-**Contraseña de todas las cuentas: `Manitas123`.** En el login (modo desarrollo) hay botones para entrar directo.
+**Contraseña de las cuentas: `Manitas123`**, menos la de Maxi (`maxi.rp002@gmail.com`), que se toma de
+`SEED_CONTRASENA_MAXI` en el `.env` (si no está, también usa `Manitas123`).
 
 | Rol | Correo | Para probar |
 | --- | --- | --- |
-| Cliente | laura.cliente@manitas.test | Una solicitud en cada estado: aceptar presupuesto, pagar con Mercado Pago, responder un cambio de horario, calificar |
-| Cliente | martin.cliente@manitas.test | Visita hecha, esperando el presupuesto de Jorge |
-| Cliente | sofia.cliente@manitas.test / diego.cliente@manitas.test / carla.cliente@manitas.test | Nuevas pendientes, historial |
-| Profesional | jorge.plomero@manitas.test | Plomería y Gas: nuevas para aceptar y una visita para presupuestar |
-| Profesional | oscar.electricista@manitas.test | Una nueva y un trabajo por cobrar |
-| Profesional | marta.pintora@manitas.test, nicolas.clima@manitas.test, julian.gasista@manitas.test | Visita confirmada / propuso otro horario / presupuesto enviado |
-| Profesional | lucia.carpintera@, ramon.cerrajero@, ana.limpieza@, pablo.jardinero@ (manitas.test) | Un profesional por oficio |
+| Cliente | maxi.rp002@gmail.com | Una solicitud en cada estado: aceptar presupuesto, pagar con Mercado Pago, responder un cambio de horario, calificar |
+| Cliente | valeriagodoy.ros@gmail.com | Presupuesto para responder, trabajo para pagar, visita esperando el presupuesto de Raúl |
+| Cliente | fede.ibarra88@gmail.com / gusmolina.rosario@gmail.com / nati.herrera.82@gmail.com / camirossi.95@gmail.com | Nuevas pendientes, historial |
+| Profesional | raulbustos.plomeria@gmail.com | Plomería y Gas: nuevas para aceptar y una visita para presupuestar |
+| Profesional | sergioledesma.electricista@gmail.com | Una nueva y trabajos por cobrar |
+| Profesional | silviaortiz.pinturas@gmail.com, leandrocabrera.clima@gmail.com, marceloquiroga.gasista@gmail.com | Visita confirmada / propuso otro horario / presupuesto enviado |
+| Profesional | damianaguirre.carpinteria@, cerrajeriavillalba@, graciela.romero.limpieza@, ezequieltoledo.jardines@ (gmail.com) | Un profesional por oficio |
+
+## Borrar las cuentas de prueba viejas (`seed:limpiar`)
+
+```bash
+pnpm run seed:limpiar
+```
+
+Borra las cuentas de prueba (correos `@manitas.test`, `@test.com` y `@t.com`) con sus solicitudes, turnos, horarios,
+matrículas y consultas de Ayuda. Las demás cuentas no se tocan. Después, `pnpm run seed:demo` carga la gente nueva.
+Si falla por las tablas viejas `precio_base` o `tarjeta` (de antes de sacar PrecioBase y la tarjeta guardada),
+borrarlas a mano: ya no se usan.
