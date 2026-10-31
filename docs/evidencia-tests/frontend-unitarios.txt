@@ -1,16 +1,16 @@
 Frontend — test unitario de componentes (npm test, Vitest + Testing Library)
-Ejecutado: 29/10/2026 22:34
+Ejecutado: 30/10/2026 21:05
 
 
  RUN  v5.0.5 C:/Users/Usuario/OneDrive/UTN/3 año/Proy DSW/Manitas/manitas-frontend
 
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > muestra el profesional, el trabajo, la dirección y el estado en palabras del cliente 809ms
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > avisa al tocar "Ver detalles" (output del componente) 653ms
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > una urgencia sin profesional dice que se está buscando y se marca como urgente 125ms
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > una solicitud pagada muestra el chip "Pagado" 120ms
+ ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > muestra el profesional, el trabajo, la dirección y el estado en palabras del cliente 566ms
+ ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > avisa al tocar "Ver detalles" (output del componente) 476ms
+ ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > una urgencia sin profesional dice que se está buscando y se marca como urgente 118ms
+ ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > una solicitud pagada muestra el chip "Pagado" 157ms
 
  Test Files  1 passed (1)
       Tests  4 passed (4)
-   Start at  22:34:45
-   Duration  74.34s (environment 65%, import 17%, setup 15%, tests 2%, transform 1%)
+   Start at  21:05:29
+   Duration  18.53s (environment 47%, import 31%, setup 13%, tests 7%, transform 2%)
 
