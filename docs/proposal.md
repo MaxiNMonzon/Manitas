@@ -5,15 +5,15 @@
 ### Integrantes
 
 * 56821 - Arias, Francisco José
-* 52098 - Monzón, Maximiliano Nicolás
 * 54456 - Baremboum, Micaela
 * 42062 - Coria, Lautaro
+* 52098 - Monzón, Maximiliano Nicolás
 
 ### Repositorios
 
 * [fullstack app (monorepo)](https://github.com/MaxiNMonzon/Manitas): `manitas-backend` (API) y `manitas-frontend` (SPA)
 
-*Pull requests de entrega:* back → _(completar link)_ · front → _(completar link)_
+*Pull request de entrega:* https://github.com/utnfrrodsw/tp/pull/272
 
 ## Tema
 
