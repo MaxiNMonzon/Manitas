@@ -13,9 +13,14 @@ al menos 1 test unitario de un componente y 1 test end-to-end en el front.
 | Front: test unitario de componente | [`TarjetaSolicitudCliente.test.tsx`](../manitas-frontend/src/components/solicitudes/TarjetaSolicitudCliente.test.tsx) | Vitest + Testing Library | 4 | ✅ |
 | Front: test end-to-end | [`e2e/cliente.spec.ts`](../manitas-frontend/e2e/cliente.spec.ts) | Playwright (Chrome, escritorio y celular) | 4 × 2 | ✅ |
 
-> **Asignación sugerida (1 por integrante):** cada integrante se queda con uno de los cuatro tests unitarios del back
-> para explicarlo en la defensa. Completar acá: auth.guard → _____, roles.guard → _____, turno.service → _____,
-> payments.service → _____.
+### Test por integrante
+
+| Integrante | Test |
+| --- | --- |
+| Arias, Francisco José | [`roles.guard.spec.ts`](../manitas-backend/src/auth/guard/roles.guard.spec.ts) — niveles de acceso |
+| Baremboum, Micaela | [`payments.service.spec.ts`](../manitas-backend/src/payments/payments.service.spec.ts) — confirmación del pago con Mercado Pago |
+| Coria, Lautaro | [`auth.guard.spec.ts`](../manitas-backend/src/auth/guard/auth.guard.spec.ts) — autenticación (JWT) |
+| Monzón, Maximiliano Nicolás | [`turno.service.spec.ts`](../manitas-backend/src/turno/turno.service.spec.ts) — horario de trabajo del profesional |
 
 ## Qué prueba cada uno
 

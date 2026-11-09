@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { CorreoService } from './correo.service';
+import { RecuperacionContrasena } from './entities/recuperacion-contrasena.entity';
 import { ProfesionalModule } from '../profesional/profesional.module';
 import { ClienteModule } from '../cliente/cliente.module';
 
@@ -10,6 +13,7 @@ import { ClienteModule } from '../cliente/cliente.module';
   imports: [
     ProfesionalModule,
     ClienteModule,
+    TypeOrmModule.forFeature([RecuperacionContrasena]),
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],
@@ -19,7 +23,7 @@ import { ClienteModule } from '../cliente/cliente.module';
       }),
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, CorreoService],
   controllers: [AuthController]
 })
 export class AuthModule {}

@@ -33,6 +33,8 @@ Registrarse, iniciar sesion y ver mis datos
 | `POST` | `/auth/login/admin` | público | Iniciar sesion como admin |
 | `GET` | `/auth/perfil` | con sesión | Ver mis datos |
 | `PATCH` | `/auth/contrasena` | con sesión | Cambiar mi contraseña |
+| `POST` | `/auth/olvide-contrasena` | público | Olvidé mi contraseña: manda un mail con un link (vence en 30 min, sirve una vez) |
+| `POST` | `/auth/restablecer-contrasena` | público | Crear la contraseña nueva con el código del link |
 
 ### Profesionales
 
