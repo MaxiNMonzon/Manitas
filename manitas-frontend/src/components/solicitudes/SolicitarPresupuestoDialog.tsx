@@ -16,7 +16,7 @@ import { crearSolicitud } from '../../api/solicitudes'
 import AvatarProfesional from '../profesional/AvatarProfesional'
 import SelectorTurno from '../agenda/SelectorTurno'
 import { formatoPesos } from './estados'
-import type { ProfesionalResumen } from '../../mocks/inicioCliente'
+import type { ProfesionalResumen } from '../../types'
 
 const MAX_DESCRIPCION = 1000
 
@@ -55,14 +55,12 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
     setEnviando(true)
     setError(null)
     try {
-      await crearSolicitud(
-        { idProfesional: p.idUsuario, idEspecialidad: Number(especialidad), descripcionProblema: descripcion.trim(), inicioTurno: new Date(inicio!) },
-        {
-          profesional: { idUsuario: p.idUsuario, nombre: p.nombre, apellido: p.apellido, telefono: '' },
-          especialidad: p.oficios.find((o) => o.idEspecialidad === Number(especialidad))?.nombre ?? '',
-          costoVisita: p.costoVisita,
-        },
-      )
+      await crearSolicitud({
+        idProfesional: p.idUsuario,
+        idEspecialidad: Number(especialidad),
+        descripcionProblema: descripcion.trim(),
+        inicioTurno: new Date(inicio!),
+      })
       const cuando = dayjs(inicio).format('dddd DD/MM [a las] HH:mm')
       // Igual que el back: tiene 48 h para responder, o hasta la hora del turno si llega antes
       const en48hs = dayjs().add(48, 'hour')

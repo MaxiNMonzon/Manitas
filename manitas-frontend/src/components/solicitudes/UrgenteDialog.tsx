@@ -11,7 +11,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import BoltIcon from '@mui/icons-material/Bolt'
 import { crearUrgente } from '../../api/solicitudes'
-import type { Categoria } from '../../mocks/inicioCliente'
+import type { Categoria } from '../../types'
 
 const MAX_DESCRIPCION = 1000
 
@@ -45,8 +45,7 @@ export default function UrgenteDialog({ abierto, especialidades, idEspecialidadI
     setEnviando(true)
     setError(null)
     try {
-      const nombre = especialidades.find((e) => e.idEspecialidad === idEspecialidad)?.nombre ?? ''
-      await crearUrgente(idEspecialidad, descripcion.trim(), nombre)
+      await crearUrgente(idEspecialidad, descripcion.trim())
       cerrar()
       onCreada('Urgencia enviada a los profesionales de tu zona. Te avisamos apenas uno la tome y cuándo llega.')
     } catch (e) {

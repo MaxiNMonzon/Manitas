@@ -11,6 +11,7 @@ al menos 1 test unitario de un componente y 1 test end-to-end en el front.
 | Back: test unitario 4 | [`payments/payments.service.spec.ts`](../manitas-backend/src/payments/payments.service.spec.ts) | Jest + Nest Testing (Mercado Pago simulado) | 5 | ✅ |
 | Back: test de integración | [`test/turnos.e2e-spec.ts`](../manitas-backend/test/turnos.e2e-spec.ts) | Jest + Supertest | 6 | ✅ |
 | Front: test unitario de componente | [`TarjetaSolicitudCliente.test.tsx`](../manitas-frontend/src/components/solicitudes/TarjetaSolicitudCliente.test.tsx) | Vitest + Testing Library | 4 | ✅ |
+| Front: test unitario de lógica | [`ordenSolicitudes.test.ts`](../manitas-frontend/src/components/solicitudes/profesional/ordenSolicitudes.test.ts) | Vitest (orden, carpetas y acciones de "Mis solicitudes" del profesional) | 6 | ✅ |
 | Front: test end-to-end | [`e2e/cliente.spec.ts`](../manitas-frontend/e2e/cliente.spec.ts) | Playwright (Chrome, escritorio y celular) | 4 × 2 | ✅ |
 
 ### Test por integrante
@@ -53,7 +54,7 @@ npm test               # componente
 npm run test:e2e       # end-to-end (levanta el front solo si no está corriendo)
 ```
 
-Ninguno necesita MySQL: en el back los repositorios y Mercado Pago se simulan, y el end-to-end usa la sesión demo.
+Ninguno necesita MySQL: en el back los repositorios y Mercado Pago se simulan, y en el end-to-end las respuestas del back las simula el propio test ([`e2e/backSimulado.ts`](../manitas-frontend/e2e/backSimulado.ts)).
 
 > **Nota técnica:** `@nestjs/typeorm` y `@nestjs/config` se publican como módulos ESM que Jest no puede cargar.
 > En los tests se reemplazan por versiones mínimas equivalentes ([`test/stubs`](../manitas-backend/test/stubs))
@@ -63,5 +64,5 @@ Ninguno necesita MySQL: en el back los repositorios y Mercado Pago se simulan, y
 
 - [Back — unitarios](evidencia-tests/backend-unitarios.txt) — 4 suites, 19 tests OK
 - [Back — integración](evidencia-tests/backend-integracion.txt) — 1 suite, 6 tests OK
-- [Front — componente](evidencia-tests/frontend-unitarios.txt) — 1 archivo, 4 tests OK
+- [Front — unitarios](evidencia-tests/frontend-unitarios.txt) — 2 archivos, 10 tests OK (componente y lógica)
 - [Front — end-to-end](evidencia-tests/frontend-e2e.txt) — 8 ejecuciones OK (4 escenarios × escritorio y celular)

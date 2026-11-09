@@ -5,7 +5,6 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import PaymentIcon from '@mui/icons-material/Payment'
 import { useAuth } from '../auth/useAuth'
-import { tokenStorage } from '../api/client'
 import { traerSolicitudesCliente } from '../api/solicitudes'
 import { useCarga } from '../hooks/useCarga'
 import CheckoutButton from '../components/pagos/CheckoutButton'
@@ -32,11 +31,6 @@ export default function Pagos() {
         <Typography variant="h5">Pagos</Typography>
       </Stack>
 
-      {tokenStorage.esDemo() && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Con la sesión de prueba no se puede pagar: el pago pasa por Mercado Pago y necesita una cuenta real.
-        </Alert>
-      )}
       {error && <Alert severity="error">{error}</Alert>}
       {cargando && <CircularProgress />}
       {!cargando && pendientes.length === 0 && <Typography color="text.secondary">No tenés nada para pagar.</Typography>}

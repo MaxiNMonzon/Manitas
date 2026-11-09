@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { Brackets, In, IsNull, Not, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Profesional } from './entities/profesional.entity';
 import { Zona } from '../zona/entities/zona.entity';
@@ -12,6 +12,12 @@ import { CreateProfesionalDto } from './dto/create-profesional.dto';
 import { UpdateProfesionalDto } from './dto/update-profesional.dto';
 import { MatriculaDto } from './dto/matricula.dto';
 import { Matricula } from './entities/matricula.entity';
+
+// Sin tildes ni mayúsculas, para que "plomeria" encuentre "Plomería"
+const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// En un LIKE, "%" y "_" son comodines: si el cliente los escribe, se buscan como texto
+const escaparLike = (texto: string) => texto.replace(/[\\%_]/g, '\\$&');
 
 @Injectable()
 export class ProfesionalService {
@@ -73,7 +79,18 @@ export class ProfesionalService {
     return await this.profesionalRepository.save(nuevoProfesional);
   }
 
-  async findAll(idEspecialidad?: number, idZona?: number): Promise<Profesional[]> {
+  // Buscador del cliente: filtra en la base y devuelve cada profesional con su promedio de estrellas,
+  // así el front recibe solo los que coinciden y en un solo pedido (sin una consulta por profesional)
+  async buscar(filtros: { idEspecialidad?: number; idZona?: number; texto?: string }) {
+    const profesionales = await this.findAll(filtros.idEspecialidad, filtros.idZona, filtros.texto);
+    const calificaciones = await this.resumenCalificaciones(profesionales.map((p) => p.idUsuario));
+    return profesionales.map((p) => ({
+      ...this.vistaPublica(p),
+      calificacion: calificaciones.get(p.idUsuario) ?? { promedio: null, cantidad: 0 },
+    }));
+  }
+
+  async findAll(idEspecialidad?: number, idZona?: number, texto?: string): Promise<Profesional[]> {
     const query = this.profesionalRepository
       .createQueryBuilder('profesional')
       .leftJoinAndSelect('profesional.zonasDeCobertura', 'zona')
@@ -94,7 +111,67 @@ export class ProfesionalService {
         .andWhere('zonaFiltro.idZona = :idZona', { idZona });
     }
 
+    // Texto libre ("Juan", "plomería", "pierde la canilla"): se busca en la base, no en el navegador.
+    // Las comparaciones no distinguen mayúsculas ni tildes porque así compara MySQL (collation *_ai_ci)
+    // (si mandan ?q= dos veces llega un arreglo: se ignora) y como mucho 100 letras
+    const buscado = typeof texto === 'string' ? texto.trim().slice(0, 100) : '';
+    if (buscado) {
+      const patron = `%${escaparLike(buscado)}%`;
+      const oficios = await this.oficiosPorPalabraClave(buscado);
+      query
+        .leftJoin('profesional.especialidades', 'especialidadTexto')
+        .leftJoin('profesional.tiposDeServicio', 'habilidadTexto')
+        .andWhere(
+          new Brackets((o) => {
+            // Su nombre y apellido, su descripción, sus oficios o sus habilidades
+            o.where("CONCAT(profesional.nombre, ' ', profesional.apellido) LIKE :patron", { patron })
+              .orWhere('profesional.descripcion LIKE :patron')
+              .orWhere('especialidadTexto.nombreEspecialidad LIKE :patron')
+              .orWhere('habilidadTexto.nombreServicio LIKE :patron');
+            // O hace un oficio que tiene esa palabra clave (ej: "caño" → Plomería)
+            if (oficios.length) o.orWhere('especialidadTexto.idEspecialidad IN (:...oficios)', { oficios });
+          }),
+        );
+    }
+
     return await query.getMany();
+  }
+
+  // Oficios cuyas palabras clave (las que carga el admin) coinciden con lo que escribió el cliente.
+  // Las palabras clave son un texto separado por comas, así que la comparación se hace acá y no en SQL
+  private async oficiosPorPalabraClave(texto: string): Promise<number[]> {
+    const buscado = normalizar(texto);
+    // Las palabras muy cortas no cuentan, para que "a" o "el" no encuentren todo
+    const palabras = buscado.split(/\s+/).filter((p) => p.length >= 3);
+    const oficios = await this.especialidadRepository.find({ select: { idEspecialidad: true, palabrasClave: true } });
+    return oficios
+      .filter((e) =>
+        (e.palabrasClave ?? '')
+          .split(',')
+          .map((clave) => normalizar(clave.trim()))
+          .filter(Boolean)
+          .some((clave) => buscado.includes(clave) || palabras.some((p) => clave.includes(p))),
+      )
+      .map((e) => e.idEspecialidad);
+  }
+
+  // Promedio y cantidad de calificaciones de varios profesionales, en una sola consulta (GROUP BY)
+  private async resumenCalificaciones(ids: number[]): Promise<Map<number, { promedio: number | null; cantidad: number }>> {
+    if (!ids.length) return new Map();
+    const filas = await this.solicitudRepository
+      .createQueryBuilder('solicitud')
+      .innerJoin('solicitud.profesional', 'profesional')
+      .select('profesional.idUsuario', 'id')
+      .addSelect('AVG(solicitud.calificacionServicio)', 'promedio')
+      .addSelect('COUNT(*)', 'cantidad')
+      .where('solicitud.calificacionServicio IS NOT NULL')
+      .andWhere('profesional.idUsuario IN (:...ids)', { ids })
+      .groupBy('profesional.idUsuario')
+      .getRawMany<{ id: number; promedio: string; cantidad: string }>();
+    // Redondeado a un decimal, igual que GET /profesional/:id/calificaciones
+    return new Map(
+      filas.map((f) => [Number(f.id), { promedio: Math.round(Number(f.promedio) * 10) / 10, cantidad: Number(f.cantidad) }]),
+    );
   }
 
   // Lo que cualquiera puede ver de un profesional (las búsquedas son públicas):

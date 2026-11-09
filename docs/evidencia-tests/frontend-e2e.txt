@@ -1,16 +1,16 @@
 Frontend — tests end-to-end (npm run test:e2e, Playwright con Google Chrome; escritorio y celular)
-Ejecutado: 30/10/2026 21:06
+Ejecutado: 09/11/2026 00:31
 
 
 Running 8 tests using 1 worker
 
-  ok 1 [escritorio] › e2e\cliente.spec.ts:12:1 › sin sesión, las pantallas privadas mandan al login (16.7s)
-  ok 2 [escritorio] › e2e\cliente.spec.ts:17:1 › el cliente ve sus solicitudes y abre el detalle de una (13.5s)
-  ok 3 [escritorio] › e2e\cliente.spec.ts:35:1 › el cliente busca en Ayuda y no puede mandar una consulta vacía (15.0s)
-  ok 4 [escritorio] › e2e\cliente.spec.ts:48:1 › un cliente no puede entrar a las pantallas del administrador (21.8s)
-  ok 5 [celular] › e2e\cliente.spec.ts:12:1 › sin sesión, las pantallas privadas mandan al login (13.9s)
-  ok 6 [celular] › e2e\cliente.spec.ts:17:1 › el cliente ve sus solicitudes y abre el detalle de una (20.3s)
-  ok 7 [celular] › e2e\cliente.spec.ts:35:1 › el cliente busca en Ayuda y no puede mandar una consulta vacía (20.2s)
-  ok 8 [celular] › e2e\cliente.spec.ts:48:1 › un cliente no puede entrar a las pantallas del administrador (15.9s)
+  ok 1 [escritorio] › e2e\cliente.spec.ts:8:1 › sin sesión, las pantallas privadas mandan al login (44.4s)
+  ok 2 [escritorio] › e2e\cliente.spec.ts:13:1 › el cliente ve sus solicitudes y abre el detalle de una (48.3s)
+  ok 3 [escritorio] › e2e\cliente.spec.ts:31:1 › el cliente busca en Ayuda y no puede mandar una consulta vacía (34.9s)
+  ok 4 [escritorio] › e2e\cliente.spec.ts:44:1 › un cliente no puede entrar a las pantallas del administrador (19.0s)
+  ok 5 [celular] › e2e\cliente.spec.ts:8:1 › sin sesión, las pantallas privadas mandan al login (18.5s)
+  ok 6 [celular] › e2e\cliente.spec.ts:13:1 › el cliente ve sus solicitudes y abre el detalle de una (26.8s)
+  ok 7 [celular] › e2e\cliente.spec.ts:31:1 › el cliente busca en Ayuda y no puede mandar una consulta vacía (20.0s)
+  ok 8 [celular] › e2e\cliente.spec.ts:44:1 › un cliente no puede entrar a las pantallas del administrador (9.8s)
 
-  8 passed (2.7m)
+  8 passed (4.4m)

@@ -1,13 +1,9 @@
 /// <reference lib="dom" />
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import { entrarComoCliente } from './backSimulado.js'
 
-// Entra con la sesión de prueba (sin back) desde los accesos del login, como un usuario
-async function entrarComoClienteDemo(page: Page, pantalla: string) {
-  await page.goto('/login')
-  await expect(page.getByText('Accesos provisorios (solo desarrollo)')).toBeVisible()
-  // El primer grupo de accesos es "Como cliente"
-  await page.getByRole('button', { name: pantalla, exact: true }).first().click()
-}
+// Recorren la app en un navegador de verdad, como un cliente. Las respuestas del back
+// las simula el test (ver backSimulado.ts), así corren sin back ni base de datos
 
 test('sin sesión, las pantallas privadas mandan al login', async ({ page }) => {
   await page.goto('/app/solicitudes')
@@ -15,7 +11,7 @@ test('sin sesión, las pantallas privadas mandan al login', async ({ page }) => 
 })
 
 test('el cliente ve sus solicitudes y abre el detalle de una', async ({ page }) => {
-  await entrarComoClienteDemo(page, 'Solicitudes')
+  await entrarComoCliente(page, '/app/solicitudes')
 
   await expect(page.getByRole('heading', { name: 'Mis solicitudes' })).toBeVisible()
   await expect(page.getByRole('tab', { name: /En curso/ })).toBeVisible()
@@ -33,7 +29,7 @@ test('el cliente ve sus solicitudes y abre el detalle de una', async ({ page }) 
 })
 
 test('el cliente busca en Ayuda y no puede mandar una consulta vacía', async ({ page }) => {
-  await entrarComoClienteDemo(page, 'Ayuda')
+  await entrarComoCliente(page, '/app/ayuda')
 
   await page.getByPlaceholder(/Buscá tu duda/).fill('cancelar')
   await expect(page.getByText('¿Puedo cancelar?')).toBeVisible()
@@ -46,7 +42,7 @@ test('el cliente busca en Ayuda y no puede mandar una consulta vacía', async ({
 })
 
 test('un cliente no puede entrar a las pantallas del administrador', async ({ page }) => {
-  await entrarComoClienteDemo(page, 'Inicio')
+  await entrarComoCliente(page)
   await expect(page.getByText('¿Qué necesitás arreglar hoy?')).toBeVisible()
 
   // Escribe a mano la dirección del panel de administración: vuelve a su inicio

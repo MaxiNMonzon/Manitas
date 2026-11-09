@@ -165,6 +165,8 @@ export interface ProfesionalApi {
   zonasDeCobertura: { idZona: number; nombreZona: string }[]
   // Sus habilidades (tipos de servicio)
   tiposDeServicio?: { idServicio: number; nombreServicio: string }[]
+  // Su promedio de estrellas (lo calcula el back en el mismo pedido)
+  calificacion?: Calificaciones
 }
 
 // GET /profesional/:id/calificaciones (con las reseñas)
@@ -321,4 +323,43 @@ export interface CambiosPerfilCliente {
   piso: string | null
   depto: string | null
   idZonaResidencia: number
+}
+
+// Un oficio como lo muestra el buscador del cliente (GET /especialidad)
+export interface Categoria {
+  idEspecialidad: number
+  nombre: string
+  // Las palabras con las que el cliente cuenta su problema (ej: "caño" → Plomería)
+  palabrasClave?: string[]
+}
+
+// Un profesional en el buscador y en el inicio del cliente (GET /profesional)
+export interface ProfesionalResumen {
+  idUsuario: number
+  nombre: string
+  apellido: string
+  fotoUrl: string | null
+  especialidades: string[]
+  // Las mismas, con su id (para pedir presupuesto de una de ellas)
+  oficios: { idEspecialidad: number; nombre: string }[]
+  zona: string
+  calificacion: number // promedio de 0 a 5
+  cantidadCalificaciones: number
+  descripcion: string
+  costoVisita: number | null
+  // Sus habilidades (ej: "Destapaciones"), para el buscador
+  habilidades?: string[]
+}
+
+// Una promoción bancaria del mes (GET /promocion/del-mes)
+export interface PromoBancaria {
+  idPromocion: number
+  banco: string
+  titulo: string
+  detalle: string
+  color: string // color de la marca del banco, para el ícono
+  // Para "Ver condiciones": el texto de la promo, con qué tarjetas y hasta cuándo
+  condiciones?: string
+  tarjetas?: string[]
+  vigencia?: string
 }

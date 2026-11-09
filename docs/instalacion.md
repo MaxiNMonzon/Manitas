@@ -51,8 +51,7 @@ cp .env.example .env      # opcional: por defecto usa http://localhost:3000
 npm run dev               # http://localhost:5173
 ```
 
-Para entrar, usar las cuentas que crea `seed:demo` (contraseña `Manitas123`). En modo desarrollo, la pantalla de
-login tiene además una **sesión demo** que funciona sin back (con datos de ejemplo).
+Para entrar, usar las cuentas que crea `seed:demo` (contraseña `Manitas123`).
 
 ## 3. Tests
 

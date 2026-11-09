@@ -253,15 +253,7 @@ export default function PerfilProfesional() {
     }
     setGuardando(true)
     try {
-      await guardarPerfilProfesional(p.idUsuario, cambios, {
-        especialidades: form.especialidades.map((o) => ({ idEspecialidad: o.id, nombreEspecialidad: o.label })),
-        tiposDeServicio: form.habilidades.map((o) => ({
-          idServicio: o.id,
-          nombreServicio: o.label,
-          especialidad: o.grupoId !== undefined ? { idEspecialidad: o.grupoId, nombreEspecialidad: o.grupo ?? '' } : undefined,
-        })),
-        zonasDeCobertura: form.zonas.map((o) => ({ idZona: o.id, nombreZona: o.label })),
-      })
+      await guardarPerfilProfesional(p.idUsuario, cambios)
       // Si cambió el email, la sesión lo muestra actualizado (el próximo login es con el nuevo)
       if (cambios.correo !== p.correo && sesion) actualizarCorreo(cambios.correo)
       setForm(null)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
@@ -15,21 +15,22 @@ import BoltIcon from '@mui/icons-material/Bolt'
 import { buscarProfesionales, traerEspecialidades } from '../../api/profesionales'
 import { traerUbicacionCliente } from '../../api/perfil'
 import { useCarga } from '../../hooks/useCarga'
+import { useDiferido } from '../../hooks/useDiferido'
 import TarjetaProfesional from '../../components/profesional/TarjetaProfesional'
 import PerfilProfesionalDialog from '../../components/profesional/PerfilProfesionalDialog'
 import SolicitarPresupuestoDialog from '../../components/solicitudes/SolicitarPresupuestoDialog'
 import UrgenteDialog from '../../components/solicitudes/UrgenteDialog'
-import type { ProfesionalResumen } from '../../mocks/inicioCliente'
+import type { ProfesionalResumen } from '../../types'
 
-// Sin tildes ni mayúsculas, para que "plomeria" encuentre "Plomería"
-const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-
-// Buscador de profesionales del cliente (/app/profesionales?q=&especialidad=): filtra por especialidad
-// y zona en el back y por texto acá. Desde el perfil se pide el presupuesto
+// Buscador de profesionales del cliente (/app/profesionales?q=&especialidad=). Todos los filtros
+// (especialidad, zona y texto) los aplica el back: acá solo llegan los que coinciden.
+// Desde el perfil se pide el presupuesto
 export default function Profesionales() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const texto = params.get('q') ?? ''
+  // Lo que se va escribiendo vive acá; a la URL (y al back) llega cuando deja de escribir.
+  // Si el campo leyera directo de la URL, al escribir rápido se perdían letras
+  const [texto, setTexto] = useState(() => params.get('q') ?? '')
   const idEspecialidad = Number(params.get('especialidad')) || null
   const [perfil, setPerfil] = useState<ProfesionalResumen | null>(null)
   const [aSolicitar, setASolicitar] = useState<ProfesionalResumen | null>(null)
@@ -39,40 +40,32 @@ export default function Profesionales() {
   const ubicacion = useCarga('ubicacion-cliente', traerUbicacionCliente)
   // Siempre los de la zona del cliente: la visita es en su casa
   const idZona = ubicacion.datos?.idZona ?? null
-  const profesionales = useCarga(`profesionales-${idEspecialidad}-${idZona}-${ubicacion.cargando}`, () =>
+  // Se busca cuando deja de escribir (no una vez por letra)
+  const textoBuscado = useDiferido(texto.trim())
+  const profesionales = useCarga(`profesionales-${idEspecialidad}-${idZona}-${textoBuscado}-${ubicacion.cargando}`, () =>
     // Se espera a saber la zona del cliente para no buscar dos veces
-    ubicacion.cargando ? Promise.resolve([]) : buscarProfesionales({ idEspecialidad, idZona }),
+    ubicacion.cargando ? Promise.resolve([]) : buscarProfesionales({ idEspecialidad, idZona, texto: textoBuscado }),
   )
 
-  const cambiarFiltro = (clave: string, valor: string) => {
-    const nuevos = new URLSearchParams(params)
-    if (valor) nuevos.set(clave, valor)
-    else nuevos.delete(clave)
-    setParams(nuevos, { replace: true })
-  }
+  // Guarda un filtro en la URL (así la búsqueda se puede compartir y sobrevive a recargar la página)
+  const cambiarFiltro = useCallback(
+    (clave: string, valor: string) =>
+      setParams(
+        (actuales) => {
+          const nuevos = new URLSearchParams(actuales)
+          if (valor) nuevos.set(clave, valor)
+          else nuevos.delete(clave)
+          return nuevos
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
 
-  const buscado = normalizar(texto.trim())
-  // Palabras de lo que escribió (las muy cortas no, para que "a" o "el" no encuentren todo)
-  const palabrasBuscadas = buscado.split(/\s+/).filter((p) => p.length >= 3)
-  // Oficios cuyas palabras clave coinciden con lo que escribió (ej: "caño" → Plomería)
-  const oficiosPorPalabra = new Set(
-    (especialidades.datos ?? [])
-      .filter((e) =>
-        (e.palabrasClave ?? []).some((clave) => {
-          const k = normalizar(clave)
-          return buscado.includes(k) || palabrasBuscadas.some((p) => k.includes(p))
-        }),
-      )
-      .map((e) => e.nombre),
-  )
-  const lista = (profesionales.datos ?? []).filter(
-    (p) =>
-      !buscado ||
-      // Su nombre, sus oficios, sus habilidades o su descripción
-      normalizar(`${p.nombre} ${p.apellido} ${p.especialidades.join(' ')} ${(p.habilidades ?? []).join(' ')} ${p.descripcion}`).includes(buscado) ||
-      // O hace un oficio que tiene esa palabra clave
-      p.especialidades.some((e) => oficiosPorPalabra.has(e)),
-  )
+  // El texto buscado pasa a la URL recién cuando deja de escribir
+  useEffect(() => cambiarFiltro('q', textoBuscado), [cambiarFiltro, textoBuscado])
+
+  const lista = profesionales.datos ?? []
   const cargando = profesionales.cargando || ubicacion.cargando
   const error = profesionales.error ?? especialidades.error
 
@@ -95,7 +88,7 @@ export default function Profesionales() {
               size="small"
               placeholder="Buscar por nombre, oficio o problema"
               value={texto}
-              onChange={(e) => cambiarFiltro('q', e.target.value)}
+              onChange={(e) => setTexto(e.target.value)}
               slotProps={{
                 input: {
                   startAdornment: (

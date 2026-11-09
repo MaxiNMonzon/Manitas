@@ -4,7 +4,6 @@ import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import PaymentIcon from '@mui/icons-material/Payment'
 import { irAPagarConMercadoPago } from '../../api/pagos'
-import { tokenStorage } from '../../api/client'
 
 // Botón de pago con Mercado Pago (lo hizo Mica): pide al backend el link de pago
 // de esa solicitud (POST /payments/create-preference) y lleva al checkout de Mercado Pago.
@@ -13,8 +12,6 @@ import { tokenStorage } from '../../api/client'
 export default function CheckoutButton({ idSolicitud }: { idSolicitud: number }) {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // La sesión demo no tiene back: no hay con qué armar el pago
-  const esDemo = tokenStorage.esDemo()
 
   const pagar = async () => {
     setCargando(true)
@@ -38,8 +35,6 @@ export default function CheckoutButton({ idSolicitud }: { idSolicitud: number })
         startIcon={<PaymentIcon />}
         onClick={pagar}
         loading={cargando}
-        disabled={esDemo}
-        title={esDemo ? 'Para pagar iniciá sesión con una cuenta real' : undefined}
       >
         Pagar
       </Button>
