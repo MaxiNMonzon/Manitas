@@ -13,7 +13,6 @@ import Typography from '@mui/material/Typography'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import AuthLayout from '../components/AuthLayout'
-import AccesosDemo from '../components/AccesosDemo'
 import { useAuth } from '../auth/useAuth'
 import { ApiError } from '../api/client'
 import type { Rol } from '../types'
@@ -143,8 +142,6 @@ export default function Login() {
         )}
       </Stack>
 
-      {/* PROVISORIO: accesos directos sin backend (solo en desarrollo; los usan los tests e2e) */}
-      <AccesosDemo />
     </AuthLayout>
   )
 }

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 // Tests end-to-end (npm run test:e2e): abren la app en un navegador de verdad y la recorren como un usuario.
-// Usan la sesión de prueba (sin back), así se pueden correr en cualquier máquina.
+// El back lo simulan los propios tests (e2e/backSimulado.ts), así se pueden correr en cualquier máquina.
 // Si no tenés Google Chrome instalado: npx playwright install chromium y sacá `channel: 'chrome'`
 export default defineConfig({
   testDir: './e2e',

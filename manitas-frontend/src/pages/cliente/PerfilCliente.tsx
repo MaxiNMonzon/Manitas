@@ -18,7 +18,6 @@ import KeyIcon from '@mui/icons-material/Key'
 import PlaceIcon from '@mui/icons-material/Place'
 import dayjs from 'dayjs'
 import { useAuth } from '../../auth/useAuth'
-import { tokenStorage } from '../../api/client'
 import { guardarPerfilCliente, traerPerfilCliente } from '../../api/perfil'
 import { useCarga } from '../../hooks/useCarga'
 import { useListado } from '../../hooks/useListado'
@@ -92,8 +91,8 @@ export default function PerfilCliente() {
   const [mensaje, setMensaje] = useState<string | null>(null)
 
   const editando = form !== null
-  // Los catálogos de ubicación solo se piden al editar (la demo no tiene back: no se puede cambiar la zona)
-  const conCatalogos = editando && !tokenStorage.esDemo()
+  // Los catálogos de ubicación solo se piden al editar
+  const conCatalogos = editando
   const provincias = useListado<Provincia>(conCatalogos ? '/provincia' : null)
   const localidades = useListado<Localidad>(conCatalogos && form?.idProvincia ? `/localidad?provincia=${form.idProvincia}` : null)
   const zonas = useListado<Zona>(conCatalogos && form?.idLocalidad ? `/zona?localidad=${form.idLocalidad}` : null)
@@ -206,18 +205,9 @@ export default function PerfilCliente() {
       depto: form.depto.trim() || null,
       idZonaResidencia: Number(form.idZona),
     }
-    // La zona con su localidad y provincia (solo la usa la demo para mostrarla)
-    const zonaElegida = zonas.datos.find((z) => String(z.idZona) === form.idZona)
-    const localidad = localidades.datos.find((l) => String(l.idLocalidad) === form.idLocalidad)
-    const provincia = provincias.datos.find((pr) => String(pr.idProvincia) === form.idProvincia)
-    const zona: PerfilCliente['zonaResidencia'] =
-      zonaElegida && localidad && provincia
-        ? { idZona: zonaElegida.idZona, nombreZona: zonaElegida.nombreZona, localidad: { ...localidad, provincia } }
-        : p.zonaResidencia
-
     setGuardando(true)
     try {
-      await guardarPerfilCliente(p.idUsuario, cambios, zona)
+      await guardarPerfilCliente(p.idUsuario, cambios)
       // Si cambió el email, la sesión lo muestra actualizado (el próximo login es con el nuevo)
       if (cambios.correo !== p.correo && sesion) actualizarCorreo(cambios.correo)
       setForm(null)
@@ -326,7 +316,7 @@ export default function PerfilCliente() {
               <TextField {...campo('depto', 'Depto', { max: 10 })} placeholder={editando ? 'Opcional' : '—'} />
             </Grid>
 
-            {editando && !tokenStorage.esDemo() ? (
+            {editando ? (
               <>
                 <Grid size={{ xs: 12, sm: 4 }}>
                   {desplegable(
@@ -369,7 +359,6 @@ export default function PerfilCliente() {
                   label="Zona"
                   value={ubicacionActual}
                   fullWidth
-                  helperText={editando ? 'En la sesión de prueba no se puede cambiar la zona' : undefined}
                   slotProps={{ input: { readOnly: true } }}
                 />
               </Grid>

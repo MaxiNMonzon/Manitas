@@ -39,7 +39,7 @@ export default function Notificaciones() {
   const [leidos, setLeidos] = useState(leerLeidos)
 
   const rol = sesion?.rol ?? 'cliente'
-  const { datos, error } = useCarga(`avisos-${rol}`, () => traerAvisos(rol), CADA_UN_MINUTO)
+  const { datos, error } = useCarga(`avisos-${rol}`, traerAvisos, CADA_UN_MINUTO)
   const avisos = datos ?? []
   const sinLeer = avisos.filter((a) => !leidos.has(claveDe(a))).length
 

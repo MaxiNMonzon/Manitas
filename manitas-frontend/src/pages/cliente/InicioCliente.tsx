@@ -29,7 +29,7 @@ import UrgenteDialog from '../../components/solicitudes/UrgenteDialog'
 import { buscarProfesionales, traerEspecialidades } from '../../api/profesionales'
 import { traerUbicacionCliente } from '../../api/perfil'
 import { useCarga } from '../../hooks/useCarga'
-import { type ProfesionalResumen, type PromoBancaria } from '../../mocks/inicioCliente'
+import { type ProfesionalResumen, type PromoBancaria } from '../../types'
 import CondicionesPromoDialog from '../../components/CondicionesPromoDialog'
 import NovedadesInicio from '../../components/NovedadesInicio'
 import { traerPromocionesDelMes } from '../../api/promociones'
@@ -52,8 +52,7 @@ function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactN
   )
 }
 
-// Pantalla principal del cliente. Categorías y profesionales salen del back
-// (las promos siguen siendo mock, ver src/mocks/inicioCliente.ts)
+// Pantalla principal del cliente: categorías, profesionales de su zona y promociones del mes (todo sale del back)
 export default function InicioCliente() {
   const navigate = useNavigate()
   const [busqueda, setBusqueda] = useState('')

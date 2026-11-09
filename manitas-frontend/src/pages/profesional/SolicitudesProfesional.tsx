@@ -1,22 +1,15 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
 import Paper from '@mui/material/Paper'
-import Skeleton from '@mui/material/Skeleton'
 import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
-import EventRepeatIcon from '@mui/icons-material/EventRepeat'
+import dayjs from 'dayjs'
 import {
   aceptarSolicitud,
   rechazarSolicitud,
@@ -27,144 +20,83 @@ import {
   traerMisSolicitudes,
   traerUrgentes,
 } from '../../api/solicitudes'
-import ReprogramarDialog from '../../components/solicitudes/ReprogramarDialog'
-import UrgenciasCerca from '../../components/solicitudes/UrgenciasCerca'
 import { useCarga } from '../../hooks/useCarga'
-// MEDIDOR DE CARGA (desactivado, archivo local sin subir; ver NOTAS-SESION.md punto 23):
-// import { useMedidorDeCarga } from '../../hooks/useMedidorDeCarga'
-// import MedidorCarga from '../../components/MedidorCarga'
-import TarjetaSolicitud from '../../components/solicitudes/TarjetaSolicitud'
 import DetalleSolicitudDialog from '../../components/solicitudes/DetalleSolicitudDialog'
 import PresupuestarDialog from '../../components/solicitudes/PresupuestarDialog'
-import {
-  estados,
-  fechaPrincipal,
-  formatoFecha,
-  grupoDe,
-  puedeReprogramar,
-  yaFueLaVisita,
-  type ColorChip,
-  type Grupo,
-} from '../../components/solicitudes/estados'
-import GrupoCarpeta from '../../components/solicitudes/GrupoCarpeta'
+import ReprogramarDialog from '../../components/solicitudes/ReprogramarDialog'
 import TiempoLlegadaDialog from '../../components/solicitudes/TiempoLlegadaDialog'
+import UrgenciasCerca from '../../components/solicitudes/UrgenciasCerca'
+import { formatoFecha, type Grupo } from '../../components/solicitudes/estados'
+import ListaSolicitudes from '../../components/solicitudes/profesional/ListaSolicitudes'
+import RechazarSolicitudDialog from '../../components/solicitudes/profesional/RechazarSolicitudDialog'
+import { AccionesDetalle, AccionTarjeta } from '../../components/solicitudes/profesional/AccionesSolicitud'
+import { accionesDelDetalle } from '../../components/solicitudes/profesional/acciones'
+import { delGrupo, ordenar, pestañas } from '../../components/solicitudes/profesional/ordenSolicitudes'
 import type { SolicitudResumen } from '../../types'
-import dayjs from 'dayjs'
 
-const POR_PAGINA = 5
-
-const pestañas: { valor: Grupo; label: string; vacio: string }[] = [
-  { valor: 'nuevas', label: 'Nuevas', vacio: 'No tenés solicitudes nuevas para responder.' },
-  { valor: 'en_curso', label: 'En curso', vacio: 'No tenés trabajos en curso.' },
-  { valor: 'historial', label: 'Historial', vacio: 'Todavía no tenés solicitudes terminadas.' },
-]
-
-const tiempo = (fecha: string | null | undefined) => (fecha ? new Date(fecha).getTime() : 0)
-const urgentesPrimero = (a: SolicitudResumen, b: SolicitudResumen) => Number(b.urgente) - Number(a.urgente)
-
-// En curso, las urgentes van todas juntas en su propia carpeta, arriba de todo
-const URGENTES = 'urgentes'
-const claveDe = (grupo: Grupo, s: SolicitudResumen) => (grupo === 'en_curso' && s.urgente ? URGENTES : s.estadoServicio)
-
-// Orden de cada pestaña: primero las urgentes, después lo que más apura
-function ordenar(grupo: Grupo, lista: SolicitudResumen[]): SolicitudResumen[] {
-  const copia = [...lista]
-  if (grupo === 'nuevas') {
-    // Después de las urgentes, las más viejas (son las que vencen antes)
-    return copia.sort((a, b) => urgentesPrimero(a, b) || tiempo(a.fechaCambioEstado) - tiempo(b.fechaCambioEstado))
-  }
-  if (grupo === 'en_curso') {
-    // Las urgentes; después los cambios de horario, las agendadas por fecha y al final las presupuestadas
-    const prioridad = { reprogramacion: 0, agendado: 1, contratado: 2, presupuestado: 3 } as Record<string, number>
-    return copia.sort(
-      (a, b) =>
-        urgentesPrimero(a, b) ||
-        (a.urgente ? 0 : prioridad[a.estadoServicio] - prioridad[b.estadoServicio]) ||
-        tiempo(fechaPrincipal(a)?.fecha) - tiempo(fechaPrincipal(b)?.fecha) ||
-        tiempo(a.fechaCambioEstado) - tiempo(b.fechaCambioEstado),
-    )
-  }
-  // Historial: agrupadas por estado y, dentro de cada uno, las urgentes y después lo más reciente
-  const ordenHistorial = ['finalizado', 'rechazado', 'cancelado', 'expirado']
-  return copia.sort(
-    (a, b) =>
-      ordenHistorial.indexOf(a.estadoServicio) - ordenHistorial.indexOf(b.estadoServicio) ||
-      urgentesPrimero(a, b) ||
-      tiempo(b.fechaFinReal ?? b.fechaCambioEstado) - tiempo(a.fechaFinReal ?? a.fechaCambioEstado),
-  )
+// Lo que hace falta para tomar una urgencia (puede venir de la lista o del aviso de urgencias cerca)
+interface Urgencia {
+  idSolicitud: number
+  cliente: string
+  descripcionProblema: string
 }
 
-interface Carpeta {
-  clave: string
-  titulo: string
-  color: ColorChip
-  items: SolicitudResumen[]
-}
-
-// Junta las solicitudes seguidas de la misma carpeta (la lista ya viene ordenada así)
-function enCarpetas(grupo: Grupo, lista: SolicitudResumen[]): Carpeta[] {
-  const carpetas: Carpeta[] = []
-  for (const s of lista) {
-    const clave = claveDe(grupo, s)
-    const ultima = carpetas[carpetas.length - 1]
-    if (ultima?.clave === clave) ultima.items.push(s)
-    else if (clave === URGENTES) carpetas.push({ clave, titulo: 'Urgentes', color: 'error', items: [s] })
-    else carpetas.push({ clave, titulo: estados[s.estadoServicio].plural, color: estados[s.estadoServicio].color, items: [s] })
-  }
-  return carpetas
-}
-
-// Pestaña "Solicitudes" del profesional (boceto "Mis solicitudes")
+// Pestaña "Solicitudes" del profesional (boceto "Mis solicitudes").
+// Esta página solo coordina: trae los datos, decide qué pestaña y qué diálogo están abiertos y responde.
+// El orden y las carpetas están en ordenSolicitudes.ts, qué acciones hay en acciones.ts y la lista en ListaSolicitudes.
 export default function SolicitudesProfesional() {
+  // Datos del back
+  const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
+  // Urgencias cerca que nadie tomó (se revisan cada minuto): la primera que acepta se la queda
+  const urgentes = useCarga('urgentes', traerUrgentes, 60 * 1000)
+  // Para proponer otro horario hacen falta sus turnos libres (y el token no trae su id)
+  const miId = useCarga('mi-id-profesional', traerMiIdProfesional)
+
+  // Qué se está viendo
   const [grupo, setGrupo] = useState<Grupo>('nuevas')
-  // Carpetas cerradas por el usuario (al entrar están todas abiertas)
-  const [cerradas, setCerradas] = useState<Set<string>>(new Set())
-  const [cantidadVisible, setCantidadVisible] = useState(POR_PAGINA)
   const [detalleElegido, setDetalleElegido] = useState<SolicitudResumen | null>(null)
   // La que viene del Inicio se abre una sola vez: después manda lo que elija el profesional
   const [desdeInicioUsada, setDesdeInicioUsada] = useState(false)
+
+  // Diálogos abiertos (null = cerrado)
+  const [aPresupuestar, setAPresupuestar] = useState<SolicitudResumen | null>(null)
+  const [aRechazar, setARechazar] = useState<SolicitudResumen | null>(null)
+  const [aReprogramar, setAReprogramar] = useState<SolicitudResumen | null>(null)
+  // Urgente a aceptar: antes se elige en cuánto llega
+  const [aTomar, setATomar] = useState<Urgencia | null>(null)
+
+  // Respuesta en curso y aviso del resultado
+  const [aceptando, setAceptando] = useState(false)
+  const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
+
   const setDetalle = (s: SolicitudResumen | null) => {
     setDesdeInicioUsada(true)
     setDetalleElegido(s)
   }
-  const [aPresupuestar, setAPresupuestar] = useState<SolicitudResumen | null>(null)
-  const [aRechazar, setARechazar] = useState<SolicitudResumen | null>(null)
-  const [aceptando, setAceptando] = useState(false)
-  // Urgente a aceptar: antes se elige en cuánto llega
-  const [aTomar, setATomar] = useState<{ idSolicitud: number; cliente: string; descripcionProblema: string } | null>(null)
-  // Urgencias cerca que nadie tomó (se revisan cada minuto): la primera que acepta se la queda
-  const urgentes = useCarga('urgentes', traerUrgentes, 60 * 1000)
-  const tomarUrgente = (s: { idSolicitud: number; cliente: string; descripcionProblema: string }) => setATomar(s)
-  const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
-
-  const [aReprogramar, setAReprogramar] = useState<SolicitudResumen | null>(null)
-
-  const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
 
   // Si viene del Inicio ("Responder"), abre esa solicitud apenas carga la lista
   const { state } = useLocation() as { state: { abrir?: number } | null }
-  const desdeInicio =
-    !desdeInicioUsada && state?.abrir ? ((solicitudes.datos ?? []).find((s) => s.idSolicitud === state.abrir) ?? null) : null
+  const todas = solicitudes.datos ?? []
+  const desdeInicio = !desdeInicioUsada && state?.abrir ? (todas.find((s) => s.idSolicitud === state.abrir) ?? null) : null
   const detalle = detalleElegido ?? desdeInicio
-  // Para proponer otro horario hacen falta sus turnos libres (y el token no trae su id)
-  const miId = useCarga('mi-id-profesional', traerMiIdProfesional)
+
   // En una reprogramación, el horario nuevo sale del detalle de la solicitud
   const enReprogramacion = detalle?.estadoServicio === 'reprogramacion' ? detalle.idSolicitud : null
   const propuesta = useCarga(`propuesta-${enReprogramacion}`, () =>
     enReprogramacion ? traerHorarioPropuestoProfesional(enReprogramacion) : Promise.resolve(null),
   )
-  const todas = solicitudes.datos ?? []
-  const delGrupo = (g: Grupo) => todas.filter((s) => grupoDe(s.estadoServicio) === g)
-  const lista = ordenar(grupo, delGrupo(grupo))
-  const pestaña = pestañas.find((p) => p.valor === grupo)!
-  // const medidor = useMedidorDeCarga(solicitudes.cargando)
 
-  // Aceptar o rechazar desde el detalle, con aviso del resultado
+  const pestaña = pestañas.find((p) => p.valor === grupo)!
+  const lista = ordenar(grupo, delGrupo(todas, grupo))
+
+  const avisar = (texto: string) => setMensaje({ texto, tipo: 'success' })
+
+  // Manda una respuesta al back, avisa cómo salió, cierra el detalle y recarga la lista
   const responder = async (accion: () => Promise<void>, ok: string) => {
     setAceptando(true)
     try {
       await accion()
-      setMensaje({ texto: ok, tipo: 'success' })
+      avisar(ok)
       setDetalle(null)
     } catch (e) {
       setMensaje({ texto: e instanceof Error ? e.message : 'No se pudo hacer', tipo: 'error' })
@@ -174,104 +106,20 @@ export default function SolicitudesProfesional() {
     }
   }
 
-  // En la tarjeta: el botón de la acción que le toca a cada estado. Las nuevas se responden en el detalle.
-  // La visita de una urgente no se agenda (es en el día)
-  const accionesDe = (s: SolicitudResumen) => {
-    // El back no deja presupuestar antes de la hora de la visita
-    if (s.estadoServicio === 'agendado' && s.costoEstimado == null && yaFueLaVisita(s)) {
-      return (
-        <Button size="small" variant="contained" color="secondary" startIcon={<RequestQuoteIcon />} onClick={() => setAPresupuestar(s)}>
-          Enviar presupuesto
-        </Button>
-      )
-    }
-    if (s.estadoServicio === 'reprogramacion' && s.propuestaDe === 'cliente') {
-      return (
-        <Button size="small" variant="contained" color="warning" startIcon={<EventRepeatIcon />} onClick={() => setDetalle(s)}>
-          Responder horario
-        </Button>
-      )
-    }
-    return null
-  }
+  const aceptar = (s: SolicitudResumen) =>
+    // Una urgente es en el día: primero se elige en cuánto llega
+    s.urgente
+      ? setATomar({ idSolicitud: s.idSolicitud, cliente: s.cliente?.nombre ?? 'Cliente', descripcionProblema: s.descripcionProblema })
+      : responder(
+          () => aceptarSolicitud(s.idSolicitud),
+          s.fechaVisita ? `Aceptada. La visita quedó confirmada para el ${formatoFecha(s.fechaVisita)}.` : 'Aceptada. La visita quedó confirmada.',
+        )
 
-  // Botones del detalle según el estado
-  const accionesDetalle = (s: SolicitudResumen) => {
-    const botones = []
-    if (puedeReprogramar(s, 'profesional')) {
-      botones.push(
-        <Button key="reprogramar" startIcon={<EventRepeatIcon />} disabled={aceptando} onClick={() => setAReprogramar(s)} sx={{ mr: 'auto' }}>
-          {s.estadoServicio === 'reprogramacion' ? 'Proponer otro' : 'Proponer otro horario'}
-        </Button>,
-      )
-    }
-    if (s.estadoServicio === 'solicitado') {
-      botones.push(
-        <Button key="rechazar" variant="outlined" color="error" onClick={() => setARechazar(s)} disabled={aceptando}>
-          Rechazar
-        </Button>,
-        <Button
-          key="aceptar"
-          variant="contained"
-          color="success"
-          loading={aceptando}
-          onClick={() =>
-            // Una urgente es en el día: primero se elige en cuánto llega
-            s.urgente
-              ? tomarUrgente({ idSolicitud: s.idSolicitud, cliente: s.cliente?.nombre ?? 'Cliente', descripcionProblema: s.descripcionProblema })
-              : responder(
-                  () => aceptarSolicitud(s.idSolicitud),
-                  s.fechaVisita
-                    ? `Aceptada. La visita quedó confirmada para el ${formatoFecha(s.fechaVisita)}.`
-                    : 'Aceptada. La visita quedó confirmada.',
-                )
-          }
-        >
-          Aceptar
-        </Button>,
-      )
-    }
-    if (s.estadoServicio === 'reprogramacion' && s.propuestaDe === 'cliente') {
-      botones.push(
-        <Button
-          key="rechazar-horario"
-          variant="outlined"
-          disabled={aceptando}
-          onClick={() => responder(() => responderReprogramacionProfesional(s.idSolicitud, false), 'Sigue el horario que tenían.')}
-        >
-          Mantener el mío
-        </Button>,
-        <Button
-          key="aceptar-horario"
-          variant="contained"
-          color="success"
-          loading={aceptando}
-          onClick={() => responder(() => responderReprogramacionProfesional(s.idSolicitud, true), 'Horario nuevo confirmado.')}
-        >
-          Aceptar horario
-        </Button>,
-      )
-    }
-    if (s.estadoServicio === 'agendado' && s.costoEstimado == null && yaFueLaVisita(s)) {
-      botones.push(
-        <Button key="presupuestar" variant="contained" color="secondary" startIcon={<RequestQuoteIcon />} onClick={() => setAPresupuestar(s)}>
-          Enviar presupuesto
-        </Button>,
-      )
-    }
-    // A mitad del trabajo, si cambia lo que hay que hacer (el cliente lo vuelve a aceptar)
-    if (s.estadoServicio === 'contratado' && !s.fechaPago) {
-      botones.push(
-        <Button key="precio" variant="outlined" startIcon={<RequestQuoteIcon />} onClick={() => setAPresupuestar(s)}>
-          Cambiar precio
-        </Button>,
-      )
-    }
-    return botones.length ? botones : null
-  }
-
-  // (Desactivado) Al entrar y al actualizar: el velocímetro de carga (5 s)
-  // if (medidor.visible) return <MedidorCarga key={medidor.ronda} />
+  const responderHorario = (s: SolicitudResumen, acepta: boolean) =>
+    responder(
+      () => responderReprogramacionProfesional(s.idSolicitud, acepta),
+      acepta ? 'Horario nuevo confirmado.' : 'Sigue el horario que tenían.',
+    )
 
   return (
     <>
@@ -279,13 +127,7 @@ export default function SolicitudesProfesional() {
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           Mis solicitudes
         </Typography>
-        <Button
-          startIcon={<RefreshIcon />}
-          onClick={() => {
-            // medidor.reiniciar()
-            solicitudes.recargar()
-          }}
-        >
+        <Button startIcon={<RefreshIcon />} onClick={solicitudes.recargar}>
           Actualizar
         </Button>
       </Stack>
@@ -297,95 +139,46 @@ export default function SolicitudesProfesional() {
       )}
 
       <Paper variant="outlined" sx={{ mb: 2 }}>
-        <Tabs
-          value={grupo}
-          onChange={(_, valor: Grupo) => {
-            setGrupo(valor)
-            setCantidadVisible(POR_PAGINA)
-          }}
-          variant="fullWidth"
-        >
+        <Tabs value={grupo} onChange={(_, valor: Grupo) => setGrupo(valor)} variant="fullWidth">
           {pestañas.map((p) => {
-            const cantidad = delGrupo(p.valor).length
-            return (
-              <Tab
-                key={p.valor}
-                value={p.valor}
-                label={p.valor !== 'historial' && cantidad > 0 ? `${p.label} (${cantidad})` : p.label}
-              />
-            )
+            const cantidad = delGrupo(todas, p.valor).length
+            return <Tab key={p.valor} value={p.valor} label={p.valor !== 'historial' && cantidad > 0 ? `${p.label} (${cantidad})` : p.label} />
           })}
         </Tabs>
       </Paper>
 
       {/* En "Nuevas", arriba de todo, las urgencias cerca que puede tomar */}
-      {grupo === 'nuevas' && (
-        <UrgenciasCerca
-          urgentes={urgentes.datos ?? []}
-          onTomar={(u) => tomarUrgente({ idSolicitud: u.idSolicitud, cliente: u.cliente, descripcionProblema: u.descripcionProblema })}
-          sx={{ mb: 2 }}
-        />
-      )}
+      {grupo === 'nuevas' && <UrgenciasCerca urgentes={urgentes.datos ?? []} onTomar={setATomar} sx={{ mb: 2 }} />}
 
-      {solicitudes.cargando ? (
-        <Stack spacing={1.5}>
-          <Skeleton variant="rounded" height={140} />
-          <Skeleton variant="rounded" height={140} />
-        </Stack>
-      ) : lista.length === 0 ? (
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="text.secondary">{pestaña.vacio}</Typography>
-        </Paper>
-      ) : (
-        // Una sola lista, con las del mismo estado (o las urgentes) juntas en una carpeta de su color
-        <Stack spacing={1.5}>
-          {enCarpetas(grupo, lista.slice(0, cantidadVisible)).map(({ clave, titulo, color, items }) => {
-            const tarjetas = items.map((s) => (
-              <TarjetaSolicitud
-                key={s.idSolicitud}
-                solicitud={s}
-                onVerDetalles={() => setDetalle(s)}
-                acciones={accionesDe(s)}
-                // El estado ya lo dice la carpeta (o la pestaña, en Nuevas); en la de urgentes se mezclan
-                mostrarEstado={clave === URGENTES}
-              />
-            ))
-            // En Nuevas hay un solo estado: no hace falta carpeta
-            if (grupo === 'nuevas') return tarjetas
-            return (
-              <GrupoCarpeta
-                key={clave}
-                titulo={titulo}
-                color={color}
-                cantidad={lista.filter((s) => claveDe(grupo, s) === clave).length}
-                abierto={!cerradas.has(clave)}
-                onAlternar={() =>
-                  setCerradas((c) => {
-                    const nuevas = new Set(c)
-                    if (nuevas.has(clave)) nuevas.delete(clave)
-                    else nuevas.add(clave)
-                    return nuevas
-                  })
-                }
-              >
-                {tarjetas}
-              </GrupoCarpeta>
-            )
-          })}
-        </Stack>
-      )}
-
-      {lista.length > cantidadVisible && (
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button onClick={() => setCantidadVisible((c) => c + POR_PAGINA)}>Ver más ({lista.length - cantidadVisible})</Button>
-        </Box>
-      )}
+      <ListaSolicitudes
+        // Al cambiar de pestaña, la lista arranca de cero (de a 5, con todas las carpetas abiertas)
+        key={grupo}
+        grupo={grupo}
+        lista={lista}
+        cargando={solicitudes.cargando}
+        vacio={pestaña.vacio}
+        onVerDetalles={setDetalle}
+        accionDe={(s) => <AccionTarjeta solicitud={s} onPresupuestar={() => setAPresupuestar(s)} onResponderHorario={() => setDetalle(s)} />}
+      />
 
       <DetalleSolicitudDialog
         solicitud={detalle}
         onClose={() => setDetalle(null)}
         horarioPropuesto={propuesta.datos}
-        acciones={detalle && accionesDetalle(detalle)}
+        acciones={
+          detalle &&
+          accionesDelDetalle(detalle).length > 0 && (
+            <AccionesDetalle
+              solicitud={detalle}
+              ocupado={aceptando}
+              onReprogramar={() => setAReprogramar(detalle)}
+              onRechazar={() => setARechazar(detalle)}
+              onAceptar={() => aceptar(detalle)}
+              onResponderHorario={(acepta) => responderHorario(detalle, acepta)}
+              onPresupuestar={() => setAPresupuestar(detalle)}
+            />
+          )
+        }
       />
       <ReprogramarDialog
         solicitud={aReprogramar}
@@ -394,7 +187,7 @@ export default function SolicitudesProfesional() {
         onClose={() => setAReprogramar(null)}
         enviar={(inicio) => reprogramarComoProfesional(aReprogramar!.idSolicitud, inicio)}
         onEnviado={() => {
-          setMensaje({ texto: 'Horario propuesto. Te avisamos cuando el cliente conteste.', tipo: 'success' })
+          avisar('Horario propuesto. Te avisamos cuando el cliente conteste.')
           setDetalle(null)
           solicitudes.recargar()
         }}
@@ -418,35 +211,18 @@ export default function SolicitudesProfesional() {
         onEnviado={() => {
           // Se cierra también el detalle desde el que se mandó (ya no hay nada más que hacer ahí)
           setDetalle(null)
-          setMensaje({ texto: 'Presupuesto enviado. El cliente lo acepta o lo rechaza desde su cuenta.', tipo: 'success' })
+          avisar('Presupuesto enviado. El cliente lo acepta o lo rechaza desde su cuenta.')
           solicitudes.recargar()
         }}
       />
-
-      {/* Confirmar antes de rechazar (no se puede deshacer) */}
-      <Dialog open={aRechazar !== null} onClose={() => setARechazar(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>¿Rechazar la solicitud?</DialogTitle>
-        <DialogContent>
-          <Typography>
-            La solicitud de {aRechazar?.cliente?.nombre} queda rechazada y no se puede deshacer. Hacelo si no hacés ese
-            trabajo o no podés tomarlo.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setARechazar(null)}>Volver</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => {
-              const s = aRechazar!
-              setARechazar(null)
-              responder(() => rechazarSolicitud(s.idSolicitud), 'Solicitud rechazada.')
-            }}
-          >
-            Rechazar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <RechazarSolicitudDialog
+        solicitud={aRechazar}
+        onClose={() => setARechazar(null)}
+        onConfirmar={(s) => {
+          setARechazar(null)
+          responder(() => rechazarSolicitud(s.idSolicitud), 'Solicitud rechazada.')
+        }}
+      />
 
       <Snackbar
         open={mensaje !== null}

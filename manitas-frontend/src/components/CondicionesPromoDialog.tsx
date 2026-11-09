@@ -5,7 +5,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import type { PromoBancaria } from '../mocks/inicioCliente'
+import type { PromoBancaria } from '../types'
 
 // "Ver condiciones" de una promo bancaria: todo el detalle que no entra en la tarjeta.
 // El reintegro lo hace el banco

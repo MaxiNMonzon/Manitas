@@ -22,15 +22,16 @@ export class ProfesionalController {
   constructor(private readonly profesionalService: ProfesionalService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Buscar profesionales', description: 'Listado con filtros opcionales y combinables. Cada profesional trae todas sus zonas y especialidades. Sin datos personales (DNI, correo, telefono, CBU).' })
+  @ApiOperation({ summary: 'Buscar profesionales', description: 'Listado con filtros opcionales y combinables. Cada profesional trae todas sus zonas y especialidades y su promedio de calificaciones. Sin datos personales (DNI, correo, telefono, CBU).' })
   @ApiQuery({ name: 'especialidad', required: false, type: Number, description: 'id de la especialidad (ej: Plomeria)' })
   @ApiQuery({ name: 'zona', required: false, type: Number, description: 'id de la zona que cubre' })
-  async findAll(
+  @ApiQuery({ name: 'q', required: false, type: String, description: 'Texto libre: nombre, oficio, habilidad, descripcion o una palabra del problema (ej: "caño"). Sin distinguir mayusculas ni tildes' })
+  findAll(
     @Query('especialidad', new ParseIntPipe({ optional: true })) idEspecialidad?: number,
     @Query('zona', new ParseIntPipe({ optional: true })) idZona?: number,
+    @Query('q') texto?: string,
   ) {
-    const profesionales = await this.profesionalService.findAll(idEspecialidad, idZona);
-    return profesionales.map((p) => this.profesionalService.vistaPublica(p));
+    return this.profesionalService.buscar({ idEspecialidad, idZona, texto });
   }
 
   @Get(':id')

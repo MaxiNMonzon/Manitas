@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography'
 import { traerPromocionesDelMes } from '../../api/promociones'
 import { useCarga } from '../../hooks/useCarga'
 import CondicionesPromoDialog from '../../components/CondicionesPromoDialog'
-import type { PromoBancaria } from '../../mocks/inicioCliente'
+import type { PromoBancaria } from '../../types'
 
 // Todas las promociones bancarias vigentes este mes (CUU "Informar promociones bancarias del mes").
 // El reintegro lo hace el banco al pagar con ese medio

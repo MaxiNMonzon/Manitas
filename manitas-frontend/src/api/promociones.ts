@@ -1,7 +1,6 @@
 // Promociones bancarias vigentes este mes (GET /promocion/del-mes), para mostrarle al cliente.
-// Con la sesión demo (provisoria) usa las de ejemplo.
-import { api, tokenStorage } from './client'
-import { promocionesDelMes, type PromoBancaria } from '../mocks/inicioCliente'
+import { api } from './client'
+import type { PromoBancaria } from '../types'
 
 // Como viene del back
 interface PromocionApi {
@@ -24,7 +23,6 @@ function colorDe(texto: string): string {
 const fecha = (v: string) => new Date(`${v.slice(0, 10)}T00:00:00`).toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })
 
 export async function traerPromocionesDelMes(): Promise<PromoBancaria[]> {
-  if (tokenStorage.esDemo()) return promocionesDelMes
   const lista = await api.get<PromocionApi[]>('/promocion/del-mes')
   return lista.map((p) => {
     const medios = (p.metodosPago ?? []).map((m) => m.tipo)

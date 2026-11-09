@@ -5,14 +5,14 @@ Punto de entrada de la documentación del TP (formato pedido por la cátedra en
 
 | Contenido | Documento | Estado |
 | --- | --- | --- |
-| Propuesta actualizada | [proposal.md](proposal.md) | ✅ (faltan los links de los PR) |
-| Links a los PR | [proposal.md › Repositorios](proposal.md#repositorios) | ⬜ completar al abrir los PR de entrega |
+| Propuesta actualizada | [proposal.md](proposal.md) | ✅ |
+| Link al PR | [PR #272](https://github.com/utnfrrodsw/tp/pull/272) | ✅ |
 | Instrucciones de instalación | [instalacion.md](instalacion.md) | ✅ |
 | Minutas de reunión y avance | [minutas.md](minutas.md) | ⬜ completar con las reuniones del grupo |
 | Tracking de features, bugs e issues | [tracking.md](tracking.md) | ⬜ completar responsables y links (GitHub Projects) |
 | Documentación de la API | [api.md](api.md) · [openapi.json](api/openapi.json) · Swagger en `/api` | ✅ |
 | Evidencia de ejecución de tests automáticos | [tests.md](tests.md) · [evidencia-tests/](evidencia-tests/) | ✅ |
-| Demo de la app en video | _(link al video)_ | ⬜ grabar |
+| Demo de la app en video | [video](https://drive.google.com/file/d/1bY3lVukaLrSBklW50SYAPiYdt14c0BF-/view?usp=sharing) | ✅ |
 | Deploy (links y credenciales) | [deploy.md](deploy.md) | ✅ |
 
 ## Cumplimiento de requisitos para Aprobación Directa
@@ -65,10 +65,10 @@ Requisitos del [enunciado](https://github.com/utnfrrodsw/tp/blob/main/README.md)
 
 | Requisito | Estado |
 | --- | --- |
-| ⬜ Video explicando el funcionamiento | Grabar (sugerencia: recorrer el camino feliz con las cuentas de prueba + el panel de admin) |
+| ✅ Video explicando el funcionamiento | [video](https://drive.google.com/file/d/1bY3lVukaLrSBklW50SYAPiYdt14c0BF-/view?usp=sharing) |
 | ✅ Documentación de la API | [api.md](api.md) |
 | ✅ Evidencia de los tests | [tests.md](tests.md) |
-| ⬜ Proposal con links a los PR | Abrir los PR al repo de la cátedra y completar [proposal.md](proposal.md) |
+| ✅ Proposal con link al PR | [PR #272](https://github.com/utnfrrodsw/tp/pull/272) · [proposal.md](proposal.md) |
 | ✅ README con instrucciones de instalación | [instalacion.md](instalacion.md), enlazado desde el README del proyecto |
 | ✅ Links de deploy y credenciales | [deploy.md](deploy.md) |
 | ⬜ Contacto para coordinar la defensa | Completar en el formulario de entrega |

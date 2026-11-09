@@ -1,4 +1,4 @@
-import type { ProfesionalResumen } from '../../mocks/inicioCliente'
+import type { ProfesionalResumen } from '../../types'
 import AvatarPersona from '../AvatarPersona'
 
 export default function AvatarProfesional({ profesional, tamaño = 56 }: { profesional: ProfesionalResumen; tamaño?: number }) {

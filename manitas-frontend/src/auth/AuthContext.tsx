@@ -29,10 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     guardarSesion(token, { correo, rol })
   }
 
-  // PROVISORIO: sesión falsa (sin backend) para recorrer las pantallas mientras no hay datos.
-  // El token 'demo' no sirve para el back: las pantallas privadas reales van a dar 401.
-  const loginDemo = (rol: Rol) => guardarSesion('demo', { correo: `demo.${rol}@manitas.com`, rol })
-
   const logout = () => {
     tokenStorage.clear()
     localStorage.removeItem(SESION_KEY)
@@ -46,5 +42,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSesion(nueva)
   }
 
-  return <AuthContext.Provider value={{ sesion, login, loginDemo, logout, actualizarCorreo }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ sesion, login, logout, actualizarCorreo }}>{children}</AuthContext.Provider>
 }

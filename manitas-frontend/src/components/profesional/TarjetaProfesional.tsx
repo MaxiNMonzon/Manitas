@@ -6,7 +6,7 @@ import Rating from '@mui/material/Rating'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import PlaceIcon from '@mui/icons-material/Place'
-import type { ProfesionalResumen } from '../../mocks/inicioCliente'
+import type { ProfesionalResumen } from '../../types'
 import AvatarProfesional from './AvatarProfesional'
 
 // Resumen del perfil de un profesional: foto, nombre, especialidades, zona y valoración

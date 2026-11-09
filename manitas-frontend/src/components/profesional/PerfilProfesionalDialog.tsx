@@ -20,7 +20,7 @@ import dayjs from 'dayjs'
 import { traerCalificaciones } from '../../api/profesionales'
 import { useCarga } from '../../hooks/useCarga'
 import { formatoPesos } from '../solicitudes/estados'
-import type { ProfesionalResumen } from '../../mocks/inicioCliente'
+import type { ProfesionalResumen } from '../../types'
 import AvatarProfesional from './AvatarProfesional'
 
 const RESEÑAS_VISIBLES = 5
