@@ -18,7 +18,6 @@ import RegistroCliente from './pages/RegistroCliente'
 import RegistroProfesional from './pages/RegistroProfesional'
 import Pagos from './pages/Pagos'
 import Ayuda from './pages/Ayuda'
-import ResultadoPago from './pages/ResultadoPago'
 import OlvideContrasena from './pages/OlvideContrasena'
 import RestablecerContrasena from './pages/RestablecerContrasena'
 
@@ -33,8 +32,6 @@ export default function App() {
           <Route path="restablecer-contrasena" element={<RestablecerContrasena />} />
           <Route path="registro/cliente" element={<RegistroCliente />} />
           <Route path="registro/profesional" element={<RegistroProfesional />} />
-          {/* Vuelta de Mercado Pago si el .env apunta a /solicitudes (sin /app): se reenvía con los datos del pago */}
-          <Route path="solicitudes" element={<ResultadoPago />} />
 
           {/* Parte privada (requiere sesión). Cada pantalla, además, solo para los roles que la usan */}
           <Route path="app" element={<Layout />}>
@@ -45,7 +42,6 @@ export default function App() {
             <Route path="solicitudes" element={<SoloRol roles={['cliente', 'profesional']}><Solicitudes /></SoloRol>} />
             {/* Cliente */}
             <Route path="pagos" element={<SoloRol roles={['cliente']}><Pagos /></SoloRol>} />
-            <Route path="pagos/resultado" element={<ResultadoPago />} />
             <Route path="profesionales" element={<SoloRol roles={['cliente']}><Profesionales /></SoloRol>} />
             <Route path="promociones" element={<SoloRol roles={['cliente']}><Promociones /></SoloRol>} />
             {/* Profesional */}
