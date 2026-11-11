@@ -11,6 +11,7 @@ import AuthLayout from '../components/AuthLayout'
 import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { useListado } from '../hooks/useListado'
+import { validarDomicilio } from '../components/perfil/reglas'
 import { CamposContraseña, CamposDatosPersonales } from './registro/CamposDatosPersonales'
 import { datosPersonalesParaEnviar, datosPersonalesVacios, validarDatosPersonales } from './registro/datosPersonales'
 import type { Localidad, Provincia, RegistroClienteRequest, Zona } from '../types'
@@ -29,16 +30,12 @@ const vacio = {
 type Campos = typeof vacio
 type Errores = Partial<Record<keyof Campos, string>>
 
-// Mismas reglas que valida el backend (CreateClienteDto), para avisar antes de enviar
+// Mismas reglas que valida el backend (CreateClienteDto), para avisar antes de enviar.
+// La dirección se valida igual que en "Mi perfil" (reglas.ts)
 function validar(c: Campos): Errores {
-  const e: Errores = validarDatosPersonales(c)
+  const e: Errores = { ...validarDatosPersonales(c), ...validarDomicilio(c) }
   if (!c.idProvincia) e.idProvincia = 'Elegí una provincia'
   if (!c.idLocalidad) e.idLocalidad = 'Elegí una localidad'
-  if (!c.idZona) e.idZona = 'Elegí una zona'
-  if (!c.calle.trim()) e.calle = 'Ingresá la calle'
-  if (!/^[1-9]\d*$/.test(c.altura)) e.altura = 'Solo números'
-  if (c.piso.length > 10) e.piso = 'Máximo 10 caracteres'
-  if (c.depto.length > 10) e.depto = 'Máximo 10 caracteres'
   return e
 }
 

@@ -8,17 +8,16 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import AuthLayout from '../components/AuthLayout'
-import SelectorConChips, { type Opcion } from '../components/SelectorConChips'
-import EditorMatriculas from '../components/perfil/EditorMatriculas'
-import { erroresMatriculas, matriculasParaEnviar, type MatriculaForm } from '../components/perfil/matriculas'
+import type { Opcion } from '../components/SelectorConChips'
+import SelectoresDeTrabajo from '../components/perfil/profesional/SelectoresDeTrabajo'
+import { useCatalogos } from '../components/perfil/profesional/useCatalogos'
+import { matriculasParaEnviar, type MatriculaForm } from '../components/perfil/matriculas'
+import { conEspecialidades, MAX_DESCRIPCION, validarTrabajo } from '../components/perfil/reglas'
 import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
-import { useListado } from '../hooks/useListado'
 import { CamposContraseña, CamposDatosPersonales } from './registro/CamposDatosPersonales'
 import { datosPersonalesParaEnviar, datosPersonalesVacios, validarDatosPersonales } from './registro/datosPersonales'
-import type { Especialidad, Localidad, Provincia, RegistroProfesionalRequest, TipoDeServicio, Zona } from '../types'
-
-const MAX_DESCRIPCION = 2000
+import type { RegistroProfesionalRequest } from '../types'
 
 const vacio = {
   ...datosPersonalesVacios,
@@ -30,7 +29,6 @@ const vacio = {
 }
 
 type Campos = typeof vacio
-type Errores = Partial<Record<keyof Campos | 'especialidades' | 'zonas' | 'matriculas', string>>
 
 interface Seleccion {
   especialidades: Opcion[]
@@ -39,16 +37,9 @@ interface Seleccion {
   matriculas: MatriculaForm[]
 }
 
-// Mismas reglas que valida el backend (CreateProfesionalDto), para avisar antes de enviar
-function validar(c: Campos, s: Seleccion): Errores {
-  const e: Errores = validarDatosPersonales(c)
-  if (c.cbu && !/^\d{22}$/.test(c.cbu)) e.cbu = 'El CBU/CVU tiene 22 números'
-  if (c.descripcion.length > MAX_DESCRIPCION) e.descripcion = `Máximo ${MAX_DESCRIPCION} caracteres`
-  if (s.especialidades.length === 0) e.especialidades = 'Elegí al menos una especialidad'
-  if (s.zonas.length === 0) e.zonas = 'Elegí al menos una zona de trabajo'
-  if (Object.keys(erroresMatriculas(s.matriculas)).length > 0) e.matriculas = 'Revisá las matrículas'
-  return e
-}
+// Mismas reglas que valida el backend (CreateProfesionalDto), para avisar antes de enviar.
+// Lo del trabajo se valida igual que en "Mi perfil" (reglas.ts)
+const validar = (c: Campos, s: Seleccion) => ({ ...validarDatosPersonales(c), ...validarTrabajo({ ...c, ...s }) })
 
 export default function RegistroProfesional() {
   const navigate = useNavigate()
@@ -60,39 +51,10 @@ export default function RegistroProfesional() {
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const provincias = useListado<Provincia>('/provincia')
-  const localidades = useListado<Localidad>(campos.idProvincia ? `/localidad?provincia=${campos.idProvincia}` : null)
-  const zonas = useListado<Zona>(campos.idLocalidad ? `/zona?localidad=${campos.idLocalidad}` : null)
-  const especialidades = useListado<Especialidad>('/especialidad')
-  const tiposDeServicio = useListado<TipoDeServicio>('/tipos-de-servicio')
-  const errorCarga =
-    provincias.error ?? localidades.error ?? zonas.error ?? especialidades.error ?? tiposDeServicio.error
+  // Las mismas listas que "Mi perfil" (oficios, habilidades de esos oficios y zonas de la localidad elegida)
+  const catalogos = useCatalogos({ activo: true, idProvincia: campos.idProvincia, idLocalidad: campos.idLocalidad, especialidades: seleccion.especialidades })
 
-  // Opciones de cada selector con burbujas
-  const opcionesEspecialidades: Opcion[] = especialidades.datos.map((e) => ({
-    id: e.idEspecialidad,
-    label: e.nombreEspecialidad,
-  }))
-  // Habilidades: solo las de las especialidades elegidas, agrupadas por especialidad
-  const idsEspecialidadesElegidas = new Set(seleccion.especialidades.map((e) => e.id))
-  const opcionesHabilidades: Opcion[] = tiposDeServicio.datos
-    .filter((t) => idsEspecialidadesElegidas.has(t.especialidad.idEspecialidad))
-    .map((t) => ({
-      id: t.idServicio,
-      label: t.nombreServicio,
-      grupo: t.especialidad.nombreEspecialidad,
-      grupoId: t.especialidad.idEspecialidad,
-    }))
-    .sort((a, b) => a.grupo.localeCompare(b.grupo) || a.label.localeCompare(b.label))
-  // Zonas: las de la localidad elegida arriba. La burbuja lleva la localidad para no confundir
-  // zonas con el mismo nombre de distintas localidades
-  const localidadElegida = localidades.datos.find((l) => String(l.idLocalidad) === campos.idLocalidad)
-  const opcionesZonas: Opcion[] = zonas.datos.map((z) => ({
-    id: z.idZona,
-    label: localidadElegida ? `${z.nombreZona} (${localidadElegida.nombreLocalidad})` : z.nombreZona,
-  }))
-
-  const errores = intentoEnviar ? validar(campos, seleccion) : {}
+  const errores: Partial<Record<string, string>> = intentoEnviar ? validar(campos, seleccion) : {}
 
   // Props comunes de cada campo: valor, onChange y mensaje de error
   const campo = (nombre: keyof Campos) => ({
@@ -111,17 +73,6 @@ export default function RegistroProfesional() {
     helperText: errores[nombre],
     fullWidth: true,
   })
-
-  const cambiarEspecialidades = (elegidas: Opcion[]) => {
-    const ids = new Set(elegidas.map((e) => e.id))
-    // Si se saca una especialidad, también se sacan sus habilidades y sus matrículas
-    setSeleccion((s) => ({
-      ...s,
-      especialidades: elegidas,
-      habilidades: s.habilidades.filter((h) => h.grupoId !== undefined && ids.has(h.grupoId)),
-      matriculas: s.matriculas.filter((m) => !m.idEspecialidad || ids.has(Number(m.idEspecialidad))),
-    }))
-  }
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -159,9 +110,9 @@ export default function RegistroProfesional() {
         Registrarme como profesional
       </Typography>
 
-      {(error ?? errorCarga) && (
+      {(error ?? catalogos.error) && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error ?? errorCarga}
+          {error ?? catalogos.error}
         </Alert>
       )}
 
@@ -170,7 +121,7 @@ export default function RegistroProfesional() {
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField select label="Provincia" {...campo('idProvincia')} helperText="Para buscar tus zonas de trabajo">
-            {provincias.datos.map((p) => (
+            {catalogos.provincias.map((p) => (
               <MenuItem key={p.idProvincia} value={String(p.idProvincia)}>
                 {p.nombreProvincia}
               </MenuItem>
@@ -179,7 +130,7 @@ export default function RegistroProfesional() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField select label="Localidad" disabled={!campos.idProvincia} {...campo('idLocalidad')}>
-            {localidades.datos.map((l) => (
+            {catalogos.localidades.map((l) => (
               <MenuItem key={l.idLocalidad} value={String(l.idLocalidad)}>
                 {l.nombreLocalidad}
               </MenuItem>
@@ -196,47 +147,16 @@ export default function RegistroProfesional() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <SelectorConChips
-            label="Especialidades"
-            required
-            opciones={opcionesEspecialidades}
-            seleccionados={seleccion.especialidades}
-            onChange={cambiarEspecialidades}
-            error={errores.especialidades}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <SelectorConChips
-            label="Habilidades"
-            opciones={opcionesHabilidades}
-            seleccionados={seleccion.habilidades}
-            onChange={(habilidades) => setSeleccion((s) => ({ ...s, habilidades }))}
-            disabled={seleccion.especialidades.length === 0}
-            ayuda={seleccion.especialidades.length === 0 ? 'Primero elegí una especialidad' : undefined}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <SelectorConChips
-            label="Zonas de trabajo"
-            required
-            opciones={opcionesZonas}
-            seleccionados={seleccion.zonas}
-            onChange={(zonas) => setSeleccion((s) => ({ ...s, zonas }))}
-            disabled={!campos.idLocalidad}
-            ayuda={!campos.idLocalidad ? 'Primero elegí provincia y localidad' : undefined}
-            error={errores.zonas}
-          />
-        </Grid>
-
-        <Grid size={12}>
-          <EditorMatriculas
-            especialidades={seleccion.especialidades}
-            matriculas={seleccion.matriculas}
-            onChange={(matriculas) => setSeleccion((s) => ({ ...s, matriculas }))}
-            errores={intentoEnviar ? erroresMatriculas(seleccion.matriculas) : undefined}
-          />
-        </Grid>
+        <SelectoresDeTrabajo
+          elegidos={seleccion}
+          opciones={{ especialidades: catalogos.opcionesEspecialidades, habilidades: catalogos.opcionesHabilidades, zonas: catalogos.opcionesZonas }}
+          errores={errores}
+          mostrarErroresMatriculas={intentoEnviar}
+          onCambiarEspecialidades={(elegidas) => setSeleccion((s) => conEspecialidades(s, elegidas))}
+          onCambiar={(cambios) => setSeleccion((s) => ({ ...s, ...cambios }))}
+          zonasDeshabilitadas={!campos.idLocalidad}
+          ayudaZonas={!campos.idLocalidad ? 'Primero elegí provincia y localidad' : undefined}
+        />
 
         <Grid size={12}>
           <TextField
