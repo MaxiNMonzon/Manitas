@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
-import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
@@ -21,6 +20,7 @@ import {
   traerUrgentes,
 } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
+import AvisoFlotante, { type Aviso } from '../../components/AvisoFlotante'
 import DetalleSolicitudDialog from '../../components/solicitudes/DetalleSolicitudDialog'
 import PresupuestarDialog from '../../components/solicitudes/PresupuestarDialog'
 import ReprogramarDialog from '../../components/solicitudes/ReprogramarDialog'
@@ -67,7 +67,7 @@ export default function SolicitudesProfesional() {
 
   // Respuesta en curso y aviso del resultado
   const [aceptando, setAceptando] = useState(false)
-  const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'success' | 'error' } | null>(null)
+  const [mensaje, setMensaje] = useState<Aviso | null>(null)
 
   const setDetalle = (s: SolicitudResumen | null) => {
     setDesdeInicioUsada(true)
@@ -224,18 +224,7 @@ export default function SolicitudesProfesional() {
         }}
       />
 
-      <Snackbar
-        open={mensaje !== null}
-        autoHideDuration={5000}
-        onClose={() => setMensaje(null)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        {mensaje ? (
-          <Alert severity={mensaje.tipo} variant="filled" onClose={() => setMensaje(null)}>
-            {mensaje.texto}
-          </Alert>
-        ) : undefined}
-      </Snackbar>
+      <AvisoFlotante aviso={mensaje} onClose={() => setMensaje(null)} />
     </>
   )
 }

@@ -4,23 +4,18 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import PaymentIcon from '@mui/icons-material/Payment'
-import { useAuth } from '../auth/useAuth'
 import { traerSolicitudesCliente } from '../api/solicitudes'
 import { useCarga } from '../hooks/useCarga'
 import CheckoutButton from '../components/pagos/CheckoutButton'
 import { formatoPesos } from '../components/solicitudes/estados'
 import { debePagar } from '../components/solicitudes/estadosCliente'
-import EnConstruccion from './EnConstruccion'
 
 // Pestaña "Pagos" del cliente: lo que tiene para pagar (el trabajo contratado que ya empezó,
 // o la visita de un presupuesto que rechazó). Se paga con Mercado Pago (modo prueba).
 // También se puede pagar desde el detalle de cada solicitud, en "Mis solicitudes"
 export default function Pagos() {
-  const { sesion } = useAuth()
-  const esCliente = sesion?.rol === 'cliente'
-  const { datos, error, cargando } = useCarga('pagos', () => (esCliente ? traerSolicitudesCliente() : Promise.resolve([])))
-
-  if (!esCliente) return <EnConstruccion titulo="Pagos" />
+  // Solo la ve el cliente (la ruta está protegida con SoloRol)
+  const { datos, error, cargando } = useCarga('pagos', traerSolicitudesCliente)
 
   const pendientes = (datos ?? []).filter(debePagar)
 

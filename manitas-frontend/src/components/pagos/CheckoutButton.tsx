@@ -8,7 +8,7 @@ import { irAPagarConMercadoPago } from '../../api/pagos'
 // Botón de pago con Mercado Pago (lo hizo Mica): pide al backend el link de pago
 // de esa solicitud (POST /payments/create-preference) y lleva al checkout de Mercado Pago.
 // Ahí se elige el medio y las cuotas y se paga; al tocar "Volver al sitio" vuelve a
-// /app/pagos/resultado, que confirma el pago. El precio no lo manda el front: el back lo saca de la solicitud
+// "Mis solicitudes" (/app/solicitudes), que confirma el pago. El precio no lo manda el front: el back lo saca de la solicitud
 export default function CheckoutButton({ idSolicitud }: { idSolicitud: number }) {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)

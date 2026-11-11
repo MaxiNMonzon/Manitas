@@ -1,23 +1,12 @@
 Frontend — test unitario de componentes (npm test, Vitest + Testing Library)
-Ejecutado: 09/11/2026 00:30
+Ejecutado: 11/11/2026 00:58
 
 
- RUN  v5.0.5 C:/Users/Usuario/OneDrive/UTN/3 año/Proy DSW/Manitas/manitas-frontend
+ RUN  v5.0.5 C:/Users/Maxi_/OneDrive/Desktop/tpManitas-maxiN/Manitas/manitas-frontend
 
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > muestra el profesional, el trabajo, la dirección y el estado en palabras del cliente 2734ms
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > avisa al tocar "Ver detalles" (output del componente) 2059ms
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > una urgencia sin profesional dice que se está buscando y se marca como urgente 750ms
- ✓ src/components/solicitudes/TarjetaSolicitudCliente.test.tsx > TarjetaSolicitudCliente > una solicitud pagada muestra el chip "Pagado" 792ms
- ✓ src/components/solicitudes/profesional/ordenSolicitudes.test.ts > ordenar las solicitudes del profesional > en Nuevas pone primero las urgentes y después las más viejas 13ms
- ✓ src/components/solicitudes/profesional/ordenSolicitudes.test.ts > ordenar las solicitudes del profesional > en En curso arma una carpeta de urgentes arriba y después una por estado 1ms
- ✓ src/components/solicitudes/profesional/ordenSolicitudes.test.ts > ordenar las solicitudes del profesional > separa cada solicitud en la pestaña que le corresponde a su estado 2ms
- ✓ src/components/solicitudes/profesional/ordenSolicitudes.test.ts > acciones del detalle > una solicitud nueva se puede rechazar o aceptar 2ms
- ✓ src/components/solicitudes/profesional/ordenSolicitudes.test.ts > acciones del detalle > no deja presupuestar antes de la visita, sí después 8ms
- ✓ src/components/solicitudes/profesional/ordenSolicitudes.test.ts > acciones del detalle > una solicitud terminada no tiene acciones 1ms
 
- Test Files  2 passed (2)
-      Tests  10 passed (10)
-   Start at  00:30:57
-   Duration  54.24s (environment 42%, import 30%, setup 14%, tests 12%, transform 2%)
-
+ Test Files  3 passed (3)
+      Tests  16 passed (16)
+   Start at  00:58:35
+   Duration  6.51s (environment 53%, import 25%, setup 10%, tests 9%, transform 3%)
 
