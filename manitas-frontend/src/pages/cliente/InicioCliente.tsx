@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
@@ -19,6 +19,7 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import IconoEspecialidad from '../../components/IconoEspecialidad'
+import Seccion from '../../components/Seccion'
 import TarjetaProfesional from '../../components/profesional/TarjetaProfesional'
 import PerfilProfesionalDialog from '../../components/profesional/PerfilProfesionalDialog'
 import Button from '@mui/material/Button'
@@ -36,21 +37,6 @@ import { traerPromocionesDelMes } from '../../api/promociones'
 
 const CATEGORIAS_VISIBLES = 6
 const PROFESIONALES_VISIBLES = 10
-
-// Título de cada sección, con un link o acciones a la derecha
-function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactNode; children: ReactNode }) {
-  return (
-    <Box component="section" sx={{ mt: 4 }}>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          {titulo}
-        </Typography>
-        {accion}
-      </Stack>
-      {children}
-    </Box>
-  )
-}
 
 // Pantalla principal del cliente: categorías, profesionales de su zona y promociones del mes (todo sale del back)
 export default function InicioCliente() {
