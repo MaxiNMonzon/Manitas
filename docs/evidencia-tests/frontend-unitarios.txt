@@ -1,11 +1,11 @@
 Frontend — test unitario de componentes (npm test, Vitest + Testing Library)
-Ejecutado: 11/11/2026 00:58
+Ejecutado: 11/11/2026 19:39
 
 
  RUN  v5.0.5 C:/Users/Maxi_/OneDrive/Desktop/tpManitas-maxiN/Manitas/manitas-frontend
 
 
- Test Files  3 passed (3)
-      Tests  16 passed (16)
-   Start at  00:58:35
-   Duration  6.51s (environment 53%, import 25%, setup 10%, tests 9%, transform 3%)
+ Test Files  4 passed (4)
+      Tests  22 passed (22)
+   Start at  19:39:46
+   Duration  5.91s (environment 72%, setup 13%, import 9%, tests 4%, transform 1%)

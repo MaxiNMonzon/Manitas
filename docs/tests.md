@@ -13,6 +13,7 @@ al menos 1 test unitario de un componente y 1 test end-to-end en el front.
 | Front: test unitario de componente | [`TarjetaSolicitudCliente.test.tsx`](../manitas-frontend/src/components/solicitudes/TarjetaSolicitudCliente.test.tsx) | Vitest + Testing Library | 4 | ✅ |
 | Front: test unitario de lógica | [`ordenSolicitudes.test.ts`](../manitas-frontend/src/components/solicitudes/profesional/ordenSolicitudes.test.ts) | Vitest (orden, carpetas y acciones de "Mis solicitudes" del profesional) | 6 | ✅ |
 | Front: test unitario de lógica | [`ordenSolicitudes.test.ts`](../manitas-frontend/src/components/solicitudes/cliente/ordenSolicitudes.test.ts) | Vitest (pestañas, orden y acciones de "Mis solicitudes" del cliente) | 6 | ✅ |
+| Front: test unitario de lógica | [`reglas.test.ts`](../manitas-frontend/src/components/perfil/reglas.test.ts) | Vitest (reglas que comparten el registro y "Mi perfil": contacto, domicilio, CBU, oficios y zonas) | 6 | ✅ |
 | Front: test end-to-end | [`e2e/cliente.spec.ts`](../manitas-frontend/e2e/cliente.spec.ts) | Playwright (Chrome, escritorio y celular) | 4 × 2 | ✅ |
 
 ### Test por integrante
@@ -65,5 +66,5 @@ Ninguno necesita MySQL: en el back los repositorios y Mercado Pago se simulan, y
 
 - [Back — unitarios](evidencia-tests/backend-unitarios.txt) — 4 suites, 19 tests OK
 - [Back — integración](evidencia-tests/backend-integracion.txt) — 1 suite, 6 tests OK
-- [Front — unitarios](evidencia-tests/frontend-unitarios.txt) — 3 archivos, 16 tests OK (componente y lógica)
+- [Front — unitarios](evidencia-tests/frontend-unitarios.txt) — 4 archivos, 22 tests OK (componente y lógica)
 - [Front — end-to-end](evidencia-tests/frontend-e2e.txt) — 8 ejecuciones OK (4 escenarios × escritorio y celular)
