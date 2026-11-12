@@ -1,5 +1,6 @@
 // El formulario de "Mi perfil" del cliente: de dónde sale, cómo se valida y qué se le manda al back.
 // Son funciones puras (no dibujan nada).
+import { validarContacto, validarDomicilio } from '../reglas'
 import type { Errores } from '../useEdicionPerfil'
 import type { CambiosPerfilCliente, PerfilCliente } from '../../../types'
 
@@ -35,19 +36,9 @@ export function desdePerfil(p: PerfilCliente): FormularioCliente {
   }
 }
 
-// Mismas reglas que el registro (CreateClienteDto)
+// Las mismas reglas que el registro (están en reglas.ts)
 export function validar(f: FormularioCliente): Errores<FormularioCliente> {
-  const e: Errores<FormularioCliente> = {}
-  if (!f.nombre.trim()) e.nombre = 'Ingresá tu nombre'
-  if (!f.apellido.trim()) e.apellido = 'Ingresá tu apellido'
-  if (!/^\S+@\S+\.\S+$/.test(f.correo.trim())) e.correo = 'Ingresá un email válido'
-  if (!/^\d{8,15}$/.test(f.telefono)) e.telefono = 'Ingresá solo números, con característica'
-  if (!f.calle.trim()) e.calle = 'Ingresá la calle'
-  if (!(Number(f.altura) > 0)) e.altura = 'Ingresá la altura'
-  if (f.piso.length > 10) e.piso = 'Máximo 10 caracteres'
-  if (f.depto.length > 10) e.depto = 'Máximo 10 caracteres'
-  if (!f.idZona) e.idZona = 'Elegí tu zona'
-  return e
+  return { ...validarContacto(f), ...validarDomicilio(f) }
 }
 
 // Lo que se manda al back (PATCH /cliente/:id)

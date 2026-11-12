@@ -2,12 +2,13 @@ import Grid from '@mui/material/Grid'
 import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 import SeccionTarjeta from '../../SeccionTarjeta'
-import SelectorConChips, { type Opcion } from '../../SelectorConChips'
+import type { Opcion } from '../../SelectorConChips'
 import ChipsLectura from '../ChipsLectura'
-import EditorMatriculas, { ListaMatriculas } from '../EditorMatriculas'
-import { erroresMatriculas } from '../matriculas'
+import { ListaMatriculas } from '../EditorMatriculas'
+import SelectoresDeTrabajo from './SelectoresDeTrabajo'
 import { propsCampo } from '../campos'
-import { MAX_DESCRIPCION, type FormularioProfesional } from './formulario'
+import { MAX_DESCRIPCION } from '../reglas'
+import type { FormularioProfesional } from './formulario'
 import type { Errores } from '../useEdicionPerfil'
 import type { PerfilProfesional } from '../../../types'
 
@@ -25,7 +26,7 @@ interface Props {
 }
 
 // "Mi trabajo": costo de la visita, especialidades, habilidades, zonas, matrículas y "Sobre mí".
-// Viendo, cada lista se muestra como burbujas; editando, con un selector
+// Viendo, cada lista se muestra como burbujas; editando, con los mismos selectores que el registro
 export default function SeccionMiTrabajo({ datos, errores, editando, intentoGuardar, cambiar, onCambiarEspecialidades, opciones, matriculasGuardadas }: Props) {
   const estado = { datos, errores, editando, cambiar }
 
@@ -43,64 +44,34 @@ export default function SeccionMiTrabajo({ datos, errores, editando, intentoGuar
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          {editando ? (
-            <SelectorConChips
-              label="Especialidades"
-              required
-              opciones={opciones.especialidades}
-              seleccionados={datos.especialidades}
-              onChange={onCambiarEspecialidades}
-              error={errores.especialidades}
-            />
-          ) : (
-            <ChipsLectura label="Especialidades" items={datos.especialidades} vacio="Sin especialidades" />
-          )}
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          {editando ? (
-            <SelectorConChips
-              label="Habilidades"
-              opciones={opciones.habilidades}
-              seleccionados={datos.habilidades}
-              onChange={(habilidades) => cambiar({ habilidades })}
-              disabled={datos.especialidades.length === 0}
-              ayuda={datos.especialidades.length === 0 ? 'Primero elegí una especialidad' : undefined}
-            />
-          ) : (
-            <ChipsLectura label="Habilidades" items={datos.habilidades} vacio="Sin habilidades cargadas" />
-          )}
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          {editando ? (
-            <SelectorConChips
-              label="Zonas de trabajo"
-              required
-              opciones={opciones.zonas}
-              seleccionados={datos.zonas}
-              onChange={(zonas) => cambiar({ zonas })}
-              ayuda={!datos.idLocalidad ? 'Para agregar, elegí provincia y localidad en Datos personales' : undefined}
-              error={errores.zonas}
-            />
-          ) : (
-            <ChipsLectura label="Zonas de trabajo" items={datos.zonas} vacio="Sin zonas" />
-          )}
-        </Grid>
-
-        <Grid size={12}>
-          {editando ? (
-            <EditorMatriculas
-              especialidades={datos.especialidades}
-              matriculas={datos.matriculas}
-              onChange={(matriculas) => cambiar({ matriculas })}
-              errores={intentoGuardar ? erroresMatriculas(datos.matriculas) : undefined}
-            />
-          ) : (
-            <ListaMatriculas
-              matriculas={matriculasGuardadas.map((m) => ({ numero: m.numero, descripcion: m.descripcion, especialidad: m.especialidad.nombreEspecialidad }))}
-            />
-          )}
-        </Grid>
+        {editando ? (
+          <SelectoresDeTrabajo
+            elegidos={datos}
+            opciones={opciones}
+            errores={errores}
+            mostrarErroresMatriculas={intentoGuardar}
+            onCambiarEspecialidades={onCambiarEspecialidades}
+            onCambiar={cambiar}
+            ayudaZonas={!datos.idLocalidad ? 'Para agregar, elegí provincia y localidad en Datos personales' : undefined}
+          />
+        ) : (
+          <>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <ChipsLectura label="Especialidades" items={datos.especialidades} vacio="Sin especialidades" />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <ChipsLectura label="Habilidades" items={datos.habilidades} vacio="Sin habilidades cargadas" />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <ChipsLectura label="Zonas de trabajo" items={datos.zonas} vacio="Sin zonas" />
+            </Grid>
+            <Grid size={12}>
+              <ListaMatriculas
+                matriculas={matriculasGuardadas.map((m) => ({ numero: m.numero, descripcion: m.descripcion, especialidad: m.especialidad.nombreEspecialidad }))}
+              />
+            </Grid>
+          </>
+        )}
 
         <Grid size={12}>
           <TextField

@@ -21,7 +21,8 @@ import SeccionMiTrabajo from '../../components/perfil/profesional/SeccionMiTraba
 import SeccionDatosCobro from '../../components/perfil/profesional/SeccionDatosCobro'
 import { useEdicionPerfil } from '../../components/perfil/useEdicionPerfil'
 import { useCatalogos } from '../../components/perfil/profesional/useCatalogos'
-import { conEspecialidades, desdePerfil, paraEnviar, validar } from '../../components/perfil/profesional/formulario'
+import { desdePerfil, paraEnviar, validar } from '../../components/perfil/profesional/formulario'
+import { conEspecialidades } from '../../components/perfil/reglas'
 
 // Pestaña "Mi perfil" del profesional (boceto "Mi perfil"): se ve todo y con "Editar perfil" se puede cambiar.
 // Esta página solo arma las secciones: el formulario (validar, qué se manda) está en formulario.ts,
@@ -31,7 +32,12 @@ export default function PerfilProfesional() {
   const perfil = useCarga('mi-perfil', traerPerfilProfesional)
   const calificacion = useCarga('mi-calificacion', traerMiCalificacion)
   const edicion = useEdicionPerfil(validar)
-  const catalogos = useCatalogos(edicion.form)
+  const catalogos = useCatalogos({
+    activo: edicion.form !== null,
+    idProvincia: edicion.form?.idProvincia ?? '',
+    idLocalidad: edicion.form?.idLocalidad ?? '',
+    especialidades: edicion.form?.especialidades ?? [],
+  })
   const [aviso, setAviso] = useState<Aviso | null>(null)
 
   if (perfil.cargando) {
