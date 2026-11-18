@@ -1,59 +1,82 @@
 # Manitas
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-INTEGRANTES
----------------------------------------------------------------------------------------------------------------------------------------------------
+Aplicación web que conecta a clientes con profesionales de oficios (plomería, electricidad, gas, pintura y más) para
+resolver arreglos del hogar.
 
-56821 - Arias, Francisco Jose  
-52098 - Monzon, Maximiliano Nicolas  
-54456 - Baremboum, Micaela  
-42062 - Coria, Lautaro  
+## Integrantes
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-REPOSITORIOS
----------------------------------------------------------------------------------------------------------------------------------------------------
+| Legajo | Nombre |
+| --- | --- |
+| 56821 | Arias, Francisco José |
+| 54456 | Baremboum, Micaela |
+| 42062 | Coria, Lautaro |
+| 52098 | Monzón, Maximiliano Nicolás |
 
-(mas adelante backend-frontend)
+## Links
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-TEMA
----------------------------------------------------------------------------------------------------------------------------------------------------
+| | |
+| --- | --- |
+| App publicada | https://manitas-sigma.vercel.app |
+| API publicada | https://manitas-api-hv16.onrender.com (documentación en [`/api`](https://manitas-api-hv16.onrender.com/api)) |
+| Credenciales de prueba | [docs/deploy.md](docs/deploy.md) |
+| Video de la app funcionando | https://drive.google.com/file/d/1bY3lVukaLrSBklW50SYAPiYdt14c0BF-/view?usp=sharing |
+| Pull request de entrega | [PR #272](https://github.com/utnfrrodsw/tp/pull/272) |
+| Documentación del TP | [docs/](docs/README.md) |
+| Propuesta | [docs/proposal.md](docs/proposal.md) |
 
-Aplicación que conecta clientes con profesionales de distintos oficios para resolver tareas del hogar.
-Ofrece servicios urgentes con geolocalización y trabajos programados con comparación de precios.
-Cada profesional define sus tarifas y recibe calificaciones.
-Los clientes pueden pagar con tarjeta, billeteras virtuales o efectivo.
-Incluye promociones según método de pago.
-Apunta a brindar rapidez, confianza y variedad de opciones.}
+## Repositorio
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-MODELO
----------------------------------------------------------------------------------------------------------------------------------------------------
+Un solo repositorio con el back y el front en carpetas separadas, independientes entre sí, que se comunican por una
+API REST:
 
-<img width="1301" height="752" alt="MD - DSW-MD drawio (1)" src="https://github.com/user-attachments/assets/c6a9bd41-b077-4243-87ec-42b62b63b720" />
+- [`manitas-backend`](manitas-backend) — API con NestJS
+- [`manitas-frontend`](manitas-frontend) — app web con React
 
-https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view
+## Tema
 
----------------------------------------------------------------------------------------------------------------------------------------------------
-ALCANCE FUNCIONAL
----------------------------------------------------------------------------------------------------------------------------------------------------
-Alcance Mínimo
-------------------------------------------------------------------------------
-Regularidad:
+El cliente busca profesionales de su zona, les pide presupuesto eligiendo un turno libre del calendario y compara los
+presupuestos que recibe. Si es algo urgente, lo pide sin elegir profesional: les aparece a todos los de ese oficio en
+su zona y el primero que acepta va. Los profesionales cargan su horario de trabajo, presupuestan después de la visita
+y reciben calificaciones. Los clientes pagan desde la app con Mercado Pago (tarjeta de crédito, débito o saldo), y la
+app informa las promociones bancarias del mes (el reintegro lo hace el banco). Apunta a brindar rapidez, confianza y
+variedad de opciones.
+
+## Modelo de dominio
+
+<img width="1962" height="1470" alt="image" src="https://github.com/user-attachments/assets/0026ae2d-3d67-4a93-a63d-846d71eda4fa" />
+
+
+
+[Ver el modelo en Google Drive](https://drive.google.com/file/d/1yA9dty0EUn0jITPk4veSDCFWdFEMilrt/view)
+
+## Alcance funcional
+
+### Regularidad
 
 | Req | Detalle |
 | :--- | :--- |
-| **CRUD simple** | 1. CRUD Usuario <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago|
-| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad <br>2. CRUD Profesional {depende de} CRUD Especialidad|
-| **Listado + detalle** | 1. Servicio por Tipo de Servicio <br>2. Profesional por Especialidad|
-| **CUU/Epic** | 1. Informar promociones bancarias del mes <br>2. Notificar próximas visitas <br>3. Solicitud de Servicio <br>4. Calificar Profesional|
+| **CRUD simple** | 1. CRUD Usuario (Cliente y Profesional)<br>2. CRUD Tipo de Servicio<br>3. CRUD Localidad<br>4. CRUD Método de Pago |
+| **CRUD dependiente** | 1. CRUD Zona {depende de} CRUD Localidad<br>2. CRUD Profesional {depende de} CRUD Especialidad |
+| **Listado + detalle** | 1. Tipo de Servicio por Especialidad<br>2. Profesional por Especialidad (y zona) |
+| **CUU/Epic** | 1. Solicitar presupuesto<br>2. Calificar profesional<br>3. Informar promociones bancarias del mes<br>4. Notificar próximas visitas |
 
-Adicionales para Aprobación
+### Adicionales para Aprobación
+
 | Req | Detalle |
 | :--- | :--- |
-| **CRUD** | 1. CRUD Usuario  <br>2. CRUD Tipo de Servicio <br>3. CRUD Localidad<br>4. CRUD Metodo de Pago <br>5. CRUD Zona|
-| **CUU/Epic** | 1. Solicitar servicio<br>2. Confirmar servicio<br>3. Coordinar visita<br>4. Abonar servicio<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas <br>8. Solicitar Presupuesto|
+| **CRUD** | 1. CRUD Usuario (Cliente y Profesional)<br>2. CRUD Tipo de Servicio<br>3. CRUD Localidad<br>4. CRUD Método de Pago<br>5. CRUD Zona |
+| **CUU/Epic** | 1. Solicitar presupuesto<br>2. Coordinar visita (elegir y reprogramar turnos)<br>3. Confirmar servicio (aceptar el presupuesto)<br>4. Abonar servicio<br>5. Calificar profesional<br>6. Informar promociones bancarias del mes<br>7. Notificar próximas visitas |
 
----------------------------------------------------------------------------------------------------------------------------------------------------
+## Tecnologías
 
+- **Back:** NestJS 11, TypeScript, TypeORM, MySQL, JWT + bcryptjs, class-validator, Swagger y Mercado Pago (Checkout
+  Pro). Se instala con **pnpm**.
+- **Front:** React 19, TypeScript, Vite, Material UI y React Router. Se instala con **npm**.
 
+## Documentación
+
+- [Cómo instalar y ejecutar](docs/instalacion.md)
+- [Documentación de la API](docs/api.md) · Swagger: https://manitas-api-hv16.onrender.com/api
+- [Tests y evidencia](docs/tests.md)
+- [Deploy y credenciales](docs/deploy.md)
+- [Todo el TP (propuesta, minutas, seguimiento)](docs/README.md)

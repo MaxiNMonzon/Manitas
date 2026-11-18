@@ -1,0 +1,50 @@
+import { useState } from 'react'
+import Alert from '@mui/material/Alert'
+import Grid from '@mui/material/Grid'
+import Paper from '@mui/material/Paper'
+import Skeleton from '@mui/material/Skeleton'
+import Typography from '@mui/material/Typography'
+import { traerPromocionesDelMes } from '../../api/promociones'
+import { useCarga } from '../../hooks/useCarga'
+import CondicionesPromoDialog from '../../components/CondicionesPromoDialog'
+import TarjetaPromo from '../../components/promociones/TarjetaPromo'
+import type { PromoBancaria } from '../../types'
+
+// Todas las promociones bancarias vigentes este mes (CUU "Informar promociones bancarias del mes").
+// El reintegro lo hace el banco al pagar con ese medio
+export default function Promociones() {
+  const promociones = useCarga('promociones-del-mes', traerPromocionesDelMes)
+  // El nombre del mes se calcula una sola vez al entrar
+  const [mes] = useState(() => new Date().toLocaleDateString('es-AR', { month: 'long' }))
+  const [condiciones, setCondiciones] = useState<PromoBancaria | null>(null)
+
+  return (
+    <>
+      <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+        Promociones bancarias de {mes}
+      </Typography>
+      <Typography color="text.secondary" sx={{ mb: 3 }}>
+        Aprovechá ahorros extra pagando tus arreglos con estos bancos.
+      </Typography>
+
+      {promociones.error && <Alert severity="error">{promociones.error}</Alert>}
+      {promociones.cargando ? (
+        <Skeleton variant="rounded" height={160} />
+      ) : (promociones.datos ?? []).length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="text.secondary">Este mes no hay promociones vigentes.</Typography>
+        </Paper>
+      ) : (
+        <Grid container spacing={2}>
+          {(promociones.datos ?? []).map((promo) => (
+            <Grid key={promo.idPromocion} size={{ xs: 12, sm: 6, md: 4 }}>
+              <TarjetaPromo promo={promo} onVerCondiciones={() => setCondiciones(promo)} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <CondicionesPromoDialog promo={condiciones} onCerrar={() => setCondiciones(null)} />
+    </>
+  )
+}

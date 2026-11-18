@@ -1,0 +1,74 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { CreatePromocionDto } from './dto/create-promocion.dto';
+import { UpdatePromocionDto } from './dto/update-promocion.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { Promocion } from './entities/promocion.entity';
+import { MetodoDePago } from '../metodo-de-pago/entities/metodo-de-pago.entity';
+
+@Injectable()
+export class PromocionService {
+constructor(
+  @InjectRepository(Promocion)
+  private readonly promocionRepository: Repository<Promocion>,
+
+  @InjectRepository(MetodoDePago)
+  private readonly metodoDePagoRepository: Repository<MetodoDePago>,
+) {}
+
+  async create(createPromocionDto: CreatePromocionDto) {
+    let metodosPago: MetodoDePago[] = [];
+    if (createPromocionDto.idsMetodosPago && createPromocionDto.idsMetodosPago.length > 0) {
+      metodosPago = await this.metodoDePagoRepository.findBy({
+        idFormaPago: In(createPromocionDto.idsMetodosPago),
+      });
+
+      if (metodosPago.length !== createPromocionDto.idsMetodosPago.length) {
+        throw new BadRequestException('Alguno de los métodos de pago indicados no existen');
+      }
+    }
+
+    return await this.promocionRepository.save({
+      ...createPromocionDto,
+      metodosPago,
+    });
+  }
+
+  async findAll() {
+    return await this.promocionRepository.find({ relations: { metodosPago: true }, order: { fechaFinVigencia: 'DESC' } });
+  }
+
+  // Las que estan vigentes en algun momento de este mes, de mayor a menor descuento
+  async delMes() {
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+
+    return await this.promocionRepository.find({
+      where: {
+        fechaInicioVigencia: LessThanOrEqual(ultimoDia),
+        fechaFinVigencia: MoreThanOrEqual(primerDia),
+      },
+      relations: { metodosPago: true },
+      order: { porcentajeDescuento: 'DESC' },
+    });
+  }
+
+  async findOne(id: number) {
+    const promocion = await this.promocionRepository.findOneBy({ idPromocion: id });
+    if (!promocion) {
+      throw new NotFoundException(`Promocion con ID ${id} no encontrada`);
+    }
+    return promocion;
+  }
+
+  async update(id: number, updatePromocionDto: UpdatePromocionDto) {
+    const promocion = await this.findOne(id);
+    this.promocionRepository.merge(promocion, updatePromocionDto);
+    return await this.promocionRepository.save(promocion);
+  }
+
+  async remove(id: number) {
+    return await this.promocionRepository.softDelete({ idPromocion: id });
+  }
+}
