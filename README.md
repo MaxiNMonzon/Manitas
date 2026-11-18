@@ -20,7 +20,8 @@ resolver arreglos del hogar.
 | API publicada | https://manitas-api-hv16.onrender.com (documentación en [`/api`](https://manitas-api-hv16.onrender.com/api)) |
 | Credenciales de prueba | [docs/deploy.md](docs/deploy.md) |
 | Video de la app funcionando | https://drive.google.com/file/d/1bY3lVukaLrSBklW50SYAPiYdt14c0BF-/view?usp=sharing |
-| Pull request de entrega | [PR #272](https://github.com/utnfrrodsw/tp/pull/272) |
+| Pull request de entrega (todo el código) | [PR #3](https://github.com/MaxiNMonzon/Manitas/pull/3) |
+| Pull request de la propuesta | [PR #272](https://github.com/utnfrrodsw/tp/pull/272) |
 | Documentación del TP | [docs/](docs/README.md) |
 | Propuesta | [docs/proposal.md](docs/proposal.md) |
 
