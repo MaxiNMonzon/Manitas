@@ -6,7 +6,8 @@ Punto de entrada de la documentación del TP (formato pedido por la cátedra en
 | Contenido | Documento | Estado |
 | --- | --- | --- |
 | Propuesta actualizada | [proposal.md](proposal.md) | ✅ |
-| Link al PR | [PR #272](https://github.com/utnfrrodsw/tp/pull/272) | ✅ |
+| Link al PR de entrega (todo el código) | [PR #3](https://github.com/MaxiNMonzon/Manitas/pull/3) | ✅ |
+| Link al PR de la propuesta | [PR #272](https://github.com/utnfrrodsw/tp/pull/272) | ✅ |
 | Instrucciones de instalación | [instalacion.md](instalacion.md) | ✅ |
 | Minutas de reunión y avance | [minutas.md](minutas.md) | ⬜ completar con las reuniones del grupo |
 | Tracking de features, bugs e issues | [tracking.md](tracking.md) | ⬜ completar responsables y links (GitHub Projects) |
