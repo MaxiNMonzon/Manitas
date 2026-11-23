@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, ArrayMinSize, IsInt, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
+import { IsArray, ArrayMinSize, IsInt, IsNumber, IsOptional, IsString, Matches, MaxLength, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MatriculaDto } from './matricula.dto';
 import { CreateUsuarioDto } from '../../usuario/dto/create-usuario.dto';
@@ -13,9 +13,10 @@ export class CreateProfesionalDto extends CreateUsuarioDto {
   @Type(() => MatriculaDto)
   matriculas?: MatriculaDto[];
 
+  // Dinero: admite centavos (hasta 2 decimales)
   @ApiPropertyOptional({ example: 5000 })
   @IsOptional()
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   costoVisita?: number;
 

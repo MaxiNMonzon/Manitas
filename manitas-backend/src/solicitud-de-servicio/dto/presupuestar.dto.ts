@@ -1,9 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsPositive, Max, Min } from "class-validator";
+import { IsInt, IsNumber, IsOptional, IsPositive, Max, Min } from "class-validator";
 
 export class PresupuestarDto {
-    @ApiProperty({ example: 15000 })
-    @IsInt()
+    // Dinero: admite centavos (hasta 2 decimales)
+    @ApiProperty({ example: 15000.5 })
+    @IsNumber({ maxDecimalPlaces: 2 })
     @IsPositive()
     costo!: number;
 

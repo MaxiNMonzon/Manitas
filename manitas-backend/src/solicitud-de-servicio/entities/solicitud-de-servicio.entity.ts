@@ -4,6 +4,7 @@ import { Cliente } from "../../cliente/entities/cliente.entity";
 import { Profesional } from "../../profesional/entities/profesional.entity";
 import { Especialidad } from "../../especialidad/entities/especialidad.entity";
 import { EstadoSolicitud } from "../../common/enums/estado-solicitud.enum";
+import { columnaDinero } from "../../common/columnas/columna-dinero";
 
 @Entity()
 export class SolicitudDeServicio {
@@ -68,13 +69,14 @@ export class SolicitudDeServicio {
     @Column({ type: 'varchar', length: 15, nullable: true })
     propuestaDe!: 'cliente' | 'profesional' | null;
 
-    @Column({ nullable: true })
+    // Dinero: DECIMAL(12,2), ver columnaDinero
+    @Column(columnaDinero)
     costoVisita!: number;
 
-    @Column({ nullable: true })
+    @Column(columnaDinero)
     costoEstimado!: number;
 
-    @Column({ nullable: true })
+    @Column(columnaDinero)
     costoFinal!: number;
 
     @Column({ nullable: true })

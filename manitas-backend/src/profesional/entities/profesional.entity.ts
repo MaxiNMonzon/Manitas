@@ -6,6 +6,7 @@ import { TiposDeServicio } from '../../tipos-de-servicio/entities/tipos-de-servi
 import { SolicitudDeServicio } from '../../solicitud-de-servicio/entities/solicitud-de-servicio.entity';
 import { Matricula } from './matricula.entity';
 import { HorarioLaboral } from '../../turno/entities/horario-laboral.entity';
+import { columnaDinero } from '../../common/columnas/columna-dinero';
 
 @Entity('profesionales')
 export class Profesional extends Usuario {
@@ -13,8 +14,8 @@ export class Profesional extends Usuario {
   @OneToMany(() => Matricula, (matricula) => matricula.profesional, { cascade: true })
   matriculas!: Matricula[];
 
-  // Opcional: solo se cobra si el cliente rechaza el presupuesto
-  @Column({ nullable: true })
+  // Opcional: solo se cobra si el cliente rechaza el presupuesto. Dinero: DECIMAL(12,2), ver columnaDinero
+  @Column(columnaDinero)
   costoVisita?: number;
 
   // "Sobre mi": texto libre donde el profesional se describe a si mismo o a su trabajo
