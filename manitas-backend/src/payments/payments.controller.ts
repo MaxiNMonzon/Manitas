@@ -7,6 +7,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { Rol } from '../common/enums/rol.enum';
 import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
 import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
+import { sinDatosPrivados } from '../solicitud-de-servicio/respuesta-solicitud';
 
 const SIN_CONFIGURAR = 'Falta MERCADOPAGO_ACCESS_TOKEN en el .env del back';
 
@@ -39,7 +40,9 @@ export class PaymentsController {
   })
   @ApiBadRequestResponse({ description: 'El pago no existe, no se aprobo, no es de esta solicitud o el monto no coincide' })
   @ApiServiceUnavailableResponse({ description: SIN_CONFIGURAR })
-  confirmar(@Body() dto: ConfirmarPagoDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.paymentsService.confirmar(dto.paymentId, usuario);
+  async confirmar(@Body() dto: ConfirmarPagoDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    const { solicitud, estadoPago } = await this.paymentsService.confirmar(dto.paymentId, usuario);
+    // Del profesional y del cliente solo sale lo que usa el front (ver sinDatosPrivados)
+    return { solicitud: sinDatosPrivados(solicitud), estadoPago };
   }
 }
