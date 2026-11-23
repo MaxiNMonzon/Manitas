@@ -22,11 +22,15 @@ describe('Reglas de los datos del cliente y del profesional', () => {
     expect(validarDomicilio({ ...domicilio, idZona: '' }).idZona).toBe('Elegí tu zona')
   })
 
+  // Con la misma forma que tienen en el perfil del back
+  const plomeria = { idEspecialidad: 1, nombreEspecialidad: 'Plomería' }
+  const gas = { idEspecialidad: 2, nombreEspecialidad: 'Gas' }
+
   const trabajo = {
     cbu: '',
     descripcion: '',
-    especialidades: [{ id: 1, label: 'Plomería' }],
-    zonas: [{ id: 4, label: 'Centro' }],
+    especialidades: [plomeria],
+    zonas: [{ idZona: 4, nombreZona: 'Centro' }],
     matriculas: [],
   }
 
@@ -46,12 +50,15 @@ describe('Reglas de los datos del cliente y del profesional', () => {
 
   it('al sacar una especialidad se van también sus habilidades y matrículas', () => {
     const elegido = {
-      especialidades: [{ id: 1, label: 'Plomería' }, { id: 2, label: 'Gas' }],
-      habilidades: [{ id: 10, label: 'Destapaciones', grupoId: 1 }, { id: 20, label: 'Instalación de artefactos', grupoId: 2 }],
+      especialidades: [plomeria, gas],
+      habilidades: [
+        { idServicio: 10, nombreServicio: 'Destapaciones', especialidad: plomeria },
+        { idServicio: 20, nombreServicio: 'Instalación de artefactos', especialidad: gas },
+      ],
       matriculas: [{ clave: 1, numero: 'MG-4521', descripcion: '', idEspecialidad: '2' }],
     }
-    const sinGas = conEspecialidades(elegido, [{ id: 1, label: 'Plomería' }])
-    expect(sinGas.habilidades.map((h) => h.id)).toEqual([10])
+    const sinGas = conEspecialidades(elegido, [plomeria])
+    expect(sinGas.habilidades.map((h) => h.idServicio)).toEqual([10])
     expect(sinGas.matriculas).toEqual([])
   })
 })

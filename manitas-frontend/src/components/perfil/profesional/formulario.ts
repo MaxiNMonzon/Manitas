@@ -1,12 +1,12 @@
 // El formulario de "Mi perfil" del profesional: de dónde sale, cómo se valida y qué se le manda al back.
 // Son funciones puras (no dibujan nada).
-import type { Opcion } from '../../SelectorConChips'
 import { matriculasParaEnviar, type MatriculaForm } from '../matriculas'
 import { validarContacto, validarTrabajo } from '../reglas'
 import type { Errores } from '../useEdicionPerfil'
-import type { CambiosPerfilProfesional, PerfilProfesional } from '../../../types'
+import type { CambiosPerfilProfesional, EspecialidadResumen, HabilidadResumen, PerfilProfesional, ZonaResumen } from '../../../types'
 
-// Lo que se puede editar (como texto, igual que en los campos) y lo elegido en las listas
+// Lo que se puede editar: los textos como texto (así trabajan los campos) y las listas
+// con la MISMA forma que tienen en el perfil del back, así no hay que convertirlas
 export interface FormularioProfesional {
   nombre: string
   apellido: string
@@ -18,15 +18,14 @@ export interface FormularioProfesional {
   // Provincia y localidad solo sirven para buscar zonas nuevas
   idProvincia: string
   idLocalidad: string
-  especialidades: Opcion[]
-  habilidades: Opcion[]
-  zonas: Opcion[]
+  especialidades: EspecialidadResumen[]
+  habilidades: HabilidadResumen[]
+  zonas: ZonaResumen[]
   matriculas: MatriculaForm[]
 }
 
-const etiquetaZona = (z: PerfilProfesional['zonasDeCobertura'][number]) =>
-  z.localidad ? `${z.nombreZona} (${z.localidad.nombreLocalidad})` : z.nombreZona
-
+// El formulario arranca con los datos del perfil. Las listas pasan tal cual;
+// solo los números y los opcionales se pasan a texto, y las matrículas al formato del editor
 export function desdePerfil(p: PerfilProfesional): FormularioProfesional {
   return {
     nombre: p.nombre,
@@ -38,14 +37,9 @@ export function desdePerfil(p: PerfilProfesional): FormularioProfesional {
     cbu: p.cbu ?? '',
     idProvincia: '',
     idLocalidad: '',
-    especialidades: p.especialidades.map((e) => ({ id: e.idEspecialidad, label: e.nombreEspecialidad })),
-    habilidades: p.tiposDeServicio.map((t) => ({
-      id: t.idServicio,
-      label: t.nombreServicio,
-      grupo: t.especialidad?.nombreEspecialidad,
-      grupoId: t.especialidad?.idEspecialidad,
-    })),
-    zonas: p.zonasDeCobertura.map((z) => ({ id: z.idZona, label: etiquetaZona(z) })),
+    especialidades: p.especialidades,
+    habilidades: p.tiposDeServicio,
+    zonas: p.zonasDeCobertura,
     matriculas: p.matriculas.map((m, i) => ({
       clave: i + 1,
       numero: m.numero,
@@ -74,8 +68,8 @@ export function paraEnviar(f: FormularioProfesional): CambiosPerfilProfesional {
     costoVisita: f.costoVisita ? Number(f.costoVisita) : null,
     descripcion: f.descripcion.trim() || null,
     cbu: f.cbu || null,
-    idsEspecialidades: f.especialidades.map((o) => o.id),
-    idsTiposDeServicio: f.habilidades.map((o) => o.id),
-    idsZonasCobertura: f.zonas.map((o) => o.id),
+    idsEspecialidades: f.especialidades.map((e) => e.idEspecialidad),
+    idsTiposDeServicio: f.habilidades.map((h) => h.idServicio),
+    idsZonasCobertura: f.zonas.map((z) => z.idZona),
   }
 }

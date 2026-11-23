@@ -1,7 +1,7 @@
 // Las reglas de los datos del cliente y del profesional, escritas UNA sola vez.
 // Las usan el registro y "Mi perfil" (mismas reglas que los DTOs del back), así nunca validan distinto.
-import type { Opcion } from '../SelectorConChips'
 import { erroresMatriculas, type MatriculaForm } from './matriculas'
+import type { EspecialidadResumen, HabilidadResumen, ZonaResumen } from '../../types'
 import { cbuValido } from './cuentaBancaria'
 
 export const MAX_DESCRIPCION = 2000
@@ -33,8 +33,8 @@ export function validarDomicilio(f: { calle: string; altura: string; piso: strin
 export function validarTrabajo(f: {
   cbu: string
   descripcion: string
-  especialidades: Opcion[]
-  zonas: Opcion[]
+  especialidades: EspecialidadResumen[]
+  zonas: ZonaResumen[]
   matriculas: MatriculaForm[]
 }) {
   const e: Errores<'cbu' | 'descripcion' | 'especialidades' | 'zonas' | 'matriculas'> = {}
@@ -49,12 +49,15 @@ export function validarTrabajo(f: {
 }
 
 // Si se saca una especialidad, también se sacan sus habilidades y sus matrículas
-export function conEspecialidades<T extends { especialidades: Opcion[]; habilidades: Opcion[]; matriculas: MatriculaForm[] }>(f: T, elegidas: Opcion[]): T {
-  const ids = new Set(elegidas.map((e) => e.id))
+export function conEspecialidades<T extends { especialidades: EspecialidadResumen[]; habilidades: HabilidadResumen[]; matriculas: MatriculaForm[] }>(
+  f: T,
+  elegidas: EspecialidadResumen[],
+): T {
+  const ids = new Set(elegidas.map((e) => e.idEspecialidad))
   return {
     ...f,
     especialidades: elegidas,
-    habilidades: f.habilidades.filter((h) => h.grupoId === undefined || ids.has(h.grupoId)),
+    habilidades: f.habilidades.filter((h) => !h.especialidad || ids.has(h.especialidad.idEspecialidad)),
     matriculas: f.matriculas.filter((m) => !m.idEspecialidad || ids.has(Number(m.idEspecialidad))),
   }
 }

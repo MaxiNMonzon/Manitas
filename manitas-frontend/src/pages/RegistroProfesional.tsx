@@ -8,10 +8,9 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import AuthLayout from '../components/AuthLayout'
-import type { Opcion } from '../components/SelectorConChips'
-import SelectoresDeTrabajo from '../components/perfil/profesional/SelectoresDeTrabajo'
+import SelectoresDeTrabajo, { type Elegidos } from '../components/perfil/profesional/SelectoresDeTrabajo'
 import { useCatalogos } from '../components/perfil/profesional/useCatalogos'
-import { matriculasParaEnviar, type MatriculaForm } from '../components/perfil/matriculas'
+import { matriculasParaEnviar } from '../components/perfil/matriculas'
 import { conEspecialidades, MAX_DESCRIPCION, validarTrabajo } from '../components/perfil/reglas'
 import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
@@ -30,12 +29,8 @@ const vacio = {
 
 type Campos = typeof vacio
 
-interface Seleccion {
-  especialidades: Opcion[]
-  habilidades: Opcion[]
-  zonas: Opcion[]
-  matriculas: MatriculaForm[]
-}
+// Lo elegido en las listas, con la misma forma que en el perfil del back
+type Seleccion = Elegidos
 
 // Mismas reglas que valida el backend (CreateProfesionalDto), para avisar antes de enviar.
 // Lo del trabajo se valida igual que en "Mi perfil" (reglas.ts)
@@ -86,9 +81,9 @@ export default function RegistroProfesional() {
       matriculas: seleccion.matriculas.length ? matriculasParaEnviar(seleccion.matriculas) : undefined,
       cbu: campos.cbu || undefined,
       descripcion: campos.descripcion.trim() || undefined,
-      idsEspecialidades: seleccion.especialidades.map((o) => o.id),
-      idsTiposDeServicio: seleccion.habilidades.map((o) => o.id),
-      idsZonasCobertura: seleccion.zonas.map((o) => o.id),
+      idsEspecialidades: seleccion.especialidades.map((e) => e.idEspecialidad),
+      idsTiposDeServicio: seleccion.habilidades.map((h) => h.idServicio),
+      idsZonasCobertura: seleccion.zonas.map((z) => z.idZona),
     }
 
     setEnviando(true)

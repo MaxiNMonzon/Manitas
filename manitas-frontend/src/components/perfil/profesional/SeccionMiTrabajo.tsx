@@ -2,15 +2,14 @@ import Grid from '@mui/material/Grid'
 import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 import SeccionTarjeta from '../../SeccionTarjeta'
-import type { Opcion } from '../../SelectorConChips'
 import ChipsLectura from '../ChipsLectura'
 import { ListaMatriculas } from '../EditorMatriculas'
-import SelectoresDeTrabajo from './SelectoresDeTrabajo'
+import SelectoresDeTrabajo, { textoZona } from './SelectoresDeTrabajo'
 import { propsCampo } from '../campos'
 import { MAX_DESCRIPCION } from '../reglas'
 import type { FormularioProfesional } from './formulario'
 import type { Errores } from '../useEdicionPerfil'
-import type { PerfilProfesional } from '../../../types'
+import type { EspecialidadResumen, HabilidadResumen, PerfilProfesional, ZonaResumen } from '../../../types'
 
 interface Props {
   datos: FormularioProfesional
@@ -18,9 +17,9 @@ interface Props {
   editando: boolean
   intentoGuardar: boolean
   cambiar: (cambios: Partial<FormularioProfesional>) => void
-  onCambiarEspecialidades: (elegidas: Opcion[]) => void
+  onCambiarEspecialidades: (elegidas: EspecialidadResumen[]) => void
   // Las opciones de las listas (solo al editar, ver useCatalogos)
-  opciones: { especialidades: Opcion[]; habilidades: Opcion[]; zonas: Opcion[] }
+  opciones: { especialidades: EspecialidadResumen[]; habilidades: HabilidadResumen[]; zonas: ZonaResumen[] }
   // Las matrículas guardadas, para verlas sin editar
   matriculasGuardadas: PerfilProfesional['matriculas']
 }
@@ -57,13 +56,13 @@ export default function SeccionMiTrabajo({ datos, errores, editando, intentoGuar
         ) : (
           <>
             <Grid size={{ xs: 12, md: 4 }}>
-              <ChipsLectura label="Especialidades" items={datos.especialidades} vacio="Sin especialidades" />
+              <ChipsLectura label="Especialidades" items={datos.especialidades.map((e) => e.nombreEspecialidad)} vacio="Sin especialidades" />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <ChipsLectura label="Habilidades" items={datos.habilidades} vacio="Sin habilidades cargadas" />
+              <ChipsLectura label="Habilidades" items={datos.habilidades.map((h) => h.nombreServicio)} vacio="Sin habilidades cargadas" />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <ChipsLectura label="Zonas de trabajo" items={datos.zonas} vacio="Sin zonas" />
+              <ChipsLectura label="Zonas de trabajo" items={datos.zonas.map(textoZona)} vacio="Sin zonas" />
             </Grid>
             <Grid size={12}>
               <ListaMatriculas
