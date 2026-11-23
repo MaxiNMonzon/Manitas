@@ -1,13 +1,21 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Permite que el frontend (que corre en otro puerto) le haga pedidos al back
-  app.enableCors();
+  // CORS: el navegador solo deja que una página le haga pedidos al back si el back la permite.
+  // Se permiten solo las direcciones del front que estén en CORS_ORIGINS (separadas por coma);
+  // si no está cargada (en local), solo el front de desarrollo de Vite
+  const variables = app.get(ConfigService);
+  const origenesPermitidos = (variables.get<string>('CORS_ORIGINS') ?? 'http://localhost:5173')
+    .split(',')
+    .map((origen) => origen.trim())
+    .filter(Boolean);
+  app.enableCors({ origin: origenesPermitidos });
 
   app.useGlobalPipes(
     new ValidationPipe({
