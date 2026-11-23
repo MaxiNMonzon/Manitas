@@ -57,7 +57,9 @@ proveedor de la base, si pide conexión segura), `JWT_SECRET` (uno nuevo, largo 
 `ADMIN_CORREO`, `ADMIN_CONTRASENA`, `MERCADOPAGO_ACCESS_TOKEN` y
 `MERCADOPAGO_VUELTA_URL=https://<dominio-del-front>/app/solicitudes`, `TZ=America/Argentina/Buenos_Aires`, y para
 "Olvidé mi contraseña" `BREVO_API_KEY`, `CORREO_REMITENTE` (un correo verificado en [Brevo](https://www.brevo.com)) y
-`FRONT_URL=https://<dominio-del-front>`. Los mails se mandan por la API web de Brevo porque Render, en el plan gratis,
+`FRONT_URL=https://<dominio-del-front>`, y `CORS_ORIGINS=https://<dominio-del-front>` (las direcciones del front que pueden
+hacerle pedidos al back, separadas por coma; sin esto el back solo acepta `http://localhost:5173` y la página publicada no
+puede hablar con él). Los mails se mandan por la API web de Brevo porque Render, en el plan gratis,
 no deja mandar por SMTP.
 
 **Frontend:** `VITE_API_URL=https://<dominio-del-back>` (se usa al compilar).
