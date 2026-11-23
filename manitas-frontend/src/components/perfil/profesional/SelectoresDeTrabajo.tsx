@@ -2,6 +2,7 @@ import Grid from '@mui/material/Grid'
 import SelectorConChips from '../../SelectorConChips'
 import EditorMatriculas from '../EditorMatriculas'
 import { erroresMatriculas, type MatriculaForm } from '../matriculas'
+import { textoZona } from './zonas'
 import type { EspecialidadResumen, HabilidadResumen, ZonaResumen } from '../../../types'
 
 // Lo elegido, con la misma forma con la que viene en el perfil del back
@@ -11,9 +12,6 @@ export interface Elegidos {
   zonas: ZonaResumen[]
   matriculas: MatriculaForm[]
 }
-
-// "Centro (Rosario)": la localidad evita confundir zonas con el mismo nombre
-export const textoZona = (z: ZonaResumen) => (z.localidad ? `${z.nombreZona} (${z.localidad.nombreLocalidad})` : z.nombreZona)
 
 interface Props {
   elegidos: Elegidos
