@@ -1,10 +1,10 @@
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
-import type { Opcion } from '../SelectorConChips'
 
-// Lista de burbujas cuando no se está editando (especialidades, habilidades, zonas)
-export default function ChipsLectura({ label, items, vacio }: { label: string; items: Opcion[]; vacio: string }) {
+// Lista de burbujas cuando no se está editando (especialidades, habilidades, zonas).
+// Recibe solo los textos a mostrar
+export default function ChipsLectura({ label, items, vacio }: { label: string; items: string[]; vacio: string }) {
   return (
     <Box>
       <Typography variant="caption" color="text.secondary">
@@ -16,7 +16,7 @@ export default function ChipsLectura({ label, items, vacio }: { label: string; i
             {vacio}
           </Typography>
         ) : (
-          items.map((i) => <Chip key={i.id} label={i.label} color="primary" variant="outlined" />)
+          items.map((texto) => <Chip key={texto} label={texto} color="primary" variant="outlined" />)
         )}
       </Box>
     </Box>

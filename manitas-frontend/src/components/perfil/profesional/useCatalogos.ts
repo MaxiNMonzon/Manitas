@@ -1,6 +1,5 @@
 import { useListado } from '../../../hooks/useListado'
-import type { Opcion } from '../../SelectorConChips'
-import type { Especialidad, Localidad, Provincia, TipoDeServicio, Zona } from '../../../types'
+import type { EspecialidadResumen, Especialidad, HabilidadResumen, Localidad, Provincia, TipoDeServicio, Zona, ZonaResumen } from '../../../types'
 
 interface Elegido {
   // Si es false no se pide nada (ej: "Mi perfil" mientras no se edita)
@@ -9,11 +8,12 @@ interface Elegido {
   idProvincia: string
   idLocalidad: string
   // Las especialidades elegidas: las habilidades se muestran solo de esas
-  especialidades: Opcion[]
+  especialidades: EspecialidadResumen[]
 }
 
 // Las listas para elegir los oficios, habilidades y zonas del profesional.
-// Las usan el registro y "Mi perfil". Devuelve las opciones ya armadas para los selectores
+// Las usan el registro y "Mi perfil". Se devuelven tal como vienen del back: los selectores
+// saben leerlas, así que no hace falta convertirlas
 export function useCatalogos({ activo, idProvincia, idLocalidad, especialidades: elegidas }: Elegido) {
   const especialidades = useListado<Especialidad>(activo ? '/especialidad' : null)
   const tiposDeServicio = useListado<TipoDeServicio>(activo ? '/tipos-de-servicio' : null)
@@ -21,25 +21,22 @@ export function useCatalogos({ activo, idProvincia, idLocalidad, especialidades:
   const localidades = useListado<Localidad>(activo && idProvincia ? `/localidad?provincia=${idProvincia}` : null)
   const zonas = useListado<Zona>(activo && idLocalidad ? `/zona?localidad=${idLocalidad}` : null)
 
-  // Habilidades: solo las de las especialidades elegidas, agrupadas por especialidad
-  const idsEspecialidades = new Set(elegidas.map((e) => e.id))
-  const opcionesHabilidades: Opcion[] = tiposDeServicio.datos
+  // Habilidades: solo las de las especialidades elegidas, ordenadas por especialidad y nombre
+  const idsEspecialidades = new Set(elegidas.map((e) => e.idEspecialidad))
+  const opcionesHabilidades: HabilidadResumen[] = tiposDeServicio.datos
     .filter((t) => idsEspecialidades.has(t.especialidad.idEspecialidad))
-    .map((t) => ({ id: t.idServicio, label: t.nombreServicio, grupo: t.especialidad.nombreEspecialidad, grupoId: t.especialidad.idEspecialidad }))
-    .sort((a, b) => a.grupo.localeCompare(b.grupo) || a.label.localeCompare(b.label))
+    .sort((a, b) => a.especialidad.nombreEspecialidad.localeCompare(b.especialidad.nombreEspecialidad) || a.nombreServicio.localeCompare(b.nombreServicio))
 
-  // Zonas de la localidad elegida. La burbuja lleva la localidad para no confundir
-  // zonas con el mismo nombre de distintas localidades
+  // Zonas de la localidad elegida. Se les agrega su localidad (como en el perfil) para
+  // que la burbuja diga "Centro (Rosario)" y no se confundan zonas de distintas localidades
   const localidadElegida = localidades.datos.find((l) => String(l.idLocalidad) === idLocalidad)
-  const opcionesZonas: Opcion[] = zonas.datos.map((z) => ({
-    id: z.idZona,
-    label: localidadElegida ? `${z.nombreZona} (${localidadElegida.nombreLocalidad})` : z.nombreZona,
-  }))
+  const opcionesZonas: ZonaResumen[] = zonas.datos.map((z) => ({ ...z, localidad: localidadElegida }))
+  const opcionesEspecialidades: EspecialidadResumen[] = especialidades.datos
 
   return {
     provincias: provincias.datos,
     localidades: localidades.datos,
-    opcionesEspecialidades: especialidades.datos.map((e): Opcion => ({ id: e.idEspecialidad, label: e.nombreEspecialidad })),
+    opcionesEspecialidades,
     opcionesHabilidades,
     opcionesZonas,
     error: especialidades.error ?? tiposDeServicio.error ?? provincias.error ?? localidades.error ?? zonas.error,
