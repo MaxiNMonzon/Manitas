@@ -34,7 +34,7 @@ type Seleccion = Elegidos
 
 // Mismas reglas que valida el backend (CreateProfesionalDto), para avisar antes de enviar.
 // Lo del trabajo se valida igual que en "Mi perfil" (reglas.ts)
-const validar = (c: Campos, s: Seleccion) => ({ ...validarDatosPersonales(c), ...validarTrabajo({ ...c, ...s }) })
+const validar = (campos: Campos, seleccion: Seleccion) => ({ ...validarDatosPersonales(campos), ...validarTrabajo({ ...campos, ...seleccion }) })
 
 export default function RegistroProfesional() {
   const navigate = useNavigate()
@@ -55,11 +55,11 @@ export default function RegistroProfesional() {
   const campo = (nombre: keyof Campos) => ({
     name: nombre,
     value: campos[nombre],
-    onChange: (e: { target: { value: string } }) => {
-      let valor = e.target.value
+    onChange: (evento: { target: { value: string } }) => {
+      let valor = evento.target.value
       if (nombre === 'cbu') valor = valor.replace(/\D/g, '').slice(0, 22) // solo números
-      setCampos((c) => {
-        const nuevo = { ...c, [nombre]: valor }
+      setCampos((anterior) => {
+        const nuevo = { ...anterior, [nombre]: valor }
         if (nombre === 'idProvincia') nuevo.idLocalidad = ''
         return nuevo
       })
@@ -69,8 +69,8 @@ export default function RegistroProfesional() {
     fullWidth: true,
   })
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (evento: FormEvent) => {
+    evento.preventDefault()
     setIntentoEnviar(true)
     setError(null)
     if (Object.keys(validar(campos, seleccion)).length > 0) return
@@ -81,9 +81,9 @@ export default function RegistroProfesional() {
       matriculas: seleccion.matriculas.length ? matriculasParaEnviar(seleccion.matriculas) : undefined,
       cbu: campos.cbu || undefined,
       descripcion: campos.descripcion.trim() || undefined,
-      idsEspecialidades: seleccion.especialidades.map((e) => e.idEspecialidad),
-      idsTiposDeServicio: seleccion.habilidades.map((h) => h.idServicio),
-      idsZonasCobertura: seleccion.zonas.map((z) => z.idZona),
+      idsEspecialidades: seleccion.especialidades.map((especialidad) => especialidad.idEspecialidad),
+      idsTiposDeServicio: seleccion.habilidades.map((habilidad) => habilidad.idServicio),
+      idsZonasCobertura: seleccion.zonas.map((zona) => zona.idZona),
     }
 
     setEnviando(true)
@@ -92,8 +92,8 @@ export default function RegistroProfesional() {
       // Ya registrado: inicia sesión directamente
       await login({ correo: datos.correo, contraseña: datos.contraseña })
       navigate('/app')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo completar el registro')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo completar el registro')
     } finally {
       setEnviando(false)
     }
@@ -116,18 +116,18 @@ export default function RegistroProfesional() {
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField select label="Provincia" {...campo('idProvincia')} helperText="Para buscar tus zonas de trabajo">
-            {catalogos.provincias.map((p) => (
-              <MenuItem key={p.idProvincia} value={String(p.idProvincia)}>
-                {p.nombreProvincia}
+            {catalogos.provincias.map((provincia) => (
+              <MenuItem key={provincia.idProvincia} value={String(provincia.idProvincia)}>
+                {provincia.nombreProvincia}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField select label="Localidad" disabled={!campos.idProvincia} {...campo('idLocalidad')}>
-            {catalogos.localidades.map((l) => (
-              <MenuItem key={l.idLocalidad} value={String(l.idLocalidad)}>
-                {l.nombreLocalidad}
+            {catalogos.localidades.map((localidad) => (
+              <MenuItem key={localidad.idLocalidad} value={String(localidad.idLocalidad)}>
+                {localidad.nombreLocalidad}
               </MenuItem>
             ))}
           </TextField>
@@ -147,8 +147,8 @@ export default function RegistroProfesional() {
           opciones={{ especialidades: catalogos.opcionesEspecialidades, habilidades: catalogos.opcionesHabilidades, zonas: catalogos.opcionesZonas }}
           errores={errores}
           mostrarErroresMatriculas={intentoEnviar}
-          onCambiarEspecialidades={(elegidas) => setSeleccion((s) => conEspecialidades(s, elegidas))}
-          onCambiar={(cambios) => setSeleccion((s) => ({ ...s, ...cambios }))}
+          onCambiarEspecialidades={(elegidas) => setSeleccion((anterior) => conEspecialidades(anterior, elegidas))}
+          onCambiar={(cambios) => setSeleccion((anterior) => ({ ...anterior, ...cambios }))}
           zonasDeshabilitadas={!campos.idLocalidad}
           ayudaZonas={!campos.idLocalidad ? 'Primero elegí provincia y localidad' : undefined}
         />

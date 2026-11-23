@@ -18,7 +18,7 @@ export interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth debe usarse dentro de <AuthProvider>')
-  return ctx
+  const contexto = useContext(AuthContext)
+  if (!contexto) throw new Error('useAuth debe usarse dentro de <AuthProvider>')
+  return contexto
 }

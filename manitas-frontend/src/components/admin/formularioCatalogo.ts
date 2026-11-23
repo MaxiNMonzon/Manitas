@@ -6,10 +6,10 @@ import type { Catalogo } from '../../pages/admin/catalogos'
 // Los valores con los que arranca: vacíos en un alta, los de la fila al editar
 export function valoresIniciales(catalogo: Catalogo, fila: Fila | null): Fila {
   return Object.fromEntries(
-    catalogo.campos.map((c) => {
-      const desdeFila = fila ? (c.desdeFila ? c.desdeFila(fila) : fila[c.clave]) : undefined
-      const vacio = c.tipo === 'referencias' ? [] : c.tipo === 'referencia' ? null : ''
-      return [c.clave, desdeFila ?? vacio]
+    catalogo.campos.map((campo) => {
+      const desdeFila = fila ? (campo.desdeFila ? campo.desdeFila(fila) : fila[campo.clave]) : undefined
+      const vacio = campo.tipo === 'referencias' ? [] : campo.tipo === 'referencia' ? null : ''
+      return [campo.clave, desdeFila ?? vacio]
     }),
   )
 }
@@ -18,29 +18,29 @@ export function valoresIniciales(catalogo: Catalogo, fila: Fila | null): Fila {
 export function errores(catalogo: Catalogo, valores: Fila): Record<string, string> {
   return Object.fromEntries(
     catalogo.campos
-      .filter((c) => c.requerido)
-      .filter((c) => {
-        const v = valores[c.clave]
-        return v === null || v === undefined || String(v).trim() === '' || (c.tipo === 'numero' && Number.isNaN(Number(v)))
+      .filter((campo) => campo.requerido)
+      .filter((campo) => {
+        const valor = valores[campo.clave]
+        return valor === null || valor === undefined || String(valor).trim() === '' || (campo.tipo === 'numero' && Number.isNaN(Number(valor)))
       })
-      .map((c) => [c.clave, 'Completá este dato']),
+      .map((campo) => [campo.clave, 'Completá este dato']),
   )
 }
 
 // Arma el cuerpo como lo espera el DTO del back
 export function cuerpoParaEnviar(catalogo: Catalogo, valores: Fila, editando: boolean): Fila {
   const cuerpo: Fila = {}
-  for (const c of catalogo.campos) {
-    const v = valores[c.clave]
-    if (c.tipo === 'numero' || c.tipo === 'referencia') {
-      if (v !== null && v !== '') cuerpo[c.clave] = Number(v)
-    } else if (c.tipo === 'referencias') {
-      cuerpo[c.clave] = v
+  for (const campo of catalogo.campos) {
+    const valor = valores[campo.clave]
+    if (campo.tipo === 'numero' || campo.tipo === 'referencia') {
+      if (valor !== null && valor !== '') cuerpo[campo.clave] = Number(valor)
+    } else if (campo.tipo === 'referencias') {
+      cuerpo[campo.clave] = valor
     } else {
-      const t = String(v ?? '').trim()
+      const texto = String(valor ?? '').trim()
       // Un opcional vacío: en el alta no se manda; al editar se borra
-      if (t) cuerpo[c.clave] = t
-      else if (editando) cuerpo[c.clave] = null
+      if (texto) cuerpo[campo.clave] = texto
+      else if (editando) cuerpo[campo.clave] = null
     }
   }
   return cuerpo

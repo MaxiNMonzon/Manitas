@@ -17,15 +17,15 @@ export default function OlvideContrasena() {
 
   const correoValido = /^\S+@\S+\.\S+$/.test(correo.trim())
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (evento: FormEvent) => {
+    evento.preventDefault()
     setError(null)
     setEnviando(true)
     try {
       const { mensaje } = await pedirLinkDeContraseña(correo)
       setListo(mensaje)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo mandar el pedido')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo mandar el pedido')
     } finally {
       setEnviando(false)
     }
@@ -57,7 +57,7 @@ export default function OlvideContrasena() {
               required
               fullWidth
               value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
+              onChange={(evento) => setCorreo(evento.target.value)}
             />
 
             <Button type="submit" variant="contained" size="large" fullWidth loading={enviando} disabled={!correoValido}>

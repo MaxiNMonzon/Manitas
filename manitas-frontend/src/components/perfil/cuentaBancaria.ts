@@ -34,7 +34,7 @@ export function entidadDeCuenta(numero: string): string | null {
 }
 
 function digitoVerificador(digitos: string, pesos: number[]): number {
-  const suma = [...digitos].reduce((s, d, i) => s + Number(d) * pesos[i], 0)
+  const suma = [...digitos].reduce((acumulado, digito, indice) => acumulado + Number(digito) * pesos[indice], 0)
   return (10 - (suma % 10)) % 10
 }
 

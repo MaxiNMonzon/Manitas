@@ -29,7 +29,7 @@ interface Props {
 // El cliente le pide presupuesto a un profesional (POST /solicitud-de-servicio): qué necesita,
 // de cuál de sus especialidades y el turno de la visita (uno de los libres del profesional).
 // El profesional tiene 48 h para confirmarla
-export default function SolicitarPresupuestoDialog({ profesional: p, onClose, onCreada }: Props) {
+export default function SolicitarPresupuestoDialog({ profesional, onClose, onCreada }: Props) {
   const theme = useTheme()
   const pantallaChica = useMediaQuery(theme.breakpoints.down('sm'))
   const [idEspecialidad, setIdEspecialidad] = useState<number | ''>('')
@@ -39,7 +39,7 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
   const [enviando, setEnviando] = useState(false)
 
   // Si hace una sola cosa, ya queda elegida
-  const especialidad = p?.oficios.length === 1 ? p.oficios[0].idEspecialidad : idEspecialidad
+  const especialidad = profesional?.oficios.length === 1 ? profesional.oficios[0].idEspecialidad : idEspecialidad
   const listo = !!especialidad && descripcion.trim().length >= 5 && inicio !== null
 
   const cerrar = () => {
@@ -51,12 +51,12 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
   }
 
   const enviar = async () => {
-    if (!p || !listo) return
+    if (!profesional || !listo) return
     setEnviando(true)
     setError(null)
     try {
       await crearSolicitud({
-        idProfesional: p.idUsuario,
+        idProfesional: profesional.idUsuario,
         idEspecialidad: Number(especialidad),
         descripcionProblema: descripcion.trim(),
         inicioTurno: new Date(inicio!),
@@ -67,47 +67,47 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
       const limite = dayjs(inicio).isBefore(en48hs) ? dayjs(inicio) : en48hs
       cerrar()
       onCreada(
-        `Solicitud enviada a ${p.nombre}. Visita pedida para el ${cuando}. ` +
+        `Solicitud enviada a ${profesional.nombre}. Visita pedida para el ${cuando}. ` +
           `Tiene tiempo de responder hasta el ${limite.format('dddd DD/MM [a las] HH:mm')}: te avisamos cuando confirme.`,
       )
-    } catch (e) {
+    } catch (fallo) {
       // Ej: "El turno ya no esta libre"
-      setError(e instanceof Error ? e.message : 'No se pudo enviar la solicitud')
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo enviar la solicitud')
     } finally {
       setEnviando(false)
     }
   }
 
   return (
-    <Dialog open={p !== null} onClose={cerrar} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
+    <Dialog open={profesional !== null} onClose={cerrar} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
       <DialogTitle>Solicitar turno</DialogTitle>
       <DialogContent dividers>
-        {p && (
+        {profesional && (
           <Stack spacing={2.5}>
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-              <AvatarProfesional profesional={p} tamaño={48} />
+              <AvatarProfesional profesional={profesional} tamaño={48} />
               <div>
                 <Typography sx={{ fontWeight: 600 }}>
-                  {p.nombre} {p.apellido}
+                  {profesional.nombre} {profesional.apellido}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {p.costoVisita ? `Visita: ${formatoPesos(p.costoVisita)}` : 'Visita sin cargo'} · Presupuesto a confirmar
+                  {profesional.costoVisita ? `Visita: ${formatoPesos(profesional.costoVisita)}` : 'Visita sin cargo'} · Presupuesto a confirmar
                 </Typography>
               </div>
             </Stack>
 
             {error && <Alert severity="error">{error}</Alert>}
 
-            {p.oficios.length > 1 && (
+            {profesional.oficios.length > 1 && (
               <TextField
                 select
                 label="¿Qué necesitás?"
                 value={idEspecialidad}
-                onChange={(e) => setIdEspecialidad(Number(e.target.value))}
+                onChange={(evento) => setIdEspecialidad(Number(evento.target.value))}
               >
-                {p.oficios.map((o) => (
-                  <MenuItem key={o.idEspecialidad} value={o.idEspecialidad}>
-                    {o.nombre}
+                {profesional.oficios.map((oficio) => (
+                  <MenuItem key={oficio.idEspecialidad} value={oficio.idEspecialidad}>
+                    {oficio.nombre}
                   </MenuItem>
                 ))}
               </TextField>
@@ -119,7 +119,7 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
               multiline
               minRows={3}
               value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value.slice(0, MAX_DESCRIPCION))}
+              onChange={(evento) => setDescripcion(evento.target.value.slice(0, MAX_DESCRIPCION))}
               helperText={`${descripcion.length}/${MAX_DESCRIPCION}`}
             />
 
@@ -127,7 +127,7 @@ export default function SolicitarPresupuestoDialog({ profesional: p, onClose, on
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Elegí el día y la hora de la visita
               </Typography>
-              <SelectorTurno idProfesional={p.idUsuario} valor={inicio} onChange={setInicio} etiquetaHora="Hora de la visita" />
+              <SelectorTurno idProfesional={profesional.idUsuario} valor={inicio} onChange={setInicio} etiquetaHora="Hora de la visita" />
             </div>
           </Stack>
         )}

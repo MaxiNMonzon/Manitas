@@ -60,8 +60,8 @@ export default function Layout() {
             slotProps={{ indicator: { sx: { bgcolor: 'common.white', height: 3 } } }}
             sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center', alignSelf: 'stretch', '& .MuiTabs-flexContainer': { height: '100%', justifyContent: 'center' } }}
           >
-            {pestañas.map((p) => (
-              <Tab key={p.path} value={p.path} label={p.label} icon={p.icono} iconPosition="start" sx={{ minHeight: ALTO_BARRA.md, fontSize: '0.95rem' }} />
+            {pestañas.map((pestaña) => (
+              <Tab key={pestaña.path} value={pestaña.path} label={pestaña.label} icon={pestaña.icono} iconPosition="start" sx={{ minHeight: ALTO_BARRA.md, fontSize: '0.95rem' }} />
             ))}
           </Tabs>
           <Box sx={{ flexGrow: 1, display: { xs: 'block', md: 'none' } }} />
@@ -77,11 +77,11 @@ export default function Layout() {
       {/* Pestañas abajo en celulares y tablets */}
       <Paper
         elevation={8}
-        sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: { xs: 'block', md: 'none' }, zIndex: (t) => t.zIndex.appBar }}
+        sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: { xs: 'block', md: 'none' }, zIndex: (tema) => tema.zIndex.appBar }}
       >
         <BottomNavigation value={activa} onChange={(_, valor: string) => ir(valor)} showLabels sx={{ height: ALTO_NAV_INFERIOR }}>
-          {pestañas.map((p) => (
-            <BottomNavigationAction key={p.path} value={p.path} label={p.label} icon={p.icono} sx={{ minWidth: 0, px: 0.5 }} />
+          {pestañas.map((pestaña) => (
+            <BottomNavigationAction key={pestaña.path} value={pestaña.path} label={pestaña.label} icon={pestaña.icono} sx={{ minWidth: 0, px: 0.5 }} />
           ))}
         </BottomNavigation>
       </Paper>

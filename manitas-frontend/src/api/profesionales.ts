@@ -5,10 +5,10 @@ import type { CalificacionesDetalle, Categoria, Especialidad, ProfesionalApi, Pr
 // GET /especialidad (público): las categorías del buscador
 export async function traerEspecialidades(): Promise<Categoria[]> {
   const lista = await api.get<Especialidad[]>('/especialidad')
-  return lista.map((e) => ({
-    idEspecialidad: e.idEspecialidad,
-    nombre: e.nombreEspecialidad,
-    palabrasClave: (e.palabrasClave ?? '').split(',').map((p) => p.trim()).filter(Boolean),
+  return lista.map((especialidad) => ({
+    idEspecialidad: especialidad.idEspecialidad,
+    nombre: especialidad.nombreEspecialidad,
+    palabrasClave: (especialidad.palabrasClave ?? '').split(',').map((palabra) => palabra.trim()).filter(Boolean),
   }))
 }
 
@@ -31,18 +31,18 @@ export async function buscarProfesionales(filtros: {
   if (texto) query.set('q', texto)
   const lista = await api.get<ProfesionalApi[]>(`/profesional${query.size ? `?${query}` : ''}`)
 
-  return lista.map((p) => ({
-    idUsuario: p.idUsuario,
-    nombre: p.nombre,
-    apellido: p.apellido,
+  return lista.map((profesional) => ({
+    idUsuario: profesional.idUsuario,
+    nombre: profesional.nombre,
+    apellido: profesional.apellido,
     fotoUrl: null,
-    especialidades: p.especialidades.map((e) => e.nombreEspecialidad),
-    oficios: p.especialidades.map((e) => ({ idEspecialidad: e.idEspecialidad, nombre: e.nombreEspecialidad })),
-    zona: p.zonasDeCobertura.map((z) => z.nombreZona).join(', ') || 'Sin zona cargada',
-    calificacion: p.calificacion?.promedio ?? 0,
-    cantidadCalificaciones: p.calificacion?.cantidad ?? 0,
-    descripcion: p.descripcion ?? '',
-    costoVisita: p.costoVisita ?? null,
-    habilidades: (p.tiposDeServicio ?? []).map((t) => t.nombreServicio),
+    especialidades: profesional.especialidades.map((especialidad) => especialidad.nombreEspecialidad),
+    oficios: profesional.especialidades.map((especialidad) => ({ idEspecialidad: especialidad.idEspecialidad, nombre: especialidad.nombreEspecialidad })),
+    zona: profesional.zonasDeCobertura.map((zona) => zona.nombreZona).join(', ') || 'Sin zona cargada',
+    calificacion: profesional.calificacion?.promedio ?? 0,
+    cantidadCalificaciones: profesional.calificacion?.cantidad ?? 0,
+    descripcion: profesional.descripcion ?? '',
+    costoVisita: profesional.costoVisita ?? null,
+    habilidades: (profesional.tiposDeServicio ?? []).map((habilidad) => habilidad.nombreServicio),
   }))
 }

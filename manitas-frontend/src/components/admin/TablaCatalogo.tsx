@@ -21,7 +21,7 @@ interface Props {
   filas: Fila[]
   // En celular se muestra una tarjeta por fila en vez de la tabla
   angosto: boolean
-  onElegir: (f: Fila) => void
+  onElegir: (fila: Fila) => void
 }
 
 // El listado de un catálogo: tabla en compu y tarjetas en celular, de a 50 con "Ver más".
@@ -35,12 +35,12 @@ export default function TablaCatalogo({ catalogo, filas, angosto, onElegir }: Pr
       {angosto ? (
         // Celular: una tarjeta por fila
         <Stack spacing={1}>
-          {visibles.map((f) => (
-            <Paper key={String(f[catalogo.id])} variant="outlined" sx={{ p: 1.5, cursor: 'pointer' }} onClick={() => onElegir(f)}>
-              <Typography sx={{ fontWeight: 600 }}>{catalogo.columnas[0].valor(f)}</Typography>
-              {catalogo.columnas.slice(1).map((c) => (
-                <Typography key={c.label} variant="body2" color="text.secondary">
-                  {c.label}: {c.valor(f)}
+          {visibles.map((fila) => (
+            <Paper key={String(fila[catalogo.id])} variant="outlined" sx={{ p: 1.5, cursor: 'pointer' }} onClick={() => onElegir(fila)}>
+              <Typography sx={{ fontWeight: 600 }}>{catalogo.columnas[0].valor(fila)}</Typography>
+              {catalogo.columnas.slice(1).map((columna) => (
+                <Typography key={columna.label} variant="body2" color="text.secondary">
+                  {columna.label}: {columna.valor(fila)}
                 </Typography>
               ))}
             </Paper>
@@ -51,20 +51,20 @@ export default function TablaCatalogo({ catalogo, filas, angosto, onElegir }: Pr
           <Table size="small">
             <TableHead>
               <TableRow>
-                {catalogo.columnas.map((c) => (
-                  <TableCell key={c.label} sx={{ fontWeight: 700 }}>
-                    {c.label}
+                {catalogo.columnas.map((columna) => (
+                  <TableCell key={columna.label} sx={{ fontWeight: 700 }}>
+                    {columna.label}
                   </TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {visibles.map((f) => (
-                <TableRow key={String(f[catalogo.id])} hover sx={{ cursor: 'pointer' }} onClick={() => onElegir(f)}>
-                  {catalogo.columnas.map((c) => (
-                    <TableCell key={c.label} sx={{ maxWidth: 360 }}>
+              {visibles.map((fila) => (
+                <TableRow key={String(fila[catalogo.id])} hover sx={{ cursor: 'pointer' }} onClick={() => onElegir(fila)}>
+                  {catalogo.columnas.map((columna) => (
+                    <TableCell key={columna.label} sx={{ maxWidth: 360 }}>
                       <Typography variant="body2" noWrap>
-                        {c.valor(f)}
+                        {columna.valor(fila)}
                       </Typography>
                     </TableCell>
                   ))}
@@ -77,7 +77,7 @@ export default function TablaCatalogo({ catalogo, filas, angosto, onElegir }: Pr
 
       {filas.length > cantidadVisible && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button onClick={() => setCantidadVisible((c) => c + POR_PAGINA)}>Ver más ({filas.length - cantidadVisible})</Button>
+          <Button onClick={() => setCantidadVisible((anterior) => anterior + POR_PAGINA)}>Ver más ({filas.length - cantidadVisible})</Button>
         </Box>
       )}
     </>

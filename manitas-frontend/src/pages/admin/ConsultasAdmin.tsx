@@ -33,8 +33,8 @@ export default function ConsultasAdmin() {
   const consultas = useCarga('consultas-admin', () => api.get<Consulta[]>('/consulta'))
 
   const todas = consultas.datos ?? []
-  const pendientes = todas.filter((c) => !c.respondida)
-  const lista = verRespondidas ? todas.filter((c) => c.respondida) : pendientes
+  const pendientes = todas.filter((consulta) => !consulta.respondida)
+  const lista = verRespondidas ? todas.filter((consulta) => consulta.respondida) : pendientes
 
   const marcar = async (id: number) => {
     setMarcando(id)
@@ -42,8 +42,8 @@ export default function ConsultasAdmin() {
     try {
       await api.patch(`/consulta/${id}/respondida`, {})
       consultas.recargar()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo marcar')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo marcar')
     } finally {
       setMarcando(null)
     }
@@ -55,7 +55,7 @@ export default function ConsultasAdmin() {
         Consultas de Ayuda
       </Typography>
       <Paper variant="outlined" sx={{ mb: 2 }}>
-        <Tabs value={verRespondidas ? 1 : 0} onChange={(_, v: number) => setVerRespondidas(v === 1)} variant="fullWidth">
+        <Tabs value={verRespondidas ? 1 : 0} onChange={(_, elegida: number) => setVerRespondidas(elegida === 1)} variant="fullWidth">
           <Tab label={`Sin responder (${pendientes.length})`} />
           <Tab label="Respondidas" />
         </Tabs>
@@ -75,28 +75,28 @@ export default function ConsultasAdmin() {
         </Paper>
       ) : (
         <Stack spacing={1.5}>
-          {lista.map((c) => (
-            <Paper key={c.idConsulta} variant="outlined" sx={{ p: 2 }}>
+          {lista.map((consulta) => (
+            <Paper key={consulta.idConsulta} variant="outlined" sx={{ p: 2 }}>
               <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
-                <Chip size="small" color="primary" label={c.tema} />
-                <Chip size="small" variant="outlined" label={c.rol} />
+                <Chip size="small" color="primary" label={consulta.tema} />
+                <Chip size="small" variant="outlined" label={consulta.rol} />
                 <Typography variant="body2" color="text.secondary">
-                  {new Date(c.fecha).toLocaleString('es-AR')} · {c.correo}
-                  {c.correoCuenta && c.correoCuenta !== c.correo ? ` (cuenta: ${c.correoCuenta})` : ''}
+                  {new Date(consulta.fecha).toLocaleString('es-AR')} · {consulta.correo}
+                  {consulta.correoCuenta && consulta.correoCuenta !== consulta.correo ? ` (cuenta: ${consulta.correoCuenta})` : ''}
                 </Typography>
               </Stack>
-              <Typography sx={{ whiteSpace: 'pre-line', mb: 1.5 }}>{c.mensaje}</Typography>
+              <Typography sx={{ whiteSpace: 'pre-line', mb: 1.5 }}>{consulta.mensaje}</Typography>
               <Stack direction="row" spacing={1}>
                 <Button
                   size="small"
                   variant="outlined"
                   startIcon={<MailOutlinedIcon />}
-                  href={`mailto:${c.correo}?subject=${encodeURIComponent(`Manitas: tu consulta sobre ${c.tema}`)}`}
+                  href={`mailto:${consulta.correo}?subject=${encodeURIComponent(`Manitas: tu consulta sobre ${consulta.tema}`)}`}
                 >
                   Responder por correo
                 </Button>
-                {!c.respondida && (
-                  <Button size="small" startIcon={<DoneIcon />} loading={marcando === c.idConsulta} onClick={() => marcar(c.idConsulta)}>
+                {!consulta.respondida && (
+                  <Button size="small" startIcon={<DoneIcon />} loading={marcando === consulta.idConsulta} onClick={() => marcar(consulta.idConsulta)}>
                     Marcar como respondida
                   </Button>
                 )}

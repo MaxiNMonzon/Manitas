@@ -18,7 +18,7 @@ interface Props {
   vacio: string
   // Dirección del cliente (donde son las visitas)
   direccion: string | null
-  onVerDetalles: (s: SolicitudResumen) => void
+  onVerDetalles: (solicitud: SolicitudResumen) => void
 }
 
 // La lista de una pestaña, de a 5 con un botón "Ver más".
@@ -47,14 +47,14 @@ export default function ListaSolicitudes({ lista, cargando, vacio, direccion, on
   return (
     <>
       <Stack spacing={1.5}>
-        {lista.slice(0, cantidadVisible).map((s) => (
-          <TarjetaSolicitudCliente key={s.idSolicitud} solicitud={s} direccion={direccion} onVerDetalles={() => onVerDetalles(s)} />
+        {lista.slice(0, cantidadVisible).map((solicitud) => (
+          <TarjetaSolicitudCliente key={solicitud.idSolicitud} solicitud={solicitud} direccion={direccion} onVerDetalles={() => onVerDetalles(solicitud)} />
         ))}
       </Stack>
 
       {lista.length > cantidadVisible && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button onClick={() => setCantidadVisible((c) => c + POR_PAGINA)}>Ver más ({lista.length - cantidadVisible})</Button>
+          <Button onClick={() => setCantidadVisible((anterior) => anterior + POR_PAGINA)}>Ver más ({lista.length - cantidadVisible})</Button>
         </Box>
       )}
     </>

@@ -24,14 +24,14 @@ interface Props {
 
 // Proponer otro horario para la visita o el trabajo: se elige otro turno libre del profesional.
 // Queda en "reprogramación" hasta que el otro acepte (o rechace y sigue el horario de antes)
-export default function ReprogramarDialog({ solicitud: s, idProfesional, conQuien, onClose, enviar, onEnviado }: Props) {
+export default function ReprogramarDialog({ solicitud, idProfesional, conQuien, onClose, enviar, onEnviado }: Props) {
   const [inicio, setInicio] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const base = s?.estadoServicio === 'reprogramacion' ? s.estadoAnterior : s?.estadoServicio
+  const base = solicitud?.estadoServicio === 'reprogramacion' ? solicitud.estadoAnterior : solicitud?.estadoServicio
   const esTrabajo = base === 'contratado'
-  const actual = esTrabajo ? s?.fechaInicio : s?.fechaVisita
+  const actual = esTrabajo ? solicitud?.fechaInicio : solicitud?.fechaVisita
 
   const cerrar = () => {
     setInicio(null)
@@ -47,21 +47,21 @@ export default function ReprogramarDialog({ solicitud: s, idProfesional, conQuie
       await enviar(new Date(inicio))
       cerrar()
       onEnviado()
-    } catch (e) {
+    } catch (fallo) {
       // Ej: "El horario esta tomado" o "Solo se puede reprogramar hasta 12 hs antes"
-      setError(e instanceof Error ? e.message : 'No se pudo proponer el horario')
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo proponer el horario')
     } finally {
       setEnviando(false)
     }
   }
 
   return (
-    <Dialog open={s !== null} onClose={cerrar} fullWidth maxWidth="xs">
+    <Dialog open={solicitud !== null} onClose={cerrar} fullWidth maxWidth="xs">
       <DialogTitle>{esTrabajo ? 'Cambiar el horario del trabajo' : 'Cambiar el horario de la visita'}</DialogTitle>
       <DialogContent>
-        {s && (
+        {solicitud && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {s.descripcionProblema}
+            {solicitud.descripcionProblema}
             {actual && (
               <>
                 <br />
@@ -75,7 +75,7 @@ export default function ReprogramarDialog({ solicitud: s, idProfesional, conQuie
             {error}
           </Alert>
         )}
-        {s && (
+        {solicitud && (
           <SelectorTurno
             idProfesional={idProfesional}
             valor={inicio}

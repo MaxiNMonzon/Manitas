@@ -28,7 +28,7 @@ interface Props {
 // Lista editable de matrículas: especialidad + número + descripción opcional, con "Agregar matrícula"
 export default function EditorMatriculas({ especialidades, matriculas, onChange, errores = {} }: Props) {
   const cambiar = (clave: number, cambios: Partial<MatriculaForm>) =>
-    onChange(matriculas.map((m) => (m.clave === clave ? { ...m, ...cambios } : m)))
+    onChange(matriculas.map((matricula) => (matricula.clave === clave ? { ...matricula, ...cambios } : matricula)))
   const sinEspecialidades = especialidades.length === 0
 
   return (
@@ -37,8 +37,8 @@ export default function EditorMatriculas({ especialidades, matriculas, onChange,
         Matrículas
       </Typography>
       <Stack spacing={1.5}>
-        {matriculas.map((m) => (
-          <Paper key={m.clave} variant="outlined" sx={{ p: 1.5 }}>
+        {matriculas.map((matricula) => (
+          <Paper key={matricula.clave} variant="outlined" sx={{ p: 1.5 }}>
             <Grid container spacing={1.5} sx={{ alignItems: 'flex-start' }}>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
@@ -46,13 +46,13 @@ export default function EditorMatriculas({ especialidades, matriculas, onChange,
                   fullWidth
                   size="small"
                   label="Especialidad"
-                  value={m.idEspecialidad}
-                  onChange={(e) => cambiar(m.clave, { idEspecialidad: e.target.value })}
-                  error={errores[m.clave] === 'Elegí la especialidad'}
+                  value={matricula.idEspecialidad}
+                  onChange={(evento) => cambiar(matricula.clave, { idEspecialidad: evento.target.value })}
+                  error={errores[matricula.clave] === 'Elegí la especialidad'}
                 >
-                  {especialidades.map((e) => (
-                    <MenuItem key={e.idEspecialidad} value={String(e.idEspecialidad)}>
-                      {e.nombreEspecialidad}
+                  {especialidades.map((especialidad) => (
+                    <MenuItem key={especialidad.idEspecialidad} value={String(especialidad.idEspecialidad)}>
+                      {especialidad.nombreEspecialidad}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -62,9 +62,9 @@ export default function EditorMatriculas({ especialidades, matriculas, onChange,
                   fullWidth
                   size="small"
                   label="Número"
-                  value={m.numero}
-                  onChange={(e) => cambiar(m.clave, { numero: e.target.value.slice(0, MAX_NUMERO_MATRICULA) })}
-                  error={Boolean(errores[m.clave]) && errores[m.clave] !== 'Elegí la especialidad'}
+                  value={matricula.numero}
+                  onChange={(evento) => cambiar(matricula.clave, { numero: evento.target.value.slice(0, MAX_NUMERO_MATRICULA) })}
+                  error={Boolean(errores[matricula.clave]) && errores[matricula.clave] !== 'Elegí la especialidad'}
                 />
               </Grid>
               <Grid size={{ xs: 10, sm: 4 }}>
@@ -73,19 +73,19 @@ export default function EditorMatriculas({ especialidades, matriculas, onChange,
                   size="small"
                   label="Descripción (opcional)"
                   placeholder="Ej: Gasista de 1ª categoría"
-                  value={m.descripcion}
-                  onChange={(e) => cambiar(m.clave, { descripcion: e.target.value.slice(0, MAX_DESCRIPCION_MATRICULA) })}
+                  value={matricula.descripcion}
+                  onChange={(evento) => cambiar(matricula.clave, { descripcion: evento.target.value.slice(0, MAX_DESCRIPCION_MATRICULA) })}
                 />
               </Grid>
               <Grid size={{ xs: 2, sm: 1 }} sx={{ textAlign: 'right' }}>
                 <Tooltip title="Sacar matrícula">
-                  <IconButton aria-label="Sacar matrícula" onClick={() => onChange(matriculas.filter((x) => x.clave !== m.clave))}>
+                  <IconButton aria-label="Sacar matrícula" onClick={() => onChange(matriculas.filter((otra) => otra.clave !== matricula.clave))}>
                     <DeleteOutlinedIcon />
                   </IconButton>
                 </Tooltip>
               </Grid>
             </Grid>
-            {errores[m.clave] && <FormHelperText error>{errores[m.clave]}</FormHelperText>}
+            {errores[matricula.clave] && <FormHelperText error>{errores[matricula.clave]}</FormHelperText>}
           </Paper>
         ))}
       </Stack>
@@ -117,16 +117,16 @@ export function ListaMatriculas({ matriculas }: { matriculas: { numero: string; 
             Sin matrículas cargadas
           </Typography>
         ) : (
-          matriculas.map((m) => (
-            <Stack key={`${m.especialidad}-${m.numero}`} direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          matriculas.map((matricula) => (
+            <Stack key={`${matricula.especialidad}-${matricula.numero}`} direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
               <WorkspacePremiumIcon fontSize="small" color="primary" />
-              <Chip size="small" color="primary" variant="outlined" label={m.especialidad} />
+              <Chip size="small" color="primary" variant="outlined" label={matricula.especialidad} />
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {m.numero}
+                {matricula.numero}
               </Typography>
-              {m.descripcion && (
+              {matricula.descripcion && (
                 <Typography variant="body2" color="text.secondary">
-                  · {m.descripcion}
+                  · {matricula.descripcion}
                 </Typography>
               )}
             </Stack>

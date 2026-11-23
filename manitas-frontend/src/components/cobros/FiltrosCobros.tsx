@@ -22,7 +22,7 @@ export default function FiltrosCobros({ ancla, onClose, filtros, onChange, espec
   // Agrega o saca un valor de un filtro
   const alternar = <K extends keyof Filtros>(clave: K, valor: Filtros[K][number]) => {
     const lista = filtros[clave] as Filtros[K][number][]
-    onChange({ ...filtros, [clave]: lista.includes(valor) ? lista.filter((v) => v !== valor) : [...lista, valor] })
+    onChange({ ...filtros, [clave]: lista.includes(valor) ? lista.filter((otro) => otro !== valor) : [...lista, valor] })
   }
 
   return (
@@ -39,13 +39,13 @@ export default function FiltrosCobros({ ancla, onClose, filtros, onChange, espec
             Estado
           </Typography>
           <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-            {ORDEN_ESTADOS.map((e) => (
+            {ORDEN_ESTADOS.map((estado) => (
               <Chip
-                key={e}
-                label={estadosCobro[e].label}
-                color={filtros.estados.includes(e) ? estadosCobro[e].color : 'default'}
-                variant={filtros.estados.includes(e) ? 'filled' : 'outlined'}
-                onClick={() => alternar('estados', e)}
+                key={estado}
+                label={estadosCobro[estado].label}
+                color={filtros.estados.includes(estado) ? estadosCobro[estado].color : 'default'}
+                variant={filtros.estados.includes(estado) ? 'filled' : 'outlined'}
+                onClick={() => alternar('estados', estado)}
               />
             ))}
           </Stack>
@@ -55,13 +55,13 @@ export default function FiltrosCobros({ ancla, onClose, filtros, onChange, espec
             Concepto
           </Typography>
           <Stack direction="row" spacing={1}>
-            {(['trabajo', 'visita'] as const).map((c) => (
+            {(['trabajo', 'visita'] as const).map((tipo) => (
               <Chip
-                key={c}
-                label={c === 'trabajo' ? 'Trabajos' : 'Visitas'}
-                color={filtros.conceptos.includes(c) ? 'primary' : 'default'}
-                variant={filtros.conceptos.includes(c) ? 'filled' : 'outlined'}
-                onClick={() => alternar('conceptos', c)}
+                key={tipo}
+                label={tipo === 'trabajo' ? 'Trabajos' : 'Visitas'}
+                color={filtros.conceptos.includes(tipo) ? 'primary' : 'default'}
+                variant={filtros.conceptos.includes(tipo) ? 'filled' : 'outlined'}
+                onClick={() => alternar('conceptos', tipo)}
               />
             ))}
           </Stack>
@@ -72,13 +72,13 @@ export default function FiltrosCobros({ ancla, onClose, filtros, onChange, espec
               Especialidad
             </Typography>
             <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-              {especialidades.map((e) => (
+              {especialidades.map((especialidad) => (
                 <Chip
-                  key={e}
-                  label={e}
-                  color={filtros.especialidades.includes(e) ? 'primary' : 'default'}
-                  variant={filtros.especialidades.includes(e) ? 'filled' : 'outlined'}
-                  onClick={() => alternar('especialidades', e)}
+                  key={especialidad}
+                  label={especialidad}
+                  color={filtros.especialidades.includes(especialidad) ? 'primary' : 'default'}
+                  variant={filtros.especialidades.includes(especialidad) ? 'filled' : 'outlined'}
+                  onClick={() => alternar('especialidades', especialidad)}
                 />
               ))}
             </Stack>

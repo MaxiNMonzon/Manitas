@@ -13,7 +13,7 @@ export const MAX_NUMERO_MATRICULA = 30
 export const MAX_DESCRIPCION_MATRICULA = 200
 
 export function nuevaMatricula(lista: MatriculaForm[], idEspecialidad: number | undefined): MatriculaForm {
-  const clave = lista.reduce((max, m) => Math.max(max, m.clave), 0) + 1
+  const clave = lista.reduce((max, matricula) => Math.max(max, matricula.clave), 0) + 1
   return { clave, numero: '', descripcion: '', idEspecialidad: idEspecialidad ? String(idEspecialidad) : '' }
 }
 
@@ -21,20 +21,20 @@ export function nuevaMatricula(lista: MatriculaForm[], idEspecialidad: number | 
 export function erroresMatriculas(lista: MatriculaForm[]): Record<number, string> {
   const errores: Record<number, string> = {}
   const vistas = new Set<string>()
-  for (const m of lista) {
-    const clave = `${m.idEspecialidad}-${m.numero.trim().toLowerCase()}`
-    if (!m.idEspecialidad) errores[m.clave] = 'Elegí la especialidad'
-    else if (!m.numero.trim()) errores[m.clave] = 'Ingresá el número'
-    else if (vistas.has(clave)) errores[m.clave] = 'Esta matrícula está repetida'
+  for (const matricula of lista) {
+    const clave = `${matricula.idEspecialidad}-${matricula.numero.trim().toLowerCase()}`
+    if (!matricula.idEspecialidad) errores[matricula.clave] = 'Elegí la especialidad'
+    else if (!matricula.numero.trim()) errores[matricula.clave] = 'Ingresá el número'
+    else if (vistas.has(clave)) errores[matricula.clave] = 'Esta matrícula está repetida'
     vistas.add(clave)
   }
   return errores
 }
 
 export function matriculasParaEnviar(lista: MatriculaForm[]): MatriculaRequest[] {
-  return lista.map((m) => ({
-    numero: m.numero.trim(),
-    descripcion: m.descripcion.trim() || undefined,
-    idEspecialidad: Number(m.idEspecialidad),
+  return lista.map((matricula) => ({
+    numero: matricula.numero.trim(),
+    descripcion: matricula.descripcion.trim() || undefined,
+    idEspecialidad: Number(matricula.idEspecialidad),
   }))
 }

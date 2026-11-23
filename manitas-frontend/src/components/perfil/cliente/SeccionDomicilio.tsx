@@ -50,7 +50,7 @@ export default function SeccionDomicilio({ datos, errores, editando, cambiar, zo
     alCambiar: (valor: string) => void,
     deshabilitado = false,
   ) => {
-    const lista = valorActual && !opciones.some((o) => o.id === valorActual.id) && String(valorActual.id) === datos[nombre] ? [valorActual, ...opciones] : opciones
+    const lista = valorActual && !opciones.some((opcion) => opcion.id === valorActual.id) && String(valorActual.id) === datos[nombre] ? [valorActual, ...opciones] : opciones
     return (
       <TextField
         select
@@ -58,13 +58,13 @@ export default function SeccionDomicilio({ datos, errores, editando, cambiar, zo
         label={label}
         value={datos[nombre]}
         disabled={deshabilitado}
-        onChange={(e) => alCambiar(e.target.value)}
+        onChange={(evento) => alCambiar(evento.target.value)}
         error={Boolean(errores[nombre])}
         helperText={errores[nombre]}
       >
-        {lista.map((o) => (
-          <MenuItem key={o.id} value={String(o.id)}>
-            {o.nombre}
+        {lista.map((opcion) => (
+          <MenuItem key={opcion.id} value={String(opcion.id)}>
+            {opcion.nombre}
           </MenuItem>
         ))}
       </TextField>
@@ -101,18 +101,18 @@ export default function SeccionDomicilio({ datos, errores, editando, cambiar, zo
               {desplegable(
                 'idProvincia',
                 'Provincia',
-                provincias.datos.map((pr) => ({ id: pr.idProvincia, nombre: pr.nombreProvincia })),
+                provincias.datos.map((provincia) => ({ id: provincia.idProvincia, nombre: provincia.nombreProvincia })),
                 actual.provincia,
-                (v) => cambiar({ idProvincia: v, idLocalidad: '', idZona: '' }),
+                (valor) => cambiar({ idProvincia: valor, idLocalidad: '', idZona: '' }),
               )}
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               {desplegable(
                 'idLocalidad',
                 'Localidad',
-                localidades.datos.map((l) => ({ id: l.idLocalidad, nombre: l.nombreLocalidad })),
+                localidades.datos.map((localidad) => ({ id: localidad.idLocalidad, nombre: localidad.nombreLocalidad })),
                 actual.localidad,
-                (v) => cambiar({ idLocalidad: v, idZona: '' }),
+                (valor) => cambiar({ idLocalidad: valor, idZona: '' }),
                 !datos.idProvincia,
               )}
             </Grid>
@@ -120,9 +120,9 @@ export default function SeccionDomicilio({ datos, errores, editando, cambiar, zo
               {desplegable(
                 'idZona',
                 'Zona / barrio',
-                zonas.datos.map((z) => ({ id: z.idZona, nombre: z.nombreZona })),
+                zonas.datos.map((zona) => ({ id: zona.idZona, nombre: zona.nombreZona })),
                 actual.zona,
-                (v) => cambiar({ idZona: v }),
+                (valor) => cambiar({ idZona: valor }),
                 !datos.idLocalidad,
               )}
             </Grid>

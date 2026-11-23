@@ -15,9 +15,9 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = tokenStorage.get()
-  let res: Response
+  let respuesta: Response
   try {
-    res = await fetch(`${BASE_URL}${path}`, {
+    respuesta = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -29,14 +29,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new ApiError(0, 'No se pudo conectar con el servidor')
   }
 
-  if (!res.ok) {
+  if (!respuesta.ok) {
     // Nest devuelve { message: string | string[] } en los errores
-    const body = await res.json().catch(() => null)
+    const body = await respuesta.json().catch(() => null)
     const message = Array.isArray(body?.message) ? body.message.join('. ') : body?.message
-    throw new ApiError(res.status, message ?? `Error ${res.status}`)
+    throw new ApiError(respuesta.status, message ?? `Error ${respuesta.status}`)
   }
-  if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
+  if (respuesta.status === 204) return undefined as T
+  return respuesta.json() as Promise<T>
 }
 
 export const api = {

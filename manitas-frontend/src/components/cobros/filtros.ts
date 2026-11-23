@@ -27,5 +27,5 @@ export const cantidadDeFiltros = (filtros: Filtros) => filtros.estados.length + 
 // Los cobros que se listan en un mes. Los que el cliente todavía no pagó se muestran en el mes actual
 export function cobrosDelMes(todos: Cobro[], mes: Dayjs, hoy: Dayjs) {
   const esMesActual = mes.format('YYYY-MM') === hoy.format('YYYY-MM')
-  return todos.filter((c) => (c.fechaPago == null ? esMesActual : mesDe(c) === mes.format('YYYY-MM')))
+  return todos.filter((cobro) => (cobro.fechaPago == null ? esMesActual : mesDe(cobro) === mes.format('YYYY-MM')))
 }

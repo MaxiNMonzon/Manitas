@@ -7,8 +7,8 @@ import { keyframes } from '@emotion/react'
 // Medidor tipo velocímetro para la calificación promedio (de 1 a 5 estrellas).
 // 5 franjas de rojo a verde y una aguja que apunta al promedio.
 
-const CX = 100 // centro del semicírculo (en el viewBox de 200 x 112)
-const CY = 100
+const CENTRO_X = 100 // centro del semicírculo (en el viewBox de 200 x 112)
+const CENTRO_Y = 100
 const RADIO_EXTERNO = 92
 const RADIO_INTERNO = 60
 const LARGO_AGUJA = 74
@@ -21,16 +21,16 @@ const entrar = keyframes`from { transform: rotate(0deg); }`
 // Punto del semicírculo: 0 = extremo izquierdo, 1 = extremo derecho
 function punto(radio: number, fraccion: number) {
   const angulo = Math.PI * (1 - fraccion)
-  return { x: CX + radio * Math.cos(angulo), y: CY - radio * Math.sin(angulo) }
+  return { x: CENTRO_X + radio * Math.cos(angulo), y: CENTRO_Y - radio * Math.sin(angulo) }
 }
 
 // Franja del medidor entre dos fracciones (un "pedazo de dona")
 function franja(desde: number, hasta: number) {
-  const a = punto(RADIO_EXTERNO, desde)
-  const b = punto(RADIO_EXTERNO, hasta)
-  const c = punto(RADIO_INTERNO, hasta)
-  const d = punto(RADIO_INTERNO, desde)
-  return `M ${a.x} ${a.y} A ${RADIO_EXTERNO} ${RADIO_EXTERNO} 0 0 1 ${b.x} ${b.y} L ${c.x} ${c.y} A ${RADIO_INTERNO} ${RADIO_INTERNO} 0 0 0 ${d.x} ${d.y} Z`
+  const externoDesde = punto(RADIO_EXTERNO, desde)
+  const externoHasta = punto(RADIO_EXTERNO, hasta)
+  const internoHasta = punto(RADIO_INTERNO, hasta)
+  const internoDesde = punto(RADIO_INTERNO, desde)
+  return `M ${externoDesde.x} ${externoDesde.y} A ${RADIO_EXTERNO} ${RADIO_EXTERNO} 0 0 1 ${externoHasta.x} ${externoHasta.y} L ${internoHasta.x} ${internoHasta.y} A ${RADIO_INTERNO} ${RADIO_INTERNO} 0 0 0 ${internoDesde.x} ${internoDesde.y} Z`
 }
 
 export default function MedidorCalificacion({ promedio, cantidad }: { promedio: number | null; cantidad: number }) {
@@ -58,32 +58,32 @@ export default function MedidorCalificacion({ promedio, cantidad }: { promedio: 
         aria-label={tiene ? `Calificación ${promedio} de 5: ${nivel.nombre}` : 'Sin calificaciones'}
         sx={{ width: { xs: 140, sm: 150 }, flexShrink: 0, display: 'block' }}
       >
-        {niveles.map((n, i) => (
+        {niveles.map((nivelFranja, indice) => (
           <path
-            key={n.nombre}
-            d={franja(i / niveles.length + (i ? separacion : 0), (i + 1) / niveles.length - (i < niveles.length - 1 ? separacion : 0))}
-            fill={tiene ? n.color : theme.palette.grey[300]}
-            opacity={tiene && n !== nivel ? 0.55 : 1}
+            key={nivelFranja.nombre}
+            d={franja(indice / niveles.length + (indice ? separacion : 0), (indice + 1) / niveles.length - (indice < niveles.length - 1 ? separacion : 0))}
+            fill={tiene ? nivelFranja.color : theme.palette.grey[300]}
+            opacity={tiene && nivelFranja !== nivel ? 0.55 : 1}
           />
         ))}
         {tiene && (
           <Box
             component="g"
             sx={{
-              transformOrigin: `${CX}px ${CY}px`,
+              transformOrigin: `${CENTRO_X}px ${CENTRO_Y}px`,
               transform: `rotate(${fraccion * 180}deg)`,
               animation: `${entrar} 1s ease-out`,
               '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
             }}
           >
             <path
-              d={`M ${CX} ${CY - 5} L ${puntaAguja.x} ${puntaAguja.y} L ${CX} ${CY + 5} Z`}
+              d={`M ${CENTRO_X} ${CENTRO_Y - 5} L ${puntaAguja.x} ${puntaAguja.y} L ${CENTRO_X} ${CENTRO_Y + 5} Z`}
               fill={theme.palette.grey[800]}
             />
           </Box>
         )}
-        <circle cx={CX} cy={CY} r={11} fill={theme.palette.grey[800]} />
-        <circle cx={CX} cy={CY} r={4} fill={theme.palette.background.paper} />
+        <circle cx={CENTRO_X} cy={CENTRO_Y} r={11} fill={theme.palette.grey[800]} />
+        <circle cx={CENTRO_X} cy={CENTRO_Y} r={4} fill={theme.palette.background.paper} />
       </Box>
 
       <Box sx={{ minWidth: 0 }}>

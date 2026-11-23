@@ -74,8 +74,8 @@ export default function SolicitudesCliente() {
   const avisar = (texto: string, tipo: Aviso['tipo'] = 'success') => setMensaje({ texto, tipo })
 
   const confirmandoPago = useVueltaDeMercadoPago({
-    onPagado: (s) => {
-      avisar(s.estadoServicio === 'finalizado' ? '¡Pagado! El trabajo quedó finalizado. Ya podés calificar al profesional.' : '¡Pagado! La visita quedó paga.')
+    onPagado: (solicitud) => {
+      avisar(solicitud.estadoServicio === 'finalizado' ? '¡Pagado! El trabajo quedó finalizado. Ya podés calificar al profesional.' : '¡Pagado! La visita quedó paga.')
       setGrupo('completadas')
     },
     onError: (texto) => avisar(texto, 'warning'),
@@ -87,9 +87,9 @@ export default function SolicitudesCliente() {
   })
 
   const todas = solicitudes.datos ?? []
-  const detalle = todas.find((s) => s.idSolicitud === idDetalle) ?? null
+  const detalle = todas.find((solicitud) => solicitud.idSolicitud === idDetalle) ?? null
   const lista = ordenar(grupo, delGrupo(todas, grupo))
-  const pestaña = pestañas.find((p) => p.valor === grupo)!
+  const pestaña = pestañas.find((opcion) => opcion.valor === grupo)!
   const esperandoRespuesta = cuantasEsperanRespuesta(todas)
 
   // En una reprogramación, el horario nuevo sale del detalle de la solicitud
@@ -106,15 +106,15 @@ export default function SolicitudesCliente() {
   }
 
   // Manda una respuesta al back, avisa cómo salió, cierra el detalle y recarga la lista
-  const responder = async (accion: () => Promise<void>, ok: string) => {
+  const responder = async (accion: () => Promise<void>, mensajeExito: string) => {
     setAConfirmar(null)
     setEnviando(true)
     try {
       await accion()
-      avisar(ok)
+      avisar(mensajeExito)
       setIdDetalle(null)
-    } catch (e) {
-      avisar(e instanceof Error ? e.message : 'No se pudo hacer', 'error')
+    } catch (error) {
+      avisar(error instanceof Error ? error.message : 'No se pudo hacer', 'error')
     } finally {
       setEnviando(false)
       solicitudes.recargar()
@@ -153,9 +153,9 @@ export default function SolicitudesCliente() {
 
       <Paper variant="outlined" sx={{ mb: 2 }}>
         <Tabs value={grupo} onChange={(_, valor: GrupoCliente) => setGrupo(valor)} variant="fullWidth">
-          {pestañas.map((p) => {
-            const cantidad = delGrupo(todas, p.valor).length
-            return <Tab key={p.valor} value={p.valor} label={p.valor === 'en_curso' && cantidad > 0 ? `${p.label} (${cantidad})` : p.label} />
+          {pestañas.map((opcion) => {
+            const cantidad = delGrupo(todas, opcion.valor).length
+            return <Tab key={opcion.valor} value={opcion.valor} label={opcion.valor === 'en_curso' && cantidad > 0 ? `${opcion.label} (${cantidad})` : opcion.label} />
           })}
         </Tabs>
       </Paper>
@@ -167,7 +167,7 @@ export default function SolicitudesCliente() {
         cargando={solicitudes.cargando}
         vacio={pestaña.vacio}
         direccion={ubicacion.datos?.direccion ?? null}
-        onVerDetalles={(s) => setIdDetalle(s.idSolicitud)}
+        onVerDetalles={(solicitud) => setIdDetalle(solicitud.idSolicitud)}
       />
 
       {/* Como en el boceto: pedir otra, al pie de la lista. Se elige el profesional en el buscador;

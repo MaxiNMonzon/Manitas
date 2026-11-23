@@ -69,15 +69,15 @@ export default function SolicitudesProfesional() {
   const [aceptando, setAceptando] = useState(false)
   const [mensaje, setMensaje] = useState<Aviso | null>(null)
 
-  const setDetalle = (s: SolicitudResumen | null) => {
+  const setDetalle = (solicitud: SolicitudResumen | null) => {
     setDesdeInicioUsada(true)
-    setDetalleElegido(s)
+    setDetalleElegido(solicitud)
   }
 
   // Si viene del Inicio ("Responder"), abre esa solicitud apenas carga la lista
   const { state } = useLocation() as { state: { abrir?: number } | null }
   const todas = solicitudes.datos ?? []
-  const desdeInicio = !desdeInicioUsada && state?.abrir ? (todas.find((s) => s.idSolicitud === state.abrir) ?? null) : null
+  const desdeInicio = !desdeInicioUsada && state?.abrir ? (todas.find((solicitud) => solicitud.idSolicitud === state.abrir) ?? null) : null
   const detalle = detalleElegido ?? desdeInicio
 
   // En una reprogramación, el horario nuevo sale del detalle de la solicitud
@@ -86,38 +86,38 @@ export default function SolicitudesProfesional() {
     enReprogramacion ? traerHorarioPropuestoProfesional(enReprogramacion) : Promise.resolve(null),
   )
 
-  const pestaña = pestañas.find((p) => p.valor === grupo)!
+  const pestaña = pestañas.find((opcion) => opcion.valor === grupo)!
   const lista = ordenar(grupo, delGrupo(todas, grupo))
 
   const avisar = (texto: string) => setMensaje({ texto, tipo: 'success' })
 
   // Manda una respuesta al back, avisa cómo salió, cierra el detalle y recarga la lista
-  const responder = async (accion: () => Promise<void>, ok: string) => {
+  const responder = async (accion: () => Promise<void>, mensajeExito: string) => {
     setAceptando(true)
     try {
       await accion()
-      avisar(ok)
+      avisar(mensajeExito)
       setDetalle(null)
-    } catch (e) {
-      setMensaje({ texto: e instanceof Error ? e.message : 'No se pudo hacer', tipo: 'error' })
+    } catch (error) {
+      setMensaje({ texto: error instanceof Error ? error.message : 'No se pudo hacer', tipo: 'error' })
     } finally {
       setAceptando(false)
       solicitudes.recargar()
     }
   }
 
-  const aceptar = (s: SolicitudResumen) =>
+  const aceptar = (solicitud: SolicitudResumen) =>
     // Una urgente es en el día: primero se elige en cuánto llega
-    s.urgente
-      ? setATomar({ idSolicitud: s.idSolicitud, cliente: s.cliente?.nombre ?? 'Cliente', descripcionProblema: s.descripcionProblema })
+    solicitud.urgente
+      ? setATomar({ idSolicitud: solicitud.idSolicitud, cliente: solicitud.cliente?.nombre ?? 'Cliente', descripcionProblema: solicitud.descripcionProblema })
       : responder(
-          () => aceptarSolicitud(s.idSolicitud),
-          s.fechaVisita ? `Aceptada. La visita quedó confirmada para el ${formatoFecha(s.fechaVisita)}.` : 'Aceptada. La visita quedó confirmada.',
+          () => aceptarSolicitud(solicitud.idSolicitud),
+          solicitud.fechaVisita ? `Aceptada. La visita quedó confirmada para el ${formatoFecha(solicitud.fechaVisita)}.` : 'Aceptada. La visita quedó confirmada.',
         )
 
-  const responderHorario = (s: SolicitudResumen, acepta: boolean) =>
+  const responderHorario = (solicitud: SolicitudResumen, acepta: boolean) =>
     responder(
-      () => responderReprogramacionProfesional(s.idSolicitud, acepta),
+      () => responderReprogramacionProfesional(solicitud.idSolicitud, acepta),
       acepta ? 'Horario nuevo confirmado.' : 'Sigue el horario que tenían.',
     )
 
@@ -140,9 +140,9 @@ export default function SolicitudesProfesional() {
 
       <Paper variant="outlined" sx={{ mb: 2 }}>
         <Tabs value={grupo} onChange={(_, valor: Grupo) => setGrupo(valor)} variant="fullWidth">
-          {pestañas.map((p) => {
-            const cantidad = delGrupo(todas, p.valor).length
-            return <Tab key={p.valor} value={p.valor} label={p.valor !== 'historial' && cantidad > 0 ? `${p.label} (${cantidad})` : p.label} />
+          {pestañas.map((opcion) => {
+            const cantidad = delGrupo(todas, opcion.valor).length
+            return <Tab key={opcion.valor} value={opcion.valor} label={opcion.valor !== 'historial' && cantidad > 0 ? `${opcion.label} (${cantidad})` : opcion.label} />
           })}
         </Tabs>
       </Paper>
@@ -158,7 +158,7 @@ export default function SolicitudesProfesional() {
         cargando={solicitudes.cargando}
         vacio={pestaña.vacio}
         onVerDetalles={setDetalle}
-        accionDe={(s) => <AccionTarjeta solicitud={s} onPresupuestar={() => setAPresupuestar(s)} onResponderHorario={() => setDetalle(s)} />}
+        accionDe={(solicitud) => <AccionTarjeta solicitud={solicitud} onPresupuestar={() => setAPresupuestar(solicitud)} onResponderHorario={() => setDetalle(solicitud)} />}
       />
 
       <DetalleSolicitudDialog
@@ -197,11 +197,11 @@ export default function SolicitudesProfesional() {
         cargando={aceptando}
         onClose={() => setATomar(null)}
         onConfirmar={(minutos) => {
-          const u = aTomar!
+          const urgencia = aTomar!
           setATomar(null)
           responder(
-            () => aceptarSolicitud(u.idSolicitud, minutos),
-            `¡La tomaste! Le avisamos a ${u.cliente} que llegás a las ${dayjs().add(minutos, 'minute').format('HH:mm')}.`,
+            () => aceptarSolicitud(urgencia.idSolicitud, minutos),
+            `¡La tomaste! Le avisamos a ${urgencia.cliente} que llegás a las ${dayjs().add(minutos, 'minute').format('HH:mm')}.`,
           ).then(urgentes.recargar)
         }}
       />
@@ -218,9 +218,9 @@ export default function SolicitudesProfesional() {
       <RechazarSolicitudDialog
         solicitud={aRechazar}
         onClose={() => setARechazar(null)}
-        onConfirmar={(s) => {
+        onConfirmar={(solicitud) => {
           setARechazar(null)
-          responder(() => rechazarSolicitud(s.idSolicitud), 'Solicitud rechazada.')
+          responder(() => rechazarSolicitud(solicitud.idSolicitud), 'Solicitud rechazada.')
         }}
       />
 

@@ -32,11 +32,11 @@ type Errores = Partial<Record<keyof Campos, string>>
 
 // Mismas reglas que valida el backend (CreateClienteDto), para avisar antes de enviar.
 // La dirección se valida igual que en "Mi perfil" (reglas.ts)
-function validar(c: Campos): Errores {
-  const e: Errores = { ...validarDatosPersonales(c), ...validarDomicilio(c) }
-  if (!c.idProvincia) e.idProvincia = 'Elegí una provincia'
-  if (!c.idLocalidad) e.idLocalidad = 'Elegí una localidad'
-  return e
+function validar(campos: Campos): Errores {
+  const errores: Errores = { ...validarDatosPersonales(campos), ...validarDomicilio(campos) }
+  if (!campos.idProvincia) errores.idProvincia = 'Elegí una provincia'
+  if (!campos.idLocalidad) errores.idLocalidad = 'Elegí una localidad'
+  return errores
 }
 
 export default function RegistroCliente() {
@@ -59,10 +59,10 @@ export default function RegistroCliente() {
   const campo = (nombre: keyof Campos) => ({
     name: nombre,
     value: campos[nombre],
-    onChange: (e: { target: { value: string } }) => {
-      const valor = e.target.value
-      setCampos((c) => {
-        const nuevo = { ...c, [nombre]: valor }
+    onChange: (evento: { target: { value: string } }) => {
+      const valor = evento.target.value
+      setCampos((anterior) => {
+        const nuevo = { ...anterior, [nombre]: valor }
         // Al cambiar provincia o localidad se reinician los selects que dependen de ellos
         if (nombre === 'idProvincia') Object.assign(nuevo, { idLocalidad: '', idZona: '' })
         if (nombre === 'idLocalidad') nuevo.idZona = ''
@@ -74,8 +74,8 @@ export default function RegistroCliente() {
     fullWidth: true,
   })
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (evento: FormEvent) => {
+    evento.preventDefault()
     setIntentoEnviar(true)
     setError(null)
     if (Object.keys(validar(campos)).length > 0) return
@@ -96,8 +96,8 @@ export default function RegistroCliente() {
       // Ya registrado: inicia sesión directamente
       await login({ correo: datos.correo, contraseña: datos.contraseña })
       navigate('/app')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo completar el registro')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo completar el registro')
     } finally {
       setEnviando(false)
     }
@@ -120,27 +120,27 @@ export default function RegistroCliente() {
 
         <Grid size={{ xs: 12, sm: 4 }}>
           <TextField select label="Provincia" required {...campo('idProvincia')}>
-            {provincias.datos.map((p) => (
-              <MenuItem key={p.idProvincia} value={String(p.idProvincia)}>
-                {p.nombreProvincia}
+            {provincias.datos.map((provincia) => (
+              <MenuItem key={provincia.idProvincia} value={String(provincia.idProvincia)}>
+                {provincia.nombreProvincia}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <TextField select label="Localidad" required disabled={!campos.idProvincia} {...campo('idLocalidad')}>
-            {localidades.datos.map((l) => (
-              <MenuItem key={l.idLocalidad} value={String(l.idLocalidad)}>
-                {l.nombreLocalidad}
+            {localidades.datos.map((localidad) => (
+              <MenuItem key={localidad.idLocalidad} value={String(localidad.idLocalidad)}>
+                {localidad.nombreLocalidad}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <TextField select label="Zona" required disabled={!campos.idLocalidad} {...campo('idZona')}>
-            {zonas.datos.map((z) => (
-              <MenuItem key={z.idZona} value={String(z.idZona)}>
-                {z.nombreZona}
+            {zonas.datos.map((zona) => (
+              <MenuItem key={zona.idZona} value={String(zona.idZona)}>
+                {zona.nombreZona}
               </MenuItem>
             ))}
           </TextField>

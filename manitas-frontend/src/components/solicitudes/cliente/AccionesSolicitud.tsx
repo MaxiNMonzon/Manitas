@@ -19,7 +19,7 @@ interface Props {
 
 // En el detalle: un botón por cada acción que permite el estado (ver acciones.ts)
 export default function AccionesSolicitud({
-  solicitud: s,
+  solicitud,
   ocupado,
   onCancelar,
   onRechazarPresupuesto,
@@ -28,7 +28,7 @@ export default function AccionesSolicitud({
   onAceptarHorario,
   onCalificar,
 }: Props) {
-  return accionesDelDetalle(s).map((accion) => {
+  return accionesDelDetalle(solicitud).map((accion) => {
     switch (accion) {
       case 'cancelar':
         return (
@@ -51,7 +51,7 @@ export default function AccionesSolicitud({
       case 'reprogramar':
         return (
           <Button key={accion} startIcon={<EventRepeatIcon />} disabled={ocupado} onClick={onReprogramar}>
-            {s.estadoServicio === 'reprogramacion' ? 'Proponer otro' : 'Cambiar horario'}
+            {solicitud.estadoServicio === 'reprogramacion' ? 'Proponer otro' : 'Cambiar horario'}
           </Button>
         )
       case 'aceptarHorario':
@@ -62,7 +62,7 @@ export default function AccionesSolicitud({
         )
       case 'pagar':
         // Va a Mercado Pago; al tocar "Volver al sitio" vuelve a "Mis solicitudes" y se confirma el pago
-        return <CheckoutButton key={accion} idSolicitud={s.idSolicitud} />
+        return <CheckoutButton key={accion} idSolicitud={solicitud.idSolicitud} />
       case 'calificar':
         return (
           <Button key={accion} variant="contained" startIcon={<StarIcon />} onClick={onCalificar}>

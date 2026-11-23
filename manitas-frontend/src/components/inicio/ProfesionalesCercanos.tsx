@@ -15,7 +15,7 @@ import type { ProfesionalResumen } from '../../types'
 interface Props {
   profesionales: ProfesionalResumen[]
   cargando: boolean
-  onVerPerfil: (p: ProfesionalResumen) => void
+  onVerPerfil: (profesional: ProfesionalResumen) => void
 }
 
 // "Profesionales cerca tuyo": carrusel horizontal con flechas (en celular se desliza con el dedo)
@@ -24,8 +24,8 @@ export default function ProfesionalesCercanos({ profesionales, cargando, onVerPe
 
   // Corre el carrusel casi una pantalla para un lado
   const desplazar = (sentido: 1 | -1) => {
-    const el = carrusel.current
-    if (el) el.scrollBy({ left: sentido * el.clientWidth * 0.8, behavior: 'smooth' })
+    const elemento = carrusel.current
+    if (elemento) elemento.scrollBy({ left: sentido * elemento.clientWidth * 0.8, behavior: 'smooth' })
   }
 
   return (
@@ -55,10 +55,10 @@ export default function ProfesionalesCercanos({ profesionales, cargando, onVerPe
           '& > *': { scrollSnapAlign: 'start' },
         }}
       >
-        {cargando && [0, 1, 2].map((i) => <Skeleton key={i} variant="rounded" height={170} />)}
+        {cargando && [0, 1, 2].map((indice) => <Skeleton key={indice} variant="rounded" height={170} />)}
         {!cargando && profesionales.length === 0 && <Typography color="text.secondary">Todavía no hay profesionales cargados.</Typography>}
-        {profesionales.map((p) => (
-          <TarjetaProfesional key={p.idUsuario} profesional={p} onVerPerfil={() => onVerPerfil(p)} />
+        {profesionales.map((profesional) => (
+          <TarjetaProfesional key={profesional.idUsuario} profesional={profesional} onVerPerfil={() => onVerPerfil(profesional)} />
         ))}
       </Box>
       <Box sx={{ textAlign: 'center', mt: 1.5 }}>

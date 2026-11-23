@@ -19,9 +19,9 @@ export default function CheckoutButton({ idSolicitud }: { idSolicitud: number })
     try {
       // A partir de acá el flujo lo maneja Mercado Pago (la página se va a su sitio)
       window.location.href = await irAPagarConMercadoPago(idSolicitud)
-    } catch (e) {
+    } catch (fallo) {
       // Ej: "No se pudo conectar con el servidor" o "Mercado Pago no esta configurado"
-      setError(e instanceof Error ? e.message : 'No se pudo iniciar el pago')
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo iniciar el pago')
       setCargando(false)
     }
   }

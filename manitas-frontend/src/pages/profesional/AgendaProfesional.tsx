@@ -40,7 +40,7 @@ export default function AgendaProfesional() {
 
   // Lo del día elegido (incluye trabajos de varios días que pasan por ese día)
   const delDia = (agendaMes.datos ?? []).filter(
-    (e) => dayjs(e.inicio).isBefore(diaElegido.endOf('day')) && dayjs(e.fin).isAfter(diaElegido.startOf('day')),
+    (evento) => dayjs(evento.inicio).isBefore(diaElegido.endOf('day')) && dayjs(evento.fin).isAfter(diaElegido.startOf('day')),
   )
 
   // if (medidor.visible) return <MedidorCarga key={medidor.ronda} />
@@ -64,7 +64,7 @@ export default function AgendaProfesional() {
               eventos={agendaMes.datos ?? []}
               diaElegido={diaElegido}
               onElegirDia={setDiaElegido}
-              onCambiarMes={(m) => setMes(m.startOf('month'))}
+              onCambiarMes={(nuevoMes) => setMes(nuevoMes.startOf('month'))}
               cargando={agendaMes.cargando}
             />
             <Stack direction="row" spacing={2} sx={{ mt: 1 }}>

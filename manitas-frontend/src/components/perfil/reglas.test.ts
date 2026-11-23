@@ -43,9 +43,9 @@ describe('Reglas de los datos del cliente y del profesional', () => {
   })
 
   it('pide al menos una especialidad y una zona de trabajo', () => {
-    const e = validarTrabajo({ ...trabajo, especialidades: [], zonas: [] })
-    expect(e.especialidades).toBeDefined()
-    expect(e.zonas).toBeDefined()
+    const errores = validarTrabajo({ ...trabajo, especialidades: [], zonas: [] })
+    expect(errores.especialidades).toBeDefined()
+    expect(errores.zonas).toBeDefined()
   })
 
   it('al sacar una especialidad se van también sus habilidades y matrículas', () => {
@@ -58,7 +58,7 @@ describe('Reglas de los datos del cliente y del profesional', () => {
       matriculas: [{ clave: 1, numero: 'MG-4521', descripcion: '', idEspecialidad: '2' }],
     }
     const sinGas = conEspecialidades(elegido, [plomeria])
-    expect(sinGas.habilidades.map((h) => h.idServicio)).toEqual([10])
+    expect(sinGas.habilidades.map((habilidad) => habilidad.idServicio)).toEqual([10])
     expect(sinGas.matriculas).toEqual([])
   })
 })

@@ -42,50 +42,50 @@ interface Props {
   horarioPropuesto?: Date | null
 }
 
-export default function DetalleSolicitudDialog({ solicitud: s, onClose, acciones, horarioPropuesto }: Props) {
+export default function DetalleSolicitudDialog({ solicitud, onClose, acciones, horarioPropuesto }: Props) {
   const theme = useTheme()
   const pantallaChica = useMediaQuery(theme.breakpoints.down('sm'))
 
-  const aceptada = s !== null && s.estadoServicio !== 'solicitado'
-  const lugar = s ? direccionDe(s.cliente, s.estadoServicio) : null
-  const telefono = s?.cliente?.telefono.replace(/\D/g, '').replace(/^0/, '')
+  const aceptada = solicitud !== null && solicitud.estadoServicio !== 'solicitado'
+  const lugar = solicitud ? direccionDe(solicitud.cliente, solicitud.estadoServicio) : null
+  const telefono = solicitud?.cliente?.telefono.replace(/\D/g, '').replace(/^0/, '')
 
   return (
-    <Dialog open={s !== null} onClose={onClose} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
-      {s && (
+    <Dialog open={solicitud !== null} onClose={onClose} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
+      {solicitud && (
         <>
           <DialogTitle sx={{ pr: 6 }}>
-            Solicitud #{s.idSolicitud}
+            Solicitud #{solicitud.idSolicitud}
             <IconButton aria-label="Cerrar" onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
               <CloseIcon />
             </IconButton>
           </DialogTitle>
           <DialogContent dividers>
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
-              <AvatarPersona nombre={s.cliente?.nombre ?? '?'} apellido={s.cliente?.apellido} tamaño={64} />
+              <AvatarPersona nombre={solicitud.cliente?.nombre ?? '?'} apellido={solicitud.cliente?.apellido} tamaño={64} />
               <Stack sx={{ minWidth: 0 }}>
-                <Typography variant="h6">{s.cliente ? `${s.cliente.nombre} ${s.cliente.apellido}`.trim() : 'Cliente'}</Typography>
+                <Typography variant="h6">{solicitud.cliente ? `${solicitud.cliente.nombre} ${solicitud.cliente.apellido}`.trim() : 'Cliente'}</Typography>
                 <Stack direction="row" spacing={1}>
-                  {s.urgente && <Chip size="small" color="error" label="Urgente" />}
-                  <Chip size="small" color={estados[s.estadoServicio].color} label={estados[s.estadoServicio].label} />
+                  {solicitud.urgente && <Chip size="small" color="error" label="Urgente" />}
+                  <Chip size="small" color={estados[solicitud.estadoServicio].color} label={estados[solicitud.estadoServicio].label} />
                 </Stack>
               </Stack>
             </Stack>
 
             <Alert severity="info" icon={false} sx={{ mb: 2 }}>
-              {proximoPaso(s)}
+              {proximoPaso(solicitud)}
             </Alert>
 
-            {s.estadoServicio === 'reprogramacion' && horarioPropuesto && (
+            {solicitud.estadoServicio === 'reprogramacion' && horarioPropuesto && (
               <Alert severity="warning" sx={{ mb: 2 }}>
                 Horario propuesto: <strong>{formatoFecha(horarioPropuesto.toISOString())}</strong>
               </Alert>
             )}
 
             <Typography variant="subtitle2" gutterBottom>
-              {s.especialidad?.nombreEspecialidad ?? 'Problema'}
+              {solicitud.especialidad?.nombreEspecialidad ?? 'Problema'}
             </Typography>
-            <Typography sx={{ whiteSpace: 'pre-line', mb: 2 }}>{s.descripcionProblema}</Typography>
+            <Typography sx={{ whiteSpace: 'pre-line', mb: 2 }}>{solicitud.descripcionProblema}</Typography>
 
             {aceptada ? (
               <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', mb: 2 }}>
@@ -122,15 +122,15 @@ export default function DetalleSolicitudDialog({ solicitud: s, onClose, acciones
             <Divider sx={{ mb: 2 }} />
             <Stack spacing={1}>
               {lugar && <Dato titulo={aceptada ? 'Dirección' : 'Zona'}>{lugar}</Dato>}
-              {s.fechaSolicitud && <Dato titulo="Pedida">{formatoFecha(s.fechaSolicitud)}</Dato>}
-              {s.fechaVisita && <Dato titulo="Visita">{formatoFecha(s.fechaVisita)}</Dato>}
-              {s.fechaInicio && <Dato titulo="Trabajo">{formatoFecha(s.fechaInicio)}</Dato>}
-              {s.fechaFinReal && <Dato titulo="Terminado">{formatoFecha(s.fechaFinReal)}</Dato>}
-              {s.horasTrabajo != null && <Dato titulo="Horas de trabajo">{`${s.horasTrabajo} h`}</Dato>}
-              {s.fechaPago && <Dato titulo="Pagado">{formatoFecha(s.fechaPago)}</Dato>}
-              {s.costoVisita != null && <Dato titulo="Costo de visita">{formatoPesos(s.costoVisita)}</Dato>}
-              {s.costoEstimado != null && <Dato titulo="Presupuesto aceptado">{formatoPesos(s.costoEstimado)}</Dato>}
-              {s.costoFinal != null && <Dato titulo="A cobrar / cobrado">{formatoPesos(s.costoFinal)}</Dato>}
+              {solicitud.fechaSolicitud && <Dato titulo="Pedida">{formatoFecha(solicitud.fechaSolicitud)}</Dato>}
+              {solicitud.fechaVisita && <Dato titulo="Visita">{formatoFecha(solicitud.fechaVisita)}</Dato>}
+              {solicitud.fechaInicio && <Dato titulo="Trabajo">{formatoFecha(solicitud.fechaInicio)}</Dato>}
+              {solicitud.fechaFinReal && <Dato titulo="Terminado">{formatoFecha(solicitud.fechaFinReal)}</Dato>}
+              {solicitud.horasTrabajo != null && <Dato titulo="Horas de trabajo">{`${solicitud.horasTrabajo} h`}</Dato>}
+              {solicitud.fechaPago && <Dato titulo="Pagado">{formatoFecha(solicitud.fechaPago)}</Dato>}
+              {solicitud.costoVisita != null && <Dato titulo="Costo de visita">{formatoPesos(solicitud.costoVisita)}</Dato>}
+              {solicitud.costoEstimado != null && <Dato titulo="Presupuesto aceptado">{formatoPesos(solicitud.costoEstimado)}</Dato>}
+              {solicitud.costoFinal != null && <Dato titulo="A cobrar / cobrado">{formatoPesos(solicitud.costoFinal)}</Dato>}
             </Stack>
           </DialogContent>
           {acciones && <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>{acciones}</DialogActions>}

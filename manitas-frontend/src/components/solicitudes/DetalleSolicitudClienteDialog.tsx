@@ -46,28 +46,28 @@ interface Props {
 }
 
 // Todo sobre una solicitud, visto por el cliente: el profesional, fechas, montos y qué falta
-export default function DetalleSolicitudClienteDialog({ solicitud: s, direccion, horarioPropuesto, onClose, acciones }: Props) {
+export default function DetalleSolicitudClienteDialog({ solicitud, direccion, horarioPropuesto, onClose, acciones }: Props) {
   const theme = useTheme()
   const pantallaChica = useMediaQuery(theme.breakpoints.down('sm'))
 
   // El teléfono del profesional sirve cuando ya confirmó (antes no hay nada que coordinar)
-  const confirmada = s !== null && s.estadoServicio !== 'solicitado' && !estaTerminada(s.estadoServicio)
-  const telefono = s?.profesional?.telefono?.replace(/\D/g, '').replace(/^0/, '')
+  const confirmada = solicitud !== null && solicitud.estadoServicio !== 'solicitado' && !estaTerminada(solicitud.estadoServicio)
+  const telefono = solicitud?.profesional?.telefono?.replace(/\D/g, '').replace(/^0/, '')
 
   return (
-    <Dialog open={s !== null} onClose={onClose} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
-      {s && (
+    <Dialog open={solicitud !== null} onClose={onClose} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
+      {solicitud && (
         <>
           <DialogTitle sx={{ pr: 6 }}>
-            Solicitud #{s.idSolicitud}
+            Solicitud #{solicitud.idSolicitud}
             <IconButton aria-label="Cerrar" onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
               <CloseIcon />
             </IconButton>
           </DialogTitle>
           <DialogContent dividers>
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
-              {s.profesional ? (
-                <AvatarPersona nombre={s.profesional.nombre} apellido={s.profesional.apellido} tamaño={64} />
+              {solicitud.profesional ? (
+                <AvatarPersona nombre={solicitud.profesional.nombre} apellido={solicitud.profesional.apellido} tamaño={64} />
               ) : (
                 <Avatar sx={{ width: 64, height: 64, bgcolor: 'grey.300', color: 'grey.700' }}>
                   <PersonSearchIcon fontSize="large" />
@@ -75,30 +75,30 @@ export default function DetalleSolicitudClienteDialog({ solicitud: s, direccion,
               )}
               <Stack sx={{ minWidth: 0 }}>
                 <Typography variant="h6">
-                  {s.profesional ? `${s.profesional.nombre} ${s.profesional.apellido}`.trim() : 'Buscando profesional'}
+                  {solicitud.profesional ? `${solicitud.profesional.nombre} ${solicitud.profesional.apellido}`.trim() : 'Buscando profesional'}
                 </Typography>
                 <Stack direction="row" spacing={1}>
-                  {s.urgente && <Chip size="small" color="error" label="Urgente" />}
-                  <Chip size="small" color={estadosCliente[s.estadoServicio].color} label={estadosCliente[s.estadoServicio].label} />
-                  {s.fechaPago && <Chip size="small" color="success" variant="outlined" label="Pagado" />}
+                  {solicitud.urgente && <Chip size="small" color="error" label="Urgente" />}
+                  <Chip size="small" color={estadosCliente[solicitud.estadoServicio].color} label={estadosCliente[solicitud.estadoServicio].label} />
+                  {solicitud.fechaPago && <Chip size="small" color="success" variant="outlined" label="Pagado" />}
                 </Stack>
               </Stack>
             </Stack>
 
             <Alert severity="info" icon={false} sx={{ mb: 2 }}>
-              {proximoPasoCliente(s)}
+              {proximoPasoCliente(solicitud)}
             </Alert>
 
-            {s.estadoServicio === 'reprogramacion' && horarioPropuesto && (
+            {solicitud.estadoServicio === 'reprogramacion' && horarioPropuesto && (
               <Alert severity="warning" sx={{ mb: 2 }}>
                 Horario propuesto: <strong>{formatoFecha(horarioPropuesto.toISOString())}</strong>
               </Alert>
             )}
 
             <Typography variant="subtitle2" gutterBottom>
-              {s.especialidad?.nombreEspecialidad ?? 'Problema'}
+              {solicitud.especialidad?.nombreEspecialidad ?? 'Problema'}
             </Typography>
-            <Typography sx={{ whiteSpace: 'pre-line', mb: 2 }}>{s.descripcionProblema}</Typography>
+            <Typography sx={{ whiteSpace: 'pre-line', mb: 2 }}>{solicitud.descripcionProblema}</Typography>
 
             {confirmada && telefono && (
               <Button
@@ -114,13 +114,13 @@ export default function DetalleSolicitudClienteDialog({ solicitud: s, direccion,
               </Button>
             )}
 
-            {s.calificacionServicio != null && (
+            {solicitud.calificacionServicio != null && (
               <Stack spacing={0.5} sx={{ mb: 2 }}>
                 <Typography variant="subtitle2">Tu calificación</Typography>
-                <Rating value={s.calificacionServicio} readOnly />
-                {s.reseñaServicio && (
+                <Rating value={solicitud.calificacionServicio} readOnly />
+                {solicitud.reseñaServicio && (
                   <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    “{s.reseñaServicio}”
+                    “{solicitud.reseñaServicio}”
                   </Typography>
                 )}
               </Stack>
@@ -129,19 +129,19 @@ export default function DetalleSolicitudClienteDialog({ solicitud: s, direccion,
             <Divider sx={{ mb: 2 }} />
             <Stack spacing={1}>
               {direccion && <Dato titulo="Dirección">{direccion}</Dato>}
-              {s.fechaSolicitud && <Dato titulo="Pedida">{formatoFecha(s.fechaSolicitud)}</Dato>}
-              {s.fechaVisita && <Dato titulo="Visita">{formatoFecha(s.fechaVisita)}</Dato>}
-              {s.fechaInicio && <Dato titulo="Trabajo">{formatoFecha(s.fechaInicio)}</Dato>}
-              {s.fechaFinReal && <Dato titulo="Terminado">{formatoFecha(s.fechaFinReal)}</Dato>}
-              {s.costoVisita != null && <Dato titulo="Costo de visita">{formatoPesos(s.costoVisita)}</Dato>}
-              {s.estadoServicio === 'presupuestado' && s.costoFinal != null && (
-                <Dato titulo="Presupuesto">{formatoPesos(s.costoFinal)}</Dato>
+              {solicitud.fechaSolicitud && <Dato titulo="Pedida">{formatoFecha(solicitud.fechaSolicitud)}</Dato>}
+              {solicitud.fechaVisita && <Dato titulo="Visita">{formatoFecha(solicitud.fechaVisita)}</Dato>}
+              {solicitud.fechaInicio && <Dato titulo="Trabajo">{formatoFecha(solicitud.fechaInicio)}</Dato>}
+              {solicitud.fechaFinReal && <Dato titulo="Terminado">{formatoFecha(solicitud.fechaFinReal)}</Dato>}
+              {solicitud.costoVisita != null && <Dato titulo="Costo de visita">{formatoPesos(solicitud.costoVisita)}</Dato>}
+              {solicitud.estadoServicio === 'presupuestado' && solicitud.costoFinal != null && (
+                <Dato titulo="Presupuesto">{formatoPesos(solicitud.costoFinal)}</Dato>
               )}
-              {s.costoEstimado != null && s.estadoServicio !== 'presupuestado' && (
-                <Dato titulo="Presupuesto aceptado">{formatoPesos(s.costoEstimado)}</Dato>
+              {solicitud.costoEstimado != null && solicitud.estadoServicio !== 'presupuestado' && (
+                <Dato titulo="Presupuesto aceptado">{formatoPesos(solicitud.costoEstimado)}</Dato>
               )}
-              {s.horasTrabajo != null && <Dato titulo="Horas de trabajo">{`${s.horasTrabajo} h`}</Dato>}
-              {s.fechaPago && <Dato titulo="Pagado">{formatoFecha(s.fechaPago)}</Dato>}
+              {solicitud.horasTrabajo != null && <Dato titulo="Horas de trabajo">{`${solicitud.horasTrabajo} h`}</Dato>}
+              {solicitud.fechaPago && <Dato titulo="Pagado">{formatoFecha(solicitud.fechaPago)}</Dato>}
             </Stack>
           </DialogContent>
           {acciones && <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>{acciones}</DialogActions>}

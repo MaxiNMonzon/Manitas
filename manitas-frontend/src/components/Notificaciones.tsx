@@ -33,7 +33,7 @@ export default function Notificaciones() {
   const rol = sesion?.rol ?? 'cliente'
   const { datos, error } = useCarga(`avisos-${rol}`, traerAvisos, CADA_UN_MINUTO)
   const avisos = datos ?? []
-  const sinLeer = avisos.filter((a) => !leidos.has(claveDe(a))).length
+  const sinLeer = avisos.filter((aviso) => !leidos.has(claveDe(aviso))).length
 
   const cerrar = () => {
     setAncla(null)
@@ -45,7 +45,7 @@ export default function Notificaciones() {
 
   return (
     <>
-      <IconButton color="inherit" aria-label="Avisos" onClick={(e) => setAncla(e.currentTarget)}>
+      <IconButton color="inherit" aria-label="Avisos" onClick={(evento) => setAncla(evento.currentTarget)}>
         <Badge badgeContent={sinLeer} color="secondary">
           <NotificationsIcon />
         </Badge>
@@ -72,12 +72,12 @@ export default function Notificaciones() {
             <ListItemText primary="No tenés avisos" />
           </MenuItem>
         )}
-        {avisos.map((a) => {
-          const leido = leidos.has(claveDe(a))
-          const urgente = a.mensaje.startsWith('URGENTE')
+        {avisos.map((aviso) => {
+          const leido = leidos.has(claveDe(aviso))
+          const urgente = aviso.mensaje.startsWith('URGENTE')
           return (
             <MenuItem
-              key={claveDe(a)}
+              key={claveDe(aviso)}
               onClick={() => {
                 cerrar()
                 navigate('/app/solicitudes')
@@ -85,7 +85,7 @@ export default function Notificaciones() {
               sx={{ whiteSpace: 'normal', bgcolor: leido ? undefined : 'action.hover' }}
             >
               <ListItemText
-                primary={a.mensaje}
+                primary={aviso.mensaje}
                 slotProps={{
                   primary: { variant: 'body2', sx: { fontWeight: leido ? 400 : 600, color: urgente ? 'error.main' : undefined } },
                 }}

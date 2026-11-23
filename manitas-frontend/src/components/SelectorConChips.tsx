@@ -40,15 +40,15 @@ export default function SelectorConChips<T>({
 }: Props<T>) {
   const [texto, setTexto] = useState('')
   const idsElegidos = new Set(seleccionados.map(idDe))
-  const disponibles = opciones.filter((o) => !idsElegidos.has(idDe(o)))
+  const disponibles = opciones.filter((opcion) => !idsElegidos.has(idDe(opcion)))
 
   return (
     <Box>
       <Autocomplete
         options={disponibles}
-        groupBy={grupoDe ? (o) => grupoDe(o) ?? '' : undefined}
+        groupBy={grupoDe ? (opcion) => grupoDe(opcion) ?? '' : undefined}
         getOptionLabel={textoDe}
-        isOptionEqualToValue={(a, b) => idDe(a) === idDe(b)}
+        isOptionEqualToValue={(primera, segunda) => idDe(primera) === idDe(segunda)}
         value={null}
         inputValue={texto}
         onInputChange={(_, valor, motivo) => setTexto(motivo === 'reset' ? '' : valor)}
@@ -56,7 +56,7 @@ export default function SelectorConChips<T>({
         disabled={disabled}
         noOptionsText="No hay opciones"
         blurOnSelect
-        renderInput={(params) => <TextField {...params} label={label} required={required} error={Boolean(error)} />}
+        renderInput={(parametros) => <TextField {...parametros} label={label} required={required} error={Boolean(error)} />}
       />
       <Box
         sx={{
@@ -78,13 +78,13 @@ export default function SelectorConChips<T>({
             Ninguna elegida
           </Typography>
         ) : (
-          seleccionados.map((s) => (
+          seleccionados.map((seleccionado) => (
             <Chip
-              key={idDe(s)}
-              label={textoDe(s)}
+              key={idDe(seleccionado)}
+              label={textoDe(seleccionado)}
               color="primary"
               variant="outlined"
-              onDelete={() => onChange(seleccionados.filter((x) => idDe(x) !== idDe(s)))}
+              onDelete={() => onChange(seleccionados.filter((otro) => idDe(otro) !== idDe(seleccionado)))}
             />
           ))
         )}

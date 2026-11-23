@@ -20,8 +20,8 @@ export default function ListaDeEventos({ eventos, cargando, vacio }: { eventos: 
   }
   return (
     <Stack spacing={1.5}>
-      {[...eventos].sort((a, b) => Number(b.urgente) - Number(a.urgente)).map((e) => (
-        <ItemAgenda key={`${e.idSolicitud}-${e.tipo}`} evento={e} />
+      {[...eventos].sort((primero, segundo) => Number(segundo.urgente) - Number(primero.urgente)).map((evento) => (
+        <ItemAgenda key={`${evento.idSolicitud}-${evento.tipo}`} evento={evento} />
       ))}
     </Stack>
   )

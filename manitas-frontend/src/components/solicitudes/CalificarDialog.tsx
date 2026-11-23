@@ -23,7 +23,7 @@ interface Props {
 }
 
 // Calificar al profesional de una solicitud finalizada (PATCH /:id/calificar, una sola vez)
-export default function CalificarDialog({ solicitud: s, onClose, onCalificado }: Props) {
+export default function CalificarDialog({ solicitud, onClose, onCalificado }: Props) {
   const [estrellas, setEstrellas] = useState<number | null>(null)
   const [hover, setHover] = useState(-1)
   const [reseña, setReseña] = useState('')
@@ -38,32 +38,32 @@ export default function CalificarDialog({ solicitud: s, onClose, onCalificado }:
   }
 
   const enviar = async () => {
-    if (!s || !estrellas) return
+    if (!solicitud || !estrellas) return
     setEnviando(true)
     setError(null)
     try {
-      await calificarServicio(s.idSolicitud, estrellas, reseña)
+      await calificarServicio(solicitud.idSolicitud, estrellas, reseña)
       cerrar()
       onCalificado()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo calificar')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo calificar')
     } finally {
       setEnviando(false)
     }
   }
 
   return (
-    <Dialog open={s !== null} onClose={cerrar} fullWidth maxWidth="xs">
+    <Dialog open={solicitud !== null} onClose={cerrar} fullWidth maxWidth="xs">
       <DialogTitle>Calificar al profesional</DialogTitle>
       <DialogContent>
-        {s?.profesional && (
+        {solicitud?.profesional && (
           <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center', mb: 2 }}>
-            <AvatarPersona nombre={s.profesional.nombre} apellido={s.profesional.apellido} tamaño={64} />
+            <AvatarPersona nombre={solicitud.profesional.nombre} apellido={solicitud.profesional.apellido} tamaño={64} />
             <Typography variant="h6">
-              {s.profesional.nombre} {s.profesional.apellido}
+              {solicitud.profesional.nombre} {solicitud.profesional.apellido}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {s.descripcionProblema}
+              {solicitud.descripcionProblema}
             </Typography>
           </Stack>
         )}
@@ -85,7 +85,7 @@ export default function CalificarDialog({ solicitud: s, onClose, onCalificado }:
             label="Reseña (opcional)"
             placeholder="Ej: muy prolijo y llegó puntual"
             value={reseña}
-            onChange={(e) => setReseña(e.target.value.slice(0, MAX_RESEÑA))}
+            onChange={(evento) => setReseña(evento.target.value.slice(0, MAX_RESEÑA))}
             helperText={`${reseña.length}/${MAX_RESEÑA}`}
           />
         </Stack>

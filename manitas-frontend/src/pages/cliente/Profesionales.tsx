@@ -27,11 +27,11 @@ import type { ProfesionalResumen } from '../../types'
 // Desde el perfil se pide el presupuesto
 export default function Profesionales() {
   const navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
+  const [parametros, setParametros] = useSearchParams()
   // Lo que se va escribiendo vive acá; a la URL (y al back) llega cuando deja de escribir.
   // Si el campo leyera directo de la URL, al escribir rápido se perdían letras
-  const [texto, setTexto] = useState(() => params.get('q') ?? '')
-  const idEspecialidad = Number(params.get('especialidad')) || null
+  const [texto, setTexto] = useState(() => parametros.get('q') ?? '')
+  const idEspecialidad = Number(parametros.get('especialidad')) || null
   const [perfil, setPerfil] = useState<ProfesionalResumen | null>(null)
   const [aSolicitar, setASolicitar] = useState<ProfesionalResumen | null>(null)
   const [urgenteAbierto, setUrgenteAbierto] = useState(false)
@@ -50,7 +50,7 @@ export default function Profesionales() {
   // Guarda un filtro en la URL (así la búsqueda se puede compartir y sobrevive a recargar la página)
   const cambiarFiltro = useCallback(
     (clave: string, valor: string) =>
-      setParams(
+      setParametros(
         (actuales) => {
           const nuevos = new URLSearchParams(actuales)
           if (valor) nuevos.set(clave, valor)
@@ -59,7 +59,7 @@ export default function Profesionales() {
         },
         { replace: true },
       ),
-    [setParams],
+    [setParametros],
   )
 
   // El texto buscado pasa a la URL recién cuando deja de escribir
@@ -88,7 +88,7 @@ export default function Profesionales() {
               size="small"
               placeholder="Buscar por nombre, oficio o problema"
               value={texto}
-              onChange={(e) => setTexto(e.target.value)}
+              onChange={(evento) => setTexto(evento.target.value)}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -107,12 +107,12 @@ export default function Profesionales() {
               size="small"
               label="Especialidad"
               value={idEspecialidad ?? ''}
-              onChange={(e) => cambiarFiltro('especialidad', String(e.target.value))}
+              onChange={(evento) => cambiarFiltro('especialidad', String(evento.target.value))}
             >
               <MenuItem value="">Todas</MenuItem>
-              {(especialidades.datos ?? []).map((e) => (
-                <MenuItem key={e.idEspecialidad} value={e.idEspecialidad}>
-                  {e.nombre}
+              {(especialidades.datos ?? []).map((categoria) => (
+                <MenuItem key={categoria.idEspecialidad} value={categoria.idEspecialidad}>
+                  {categoria.nombre}
                 </MenuItem>
               ))}
             </TextField>
@@ -128,8 +128,8 @@ export default function Profesionales() {
 
       {cargando ? (
         <Grid container spacing={2}>
-          {[0, 1, 2].map((i) => (
-            <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
+          {[0, 1, 2].map((indice) => (
+            <Grid key={indice} size={{ xs: 12, sm: 6, md: 4 }}>
               <Skeleton variant="rounded" height={170} />
             </Grid>
           ))}
@@ -143,9 +143,9 @@ export default function Profesionales() {
         </Paper>
       ) : (
         <Grid container spacing={2}>
-          {lista.map((p) => (
-            <Grid key={p.idUsuario} size={{ xs: 12, sm: 6, md: 4 }}>
-              <TarjetaProfesional profesional={p} onVerPerfil={() => setPerfil(p)} />
+          {lista.map((profesional) => (
+            <Grid key={profesional.idUsuario} size={{ xs: 12, sm: 6, md: 4 }}>
+              <TarjetaProfesional profesional={profesional} onVerPerfil={() => setPerfil(profesional)} />
             </Grid>
           ))}
         </Grid>
@@ -154,9 +154,9 @@ export default function Profesionales() {
       <PerfilProfesionalDialog
         profesional={perfil}
         onClose={() => setPerfil(null)}
-        onSolicitar={(p) => {
+        onSolicitar={(profesional) => {
           setPerfil(null)
-          setASolicitar(p)
+          setASolicitar(profesional)
         }}
       />
       <SolicitarPresupuestoDialog

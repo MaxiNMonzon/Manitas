@@ -10,7 +10,7 @@ interface Props {
   // La solicitud a rechazar; con null el diálogo está cerrado
   solicitud: SolicitudResumen | null
   onClose: () => void
-  onConfirmar: (s: SolicitudResumen) => void
+  onConfirmar: (solicitud: SolicitudResumen) => void
 }
 
 // Confirmar antes de rechazar (no se puede deshacer)

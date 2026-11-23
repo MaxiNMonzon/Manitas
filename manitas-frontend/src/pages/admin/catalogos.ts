@@ -45,23 +45,23 @@ export interface Catalogo {
 
 // ---------- Ayudas para leer las filas ----------
 
-const texto = (v: unknown) => (v === null || v === undefined || v === '' ? '—' : String(v))
+const texto = (valor: unknown) => (valor === null || valor === undefined || valor === '' ? '—' : String(valor))
 const de = (fila: Fila, ...ruta: string[]): unknown =>
   ruta.reduce<unknown>((actual, clave) => (actual && typeof actual === 'object' ? (actual as Fila)[clave] : undefined), fila)
-const lista = (v: unknown): Fila[] => (Array.isArray(v) ? (v as Fila[]) : [])
-const fecha = (v: unknown) => (v ? new Date(`${String(v).slice(0, 10)}T00:00:00`).toLocaleDateString('es-AR') : '—')
+const lista = (valor: unknown): Fila[] => (Array.isArray(valor) ? (valor as Fila[]) : [])
+const fecha = (valor: unknown) => (valor ? new Date(`${String(valor).slice(0, 10)}T00:00:00`).toLocaleDateString('es-AR') : '—')
 
 // ---------- Referencias (listas de opciones) ----------
 
-const especialidad: Referencia = { path: '/especialidad', id: 'idEspecialidad', etiqueta: (f) => texto(f.nombreEspecialidad) }
-const provincia: Referencia = { path: '/provincia', id: 'idProvincia', etiqueta: (f) => texto(f.nombreProvincia) }
+const especialidad: Referencia = { path: '/especialidad', id: 'idEspecialidad', etiqueta: (fila) => texto(fila.nombreEspecialidad) }
+const provincia: Referencia = { path: '/provincia', id: 'idProvincia', etiqueta: (fila) => texto(fila.nombreProvincia) }
 const localidad: Referencia = {
   path: '/localidad',
   id: 'idLocalidad',
-  etiqueta: (f) => `${texto(f.nombreLocalidad)}${de(f, 'provincia', 'nombreProvincia') ? ` (${texto(de(f, 'provincia', 'nombreProvincia'))})` : ''}`,
+  etiqueta: (fila) => `${texto(fila.nombreLocalidad)}${de(fila, 'provincia', 'nombreProvincia') ? ` (${texto(de(fila, 'provincia', 'nombreProvincia'))})` : ''}`,
 }
-const metodoDePago: Referencia = { path: '/metodo-de-pago', id: 'idFormaPago', etiqueta: (f) => texto(f.tipo) }
-const promocion: Referencia = { path: '/promocion', id: 'idPromocion', etiqueta: (f) => `${texto(f.codigo)} (${texto(f.porcentajeDescuento)}%)` }
+const metodoDePago: Referencia = { path: '/metodo-de-pago', id: 'idFormaPago', etiqueta: (fila) => texto(fila.tipo) }
+const promocion: Referencia = { path: '/promocion', id: 'idPromocion', etiqueta: (fila) => `${texto(fila.codigo)} (${texto(fila.porcentajeDescuento)}%)` }
 
 // ---------- Catálogos ----------
 
@@ -74,9 +74,9 @@ export const catalogos: Catalogo[] = [
     path: '/especialidad',
     id: 'idEspecialidad',
     columnas: [
-      { label: 'Nombre', valor: (f) => texto(f.nombreEspecialidad) },
-      { label: 'Descripción', valor: (f) => texto(f.descripcionEspecialidad) },
-      { label: 'Palabras clave', valor: (f) => texto(f.palabrasClave) },
+      { label: 'Nombre', valor: (fila) => texto(fila.nombreEspecialidad) },
+      { label: 'Descripción', valor: (fila) => texto(fila.descripcionEspecialidad) },
+      { label: 'Palabras clave', valor: (fila) => texto(fila.palabrasClave) },
     ],
     campos: [
       { clave: 'nombreEspecialidad', label: 'Nombre', tipo: 'texto', requerido: true },
@@ -97,19 +97,19 @@ export const catalogos: Catalogo[] = [
     path: '/tipos-de-servicio',
     id: 'idServicio',
     columnas: [
-      { label: 'Nombre', valor: (f) => texto(f.nombreServicio) },
-      { label: 'Especialidad', valor: (f) => texto(de(f, 'especialidad', 'nombreEspecialidad')) },
+      { label: 'Nombre', valor: (fila) => texto(fila.nombreServicio) },
+      { label: 'Especialidad', valor: (fila) => texto(de(fila, 'especialidad', 'nombreEspecialidad')) },
     ],
     campos: [
       { clave: 'nombreServicio', label: 'Nombre', tipo: 'texto', requerido: true },
       { clave: 'descripcionServicio', label: 'Descripción', tipo: 'textoLargo', requerido: true },
-      { clave: 'idEspecialidad', label: 'Especialidad', tipo: 'referencia', requerido: true, referencia: especialidad, desdeFila: (f) => de(f, 'especialidad', 'idEspecialidad') },
+      { clave: 'idEspecialidad', label: 'Especialidad', tipo: 'referencia', requerido: true, referencia: especialidad, desdeFila: (fila) => de(fila, 'especialidad', 'idEspecialidad') },
     ],
     filtro: { param: 'especialidad', label: 'Especialidad', referencia: especialidad },
-    detalle: (f) => [
-      ['Descripción', texto(f.descripcionServicio)],
-      ['Especialidad', texto(de(f, 'especialidad', 'nombreEspecialidad'))],
-      ['Sobre la especialidad', texto(de(f, 'especialidad', 'descripcionEspecialidad'))],
+    detalle: (fila) => [
+      ['Descripción', texto(fila.descripcionServicio)],
+      ['Especialidad', texto(de(fila, 'especialidad', 'nombreEspecialidad'))],
+      ['Sobre la especialidad', texto(de(fila, 'especialidad', 'descripcionEspecialidad'))],
     ],
   },
   {
@@ -119,7 +119,7 @@ export const catalogos: Catalogo[] = [
     descripcion: 'Se cargan solas con el seed de Georef; acá se pueden corregir.',
     path: '/provincia',
     id: 'idProvincia',
-    columnas: [{ label: 'Nombre', valor: (f) => texto(f.nombreProvincia) }],
+    columnas: [{ label: 'Nombre', valor: (fila) => texto(fila.nombreProvincia) }],
     campos: [{ clave: 'nombreProvincia', label: 'Nombre', tipo: 'texto', requerido: true }],
   },
   {
@@ -130,14 +130,14 @@ export const catalogos: Catalogo[] = [
     path: '/localidad',
     id: 'idLocalidad',
     columnas: [
-      { label: 'Nombre', valor: (f) => texto(f.nombreLocalidad) },
-      { label: 'Código postal', valor: (f) => texto(f.codigoPostal) },
-      { label: 'Provincia', valor: (f) => texto(de(f, 'provincia', 'nombreProvincia')) },
+      { label: 'Nombre', valor: (fila) => texto(fila.nombreLocalidad) },
+      { label: 'Código postal', valor: (fila) => texto(fila.codigoPostal) },
+      { label: 'Provincia', valor: (fila) => texto(de(fila, 'provincia', 'nombreProvincia')) },
     ],
     campos: [
       { clave: 'nombreLocalidad', label: 'Nombre', tipo: 'texto', requerido: true },
       { clave: 'codigoPostal', label: 'Código postal', tipo: 'texto' },
-      { clave: 'idProvincia', label: 'Provincia', tipo: 'referencia', requerido: true, referencia: provincia, desdeFila: (f) => de(f, 'provincia', 'idProvincia') },
+      { clave: 'idProvincia', label: 'Provincia', tipo: 'referencia', requerido: true, referencia: provincia, desdeFila: (fila) => de(fila, 'provincia', 'idProvincia') },
     ],
     filtro: { param: 'provincia', label: 'Provincia', referencia: provincia },
   },
@@ -149,17 +149,17 @@ export const catalogos: Catalogo[] = [
     path: '/zona',
     id: 'idZona',
     columnas: [
-      { label: 'Nombre', valor: (f) => texto(f.nombreZona) },
-      { label: 'Localidad', valor: (f) => texto(de(f, 'localidad', 'nombreLocalidad')) },
+      { label: 'Nombre', valor: (fila) => texto(fila.nombreZona) },
+      { label: 'Localidad', valor: (fila) => texto(de(fila, 'localidad', 'nombreLocalidad')) },
     ],
     campos: [
       { clave: 'nombreZona', label: 'Nombre', tipo: 'texto', requerido: true },
-      { clave: 'idLocalidad', label: 'Localidad', tipo: 'referencia', requerido: true, referencia: localidad, desdeFila: (f) => de(f, 'localidad', 'idLocalidad') },
+      { clave: 'idLocalidad', label: 'Localidad', tipo: 'referencia', requerido: true, referencia: localidad, desdeFila: (fila) => de(fila, 'localidad', 'idLocalidad') },
     ],
     filtro: { param: 'localidad', label: 'Localidad', referencia: localidad },
-    detalle: (f) => [
-      ['Localidad', texto(de(f, 'localidad', 'nombreLocalidad'))],
-      ['Código postal', texto(de(f, 'localidad', 'codigoPostal'))],
+    detalle: (fila) => [
+      ['Localidad', texto(de(fila, 'localidad', 'nombreLocalidad'))],
+      ['Código postal', texto(de(fila, 'localidad', 'codigoPostal'))],
     ],
   },
   {
@@ -170,19 +170,19 @@ export const catalogos: Catalogo[] = [
     path: '/metodo-de-pago',
     id: 'idFormaPago',
     columnas: [
-      { label: 'Tipo', valor: (f) => texto(f.tipo) },
-      { label: 'Estado', valor: (f) => texto(f.estado) },
-      { label: 'Promociones', valor: (f) => String(lista(f.promociones).length) },
+      { label: 'Tipo', valor: (fila) => texto(fila.tipo) },
+      { label: 'Estado', valor: (fila) => texto(fila.estado) },
+      { label: 'Promociones', valor: (fila) => String(lista(fila.promociones).length) },
     ],
     campos: [
       { clave: 'tipo', label: 'Tipo', tipo: 'texto', requerido: true, ayuda: 'Ej: Visa crédito Banco Nación' },
       { clave: 'estado', label: 'Estado', tipo: 'opciones', requerido: true, opciones: ['activo', 'inactivo'] },
-      { clave: 'idsPromociones', label: 'Promociones', tipo: 'referencias', referencia: promocion, desdeFila: (f) => lista(f.promociones).map((p) => p.idPromocion) },
+      { clave: 'idsPromociones', label: 'Promociones', tipo: 'referencias', referencia: promocion, desdeFila: (fila) => lista(fila.promociones).map((unaPromocion) => unaPromocion.idPromocion) },
     ],
-    detalle: (f) => [
-      ['Tipo', texto(f.tipo)],
-      ['Estado', texto(f.estado)],
-      ['Promociones', lista(f.promociones).map((p) => `${texto(p.codigo)}: ${texto(p.porcentajeDescuento)}% (${fecha(p.fechaInicioVigencia)} al ${fecha(p.fechaFinVigencia)})`).join(' · ') || 'Ninguna'],
+    detalle: (fila) => [
+      ['Tipo', texto(fila.tipo)],
+      ['Estado', texto(fila.estado)],
+      ['Promociones', lista(fila.promociones).map((unaPromocion) => `${texto(unaPromocion.codigo)}: ${texto(unaPromocion.porcentajeDescuento)}% (${fecha(unaPromocion.fechaInicioVigencia)} al ${fecha(unaPromocion.fechaFinVigencia)})`).join(' · ') || 'Ninguna'],
     ],
   },
   {
@@ -193,21 +193,21 @@ export const catalogos: Catalogo[] = [
     path: '/promocion',
     id: 'idPromocion',
     columnas: [
-      { label: 'Código', valor: (f) => texto(f.codigo) },
-      { label: 'Descuento', valor: (f) => `${texto(f.porcentajeDescuento)}%` },
-      { label: 'Vigencia', valor: (f) => `${fecha(f.fechaInicioVigencia)} al ${fecha(f.fechaFinVigencia)}` },
+      { label: 'Código', valor: (fila) => texto(fila.codigo) },
+      { label: 'Descuento', valor: (fila) => `${texto(fila.porcentajeDescuento)}%` },
+      { label: 'Vigencia', valor: (fila) => `${fecha(fila.fechaInicioVigencia)} al ${fecha(fila.fechaFinVigencia)}` },
     ],
     campos: [
       { clave: 'codigo', label: 'Código', tipo: 'texto', requerido: true, ayuda: 'Ej: NACION20' },
       { clave: 'descripcion', label: 'Descripción', tipo: 'textoLargo', requerido: true, ayuda: 'Condiciones y tope de reintegro' },
       { clave: 'porcentajeDescuento', label: 'Descuento (%)', tipo: 'numero', requerido: true },
-      { clave: 'fechaInicioVigencia', label: 'Vigente desde', tipo: 'fecha', requerido: true, desdeFila: (f) => String(f.fechaInicioVigencia ?? '').slice(0, 10) },
-      { clave: 'fechaFinVigencia', label: 'Vigente hasta', tipo: 'fecha', requerido: true, desdeFila: (f) => String(f.fechaFinVigencia ?? '').slice(0, 10) },
-      { clave: 'idsMetodosPago', label: 'Métodos de pago', tipo: 'referencias', referencia: metodoDePago, desdeFila: (f) => lista(f.metodosPago).map((m) => m.idFormaPago) },
+      { clave: 'fechaInicioVigencia', label: 'Vigente desde', tipo: 'fecha', requerido: true, desdeFila: (fila) => String(fila.fechaInicioVigencia ?? '').slice(0, 10) },
+      { clave: 'fechaFinVigencia', label: 'Vigente hasta', tipo: 'fecha', requerido: true, desdeFila: (fila) => String(fila.fechaFinVigencia ?? '').slice(0, 10) },
+      { clave: 'idsMetodosPago', label: 'Métodos de pago', tipo: 'referencias', referencia: metodoDePago, desdeFila: (fila) => lista(fila.metodosPago).map((metodo) => metodo.idFormaPago) },
     ],
-    detalle: (f) => [
-      ['Descripción', texto(f.descripcion)],
-      ['Métodos de pago', lista(f.metodosPago).map((m) => `${texto(m.tipo)} (${texto(m.estado)})`).join(' · ') || 'Ninguno'],
+    detalle: (fila) => [
+      ['Descripción', texto(fila.descripcion)],
+      ['Métodos de pago', lista(fila.metodosPago).map((metodo) => `${texto(metodo.tipo)} (${texto(metodo.estado)})`).join(' · ') || 'Ninguno'],
     ],
   },
   {
@@ -219,18 +219,18 @@ export const catalogos: Catalogo[] = [
     id: 'idUsuario',
     soloLectura: true,
     columnas: [
-      { label: 'Nombre', valor: (f) => `${texto(f.nombre)} ${texto(f.apellido)}` },
-      { label: 'Email', valor: (f) => texto(f.correo) },
-      { label: 'Zona', valor: (f) => texto(de(f, 'zonaResidencia', 'nombreZona')) },
+      { label: 'Nombre', valor: (fila) => `${texto(fila.nombre)} ${texto(fila.apellido)}` },
+      { label: 'Email', valor: (fila) => texto(fila.correo) },
+      { label: 'Zona', valor: (fila) => texto(de(fila, 'zonaResidencia', 'nombreZona')) },
     ],
     campos: [],
-    detalle: (f) => [
-      ['DNI', texto(f.dni)],
-      ['Teléfono', texto(f.telefono)],
-      ['Dirección', `${texto(f.calle)} ${texto(f.altura)}${f.piso ? `, piso ${texto(f.piso)}` : ''}${f.depto ? `, depto ${texto(f.depto)}` : ''}`],
-      ['Zona', texto(de(f, 'zonaResidencia', 'nombreZona'))],
-      ['Localidad', texto(de(f, 'zonaResidencia', 'localidad', 'nombreLocalidad'))],
-      ['Provincia', texto(de(f, 'zonaResidencia', 'localidad', 'provincia', 'nombreProvincia'))],
+    detalle: (fila) => [
+      ['DNI', texto(fila.dni)],
+      ['Teléfono', texto(fila.telefono)],
+      ['Dirección', `${texto(fila.calle)} ${texto(fila.altura)}${fila.piso ? `, piso ${texto(fila.piso)}` : ''}${fila.depto ? `, depto ${texto(fila.depto)}` : ''}`],
+      ['Zona', texto(de(fila, 'zonaResidencia', 'nombreZona'))],
+      ['Localidad', texto(de(fila, 'zonaResidencia', 'localidad', 'nombreLocalidad'))],
+      ['Provincia', texto(de(fila, 'zonaResidencia', 'localidad', 'provincia', 'nombreProvincia'))],
     ],
   },
   {
@@ -242,19 +242,19 @@ export const catalogos: Catalogo[] = [
     id: 'idUsuario',
     soloLectura: true,
     columnas: [
-      { label: 'Nombre', valor: (f) => `${texto(f.nombre)} ${texto(f.apellido)}` },
-      { label: 'Especialidades', valor: (f) => lista(f.especialidades).map((e) => texto(e.nombreEspecialidad)).join(', ') || '—' },
-      { label: 'Zonas', valor: (f) => lista(f.zonasDeCobertura).map((z) => texto(z.nombreZona)).join(', ') || '—' },
+      { label: 'Nombre', valor: (fila) => `${texto(fila.nombre)} ${texto(fila.apellido)}` },
+      { label: 'Especialidades', valor: (fila) => lista(fila.especialidades).map((unaEspecialidad) => texto(unaEspecialidad.nombreEspecialidad)).join(', ') || '—' },
+      { label: 'Zonas', valor: (fila) => lista(fila.zonasDeCobertura).map((zona) => texto(zona.nombreZona)).join(', ') || '—' },
     ],
     campos: [],
     filtro: { param: 'especialidad', label: 'Especialidad', referencia: especialidad },
-    detalle: (f) => [
-      ['Email', texto(f.correo)],
-      ['Teléfono', texto(f.telefono)],
-      ['Costo de visita', f.costoVisita ? `$ ${texto(f.costoVisita)}` : 'Sin cargo'],
-      ['Sobre mí', texto(f.descripcion)],
+    detalle: (fila) => [
+      ['Email', texto(fila.correo)],
+      ['Teléfono', texto(fila.telefono)],
+      ['Costo de visita', fila.costoVisita ? `$ ${texto(fila.costoVisita)}` : 'Sin cargo'],
+      ['Sobre mí', texto(fila.descripcion)],
     ],
   },
 ]
 
-export const catalogoPorClave = (clave: string | undefined) => catalogos.find((c) => c.clave === clave)
+export const catalogoPorClave = (clave: string | undefined) => catalogos.find((catalogo) => catalogo.clave === clave)

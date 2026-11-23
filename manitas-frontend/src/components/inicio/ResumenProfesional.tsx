@@ -12,7 +12,7 @@ const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS
 
 // Solicitudes activas: las que están en curso (agendadas, presupuestadas, contratadas o cambiando de horario)
 const activas = (solicitudes: SolicitudResumen[]) =>
-  solicitudes.filter((s) => ['agendado', 'presupuestado', 'contratado', 'reprogramacion'].includes(s.estadoServicio)).length
+  solicitudes.filter((solicitud) => ['agendado', 'presupuestado', 'contratado', 'reprogramacion'].includes(solicitud.estadoServicio)).length
 
 interface Props {
   solicitudes: SolicitudResumen[]
@@ -30,8 +30,8 @@ export default function ResumenProfesional({ solicitudes, pendiente, calificacio
   if (cargando) {
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        {[0, 1, 2].map((i) => (
-          <Grid key={i} size={{ xs: 12, sm: 4 }}>
+        {[0, 1, 2].map((indice) => (
+          <Grid key={indice} size={{ xs: 12, sm: 4 }}>
             <Skeleton variant="rounded" height={112} />
           </Grid>
         ))}

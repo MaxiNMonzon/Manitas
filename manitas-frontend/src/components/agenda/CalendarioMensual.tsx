@@ -28,9 +28,9 @@ function DiaConPunto(props: PickerDayProps) {
 // Todos los días que ocupa cada evento (un trabajo puede durar varios días)
 function diasDe(eventos: EventoAgenda[]): Set<string> {
   const dias = new Set<string>()
-  for (const e of eventos) {
-    let dia = dayjs(e.inicio).startOf('day')
-    const ultimo = dayjs(e.fin).startOf('day')
+  for (const evento of eventos) {
+    let dia = dayjs(evento.inicio).startOf('day')
+    const ultimo = dayjs(evento.fin).startOf('day')
     while (!dia.isAfter(ultimo)) {
       dias.add(dia.format('YYYY-MM-DD'))
       dia = dia.add(1, 'day')

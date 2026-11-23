@@ -26,50 +26,50 @@ export interface FormularioProfesional {
 
 // El formulario arranca con los datos del perfil. Las listas pasan tal cual;
 // solo los números y los opcionales se pasan a texto, y las matrículas al formato del editor
-export function desdePerfil(p: PerfilProfesional): FormularioProfesional {
+export function desdePerfil(perfil: PerfilProfesional): FormularioProfesional {
   return {
-    nombre: p.nombre,
-    apellido: p.apellido,
-    correo: p.correo,
-    telefono: p.telefono,
-    costoVisita: p.costoVisita != null ? String(p.costoVisita) : '',
-    descripcion: p.descripcion ?? '',
-    cbu: p.cbu ?? '',
+    nombre: perfil.nombre,
+    apellido: perfil.apellido,
+    correo: perfil.correo,
+    telefono: perfil.telefono,
+    costoVisita: perfil.costoVisita != null ? String(perfil.costoVisita) : '',
+    descripcion: perfil.descripcion ?? '',
+    cbu: perfil.cbu ?? '',
     idProvincia: '',
     idLocalidad: '',
-    especialidades: p.especialidades,
-    habilidades: p.tiposDeServicio,
-    zonas: p.zonasDeCobertura,
-    matriculas: p.matriculas.map((m, i) => ({
-      clave: i + 1,
-      numero: m.numero,
-      descripcion: m.descripcion ?? '',
-      idEspecialidad: String(m.especialidad.idEspecialidad),
+    especialidades: perfil.especialidades,
+    habilidades: perfil.tiposDeServicio,
+    zonas: perfil.zonasDeCobertura,
+    matriculas: perfil.matriculas.map((matricula, indice) => ({
+      clave: indice + 1,
+      numero: matricula.numero,
+      descripcion: matricula.descripcion ?? '',
+      idEspecialidad: String(matricula.especialidad.idEspecialidad),
     })),
   }
 }
 
 // Mismas reglas que el registro (están en reglas.ts), más el costo de la visita que solo se edita acá
-export function validar(f: FormularioProfesional): Errores<FormularioProfesional> {
-  const e: Errores<FormularioProfesional> = { ...validarContacto(f), ...validarTrabajo(f) }
-  if (f.costoVisita && !/^\d+$/.test(f.costoVisita)) e.costoVisita = 'Solo números, sin puntos'
-  return e
+export function validar(formulario: FormularioProfesional): Errores<FormularioProfesional> {
+  const errores: Errores<FormularioProfesional> = { ...validarContacto(formulario), ...validarTrabajo(formulario) }
+  if (formulario.costoVisita && !/^\d+$/.test(formulario.costoVisita)) errores.costoVisita = 'Solo números, sin puntos'
+  return errores
 }
 
 // Lo que se manda al back (PATCH /profesional/:id)
-export function paraEnviar(f: FormularioProfesional): CambiosPerfilProfesional {
+export function paraEnviar(formulario: FormularioProfesional): CambiosPerfilProfesional {
   return {
-    nombre: f.nombre.trim(),
-    apellido: f.apellido.trim(),
-    correo: f.correo.trim(),
-    telefono: f.telefono,
-    matriculas: matriculasParaEnviar(f.matriculas),
+    nombre: formulario.nombre.trim(),
+    apellido: formulario.apellido.trim(),
+    correo: formulario.correo.trim(),
+    telefono: formulario.telefono,
+    matriculas: matriculasParaEnviar(formulario.matriculas),
     // Vacío = se borra el dato opcional
-    costoVisita: f.costoVisita ? Number(f.costoVisita) : null,
-    descripcion: f.descripcion.trim() || null,
-    cbu: f.cbu || null,
-    idsEspecialidades: f.especialidades.map((e) => e.idEspecialidad),
-    idsTiposDeServicio: f.habilidades.map((h) => h.idServicio),
-    idsZonasCobertura: f.zonas.map((z) => z.idZona),
+    costoVisita: formulario.costoVisita ? Number(formulario.costoVisita) : null,
+    descripcion: formulario.descripcion.trim() || null,
+    cbu: formulario.cbu || null,
+    idsEspecialidades: formulario.especialidades.map((especialidad) => especialidad.idEspecialidad),
+    idsTiposDeServicio: formulario.habilidades.map((habilidad) => habilidad.idServicio),
+    idsZonasCobertura: formulario.zonas.map((zona) => zona.idZona),
   }
 }

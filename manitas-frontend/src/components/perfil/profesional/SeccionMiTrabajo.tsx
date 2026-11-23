@@ -57,17 +57,17 @@ export default function SeccionMiTrabajo({ datos, errores, editando, intentoGuar
         ) : (
           <>
             <Grid size={{ xs: 12, md: 4 }}>
-              <ChipsLectura label="Especialidades" items={datos.especialidades.map((e) => e.nombreEspecialidad)} vacio="Sin especialidades" />
+              <ChipsLectura label="Especialidades" items={datos.especialidades.map((especialidad) => especialidad.nombreEspecialidad)} vacio="Sin especialidades" />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <ChipsLectura label="Habilidades" items={datos.habilidades.map((h) => h.nombreServicio)} vacio="Sin habilidades cargadas" />
+              <ChipsLectura label="Habilidades" items={datos.habilidades.map((habilidad) => habilidad.nombreServicio)} vacio="Sin habilidades cargadas" />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <ChipsLectura label="Zonas de trabajo" items={datos.zonas.map(textoZona)} vacio="Sin zonas" />
             </Grid>
             <Grid size={12}>
               <ListaMatriculas
-                matriculas={matriculasGuardadas.map((m) => ({ numero: m.numero, descripcion: m.descripcion, especialidad: m.especialidad.nombreEspecialidad }))}
+                matriculas={matriculasGuardadas.map((matricula) => ({ numero: matricula.numero, descripcion: matricula.descripcion, especialidad: matricula.especialidad.nombreEspecialidad }))}
               />
             </Grid>
           </>

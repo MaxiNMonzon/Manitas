@@ -53,16 +53,16 @@ export default function PerfilProfesional() {
     return <Alert severity="error">{perfil.error ?? 'No se pudo cargar tu perfil'}</Alert>
   }
 
-  const p = perfil.datos
+  const miPerfil = perfil.datos
   const { editando, errores, cambiar } = edicion
-  const datos = edicion.form ?? desdePerfil(p)
+  const datos = edicion.form ?? desdePerfil(miPerfil)
 
   const guardar = () =>
     edicion.guardar(async (form) => {
       const cambios = paraEnviar(form)
-      await guardarPerfilProfesional(p.idUsuario, cambios)
+      await guardarPerfilProfesional(miPerfil.idUsuario, cambios)
       // Si cambió el email, la sesión lo muestra actualizado (el próximo login es con el nuevo)
-      const cambioCorreo = cambios.correo !== p.correo
+      const cambioCorreo = cambios.correo !== miPerfil.correo
       if (cambioCorreo && sesion) actualizarCorreo(cambios.correo)
       setAviso({ texto: cambioCorreo ? 'Perfil actualizado. La próxima vez entrá con tu email nuevo' : 'Perfil actualizado', tipo: 'success' })
       perfil.recargar()
@@ -72,7 +72,7 @@ export default function PerfilProfesional() {
     <BotonesEdicion
       editando={editando}
       guardando={edicion.guardando}
-      onEditar={() => edicion.empezar(desdePerfil(p))}
+      onEditar={() => edicion.empezar(desdePerfil(miPerfil))}
       onCancelar={edicion.cancelar}
       onGuardar={guardar}
     />
@@ -85,14 +85,14 @@ export default function PerfilProfesional() {
       </Typography>
 
       {/* Encabezado: iniciales, nombre, especialidades y calificación */}
-      <EncabezadoPerfil nombre={p.nombre} apellido={p.apellido} tamañoAvatar={96} acciones={botones}>
+      <EncabezadoPerfil nombre={miPerfil.nombre} apellido={miPerfil.apellido} tamañoAvatar={96} acciones={botones}>
         <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', my: 1, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-          {p.especialidades.map((e) => (
-            <Chip key={e.idEspecialidad} size="small" color="primary" label={e.nombreEspecialidad} />
+          {miPerfil.especialidades.map((especialidad) => (
+            <Chip key={especialidad.idEspecialidad} size="small" color="primary" label={especialidad.nombreEspecialidad} />
           ))}
-          {p.matriculas.length > 0 && (
-            <Tooltip title={p.matriculas.map((m) => `${m.especialidad.nombreEspecialidad}: ${m.numero}`).join(' · ')}>
-              <Chip size="small" variant="outlined" label={p.matriculas.length === 1 ? `Matrícula ${p.matriculas[0].numero}` : `${p.matriculas.length} matrículas`} />
+          {miPerfil.matriculas.length > 0 && (
+            <Tooltip title={miPerfil.matriculas.map((matricula) => `${matricula.especialidad.nombreEspecialidad}: ${matricula.numero}`).join(' · ')}>
+              <Chip size="small" variant="outlined" label={miPerfil.matriculas.length === 1 ? `Matrícula ${miPerfil.matriculas[0].numero}` : `${miPerfil.matriculas.length} matrículas`} />
             </Tooltip>
           )}
         </Stack>
@@ -123,8 +123,8 @@ export default function PerfilProfesional() {
           errores={errores}
           editando={editando}
           cambiar={cambiar}
-          dni={p.dni}
-          fechaNacimiento={p.fechaNacimiento}
+          dni={miPerfil.dni}
+          fechaNacimiento={miPerfil.fechaNacimiento}
           ayudaTelefono="Con característica. Tus clientes te escriben por WhatsApp a este número"
         >
           {/* Solo al editar: sirven para buscar zonas de trabajo nuevas (no se guardan) */}
@@ -136,21 +136,21 @@ export default function PerfilProfesional() {
                   fullWidth
                   label="Provincia"
                   value={datos.idProvincia}
-                  onChange={(e) => cambiar({ idProvincia: e.target.value, idLocalidad: '' })}
+                  onChange={(evento) => cambiar({ idProvincia: evento.target.value, idLocalidad: '' })}
                   helperText="Para buscar zonas de trabajo nuevas"
                 >
-                  {catalogos.provincias.map((pr) => (
-                    <MenuItem key={pr.idProvincia} value={String(pr.idProvincia)}>
-                      {pr.nombreProvincia}
+                  {catalogos.provincias.map((provincia) => (
+                    <MenuItem key={provincia.idProvincia} value={String(provincia.idProvincia)}>
+                      {provincia.nombreProvincia}
                     </MenuItem>
                   ))}
                 </TextField>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField select fullWidth label="Localidad" value={datos.idLocalidad} disabled={!datos.idProvincia} onChange={(e) => cambiar({ idLocalidad: e.target.value })}>
-                  {catalogos.localidades.map((l) => (
-                    <MenuItem key={l.idLocalidad} value={String(l.idLocalidad)}>
-                      {l.nombreLocalidad}
+                <TextField select fullWidth label="Localidad" value={datos.idLocalidad} disabled={!datos.idProvincia} onChange={(evento) => cambiar({ idLocalidad: evento.target.value })}>
+                  {catalogos.localidades.map((localidad) => (
+                    <MenuItem key={localidad.idLocalidad} value={String(localidad.idLocalidad)}>
+                      {localidad.nombreLocalidad}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -165,9 +165,9 @@ export default function PerfilProfesional() {
           editando={editando}
           intentoGuardar={edicion.intentoGuardar}
           cambiar={cambiar}
-          onCambiarEspecialidades={(elegidas) => edicion.setForm((f) => f && conEspecialidades(f, elegidas))}
+          onCambiarEspecialidades={(elegidas) => edicion.setForm((anterior) => anterior && conEspecialidades(anterior, elegidas))}
           opciones={{ especialidades: catalogos.opcionesEspecialidades, habilidades: catalogos.opcionesHabilidades, zonas: catalogos.opcionesZonas }}
-          matriculasGuardadas={p.matriculas}
+          matriculasGuardadas={miPerfil.matriculas}
         />
 
         <SeccionDatosCobro datos={datos} errores={errores} editando={editando} cambiar={cambiar} />
@@ -177,7 +177,7 @@ export default function PerfilProfesional() {
             {botones}
           </Stack>
         ) : (
-          <SeccionCuenta idUsuario={p.idUsuario} onContraseñaCambiada={() => setAviso({ texto: 'Contraseña cambiada', tipo: 'success' })} />
+          <SeccionCuenta idUsuario={miPerfil.idUsuario} onContraseñaCambiada={() => setAviso({ texto: 'Contraseña cambiada', tipo: 'success' })} />
         )}
       </Stack>
 
