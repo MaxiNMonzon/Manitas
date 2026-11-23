@@ -54,6 +54,25 @@ export interface MatriculaRequest {
   idEspecialidad: number
 }
 
+// Cómo vienen las especialidades, habilidades y zonas dentro del perfil del profesional.
+// Los formularios (registro y "Mi perfil") trabajan con esta misma forma: no hay que convertirlas
+export interface EspecialidadResumen {
+  idEspecialidad: number
+  nombreEspecialidad: string
+}
+
+export interface HabilidadResumen {
+  idServicio: number
+  nombreServicio: string
+  especialidad?: EspecialidadResumen
+}
+
+export interface ZonaResumen {
+  idZona: number
+  nombreZona: string
+  localidad?: { nombreLocalidad: string }
+}
+
 // GET /auth/perfil del profesional (sin la contraseña)
 export interface PerfilProfesional {
   idUsuario: number
@@ -63,13 +82,13 @@ export interface PerfilProfesional {
   fechaNacimiento: string // 'AAAA-MM-DD'
   correo: string
   telefono: string
-  matriculas: { idMatricula?: number; numero: string; descripcion?: string | null; especialidad: { idEspecialidad: number; nombreEspecialidad: string } }[]
+  matriculas: { idMatricula?: number; numero: string; descripcion?: string | null; especialidad: EspecialidadResumen }[]
   costoVisita?: number | null
   descripcion?: string | null
   cbu?: string | null
-  especialidades: { idEspecialidad: number; nombreEspecialidad: string }[]
-  tiposDeServicio: { idServicio: number; nombreServicio: string; especialidad?: { idEspecialidad: number; nombreEspecialidad: string } }[]
-  zonasDeCobertura: { idZona: number; nombreZona: string; localidad?: { nombreLocalidad: string } }[]
+  especialidades: EspecialidadResumen[]
+  tiposDeServicio: HabilidadResumen[]
+  zonasDeCobertura: ZonaResumen[]
 }
 
 // PATCH /profesional/:id (null = borrar el dato opcional)

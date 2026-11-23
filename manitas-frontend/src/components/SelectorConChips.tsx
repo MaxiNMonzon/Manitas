@@ -6,19 +6,16 @@ import FormHelperText from '@mui/material/FormHelperText'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
-export interface Opcion {
-  id: number
+interface Props<T> {
   label: string
+  opciones: T[]
+  seleccionados: T[]
+  onChange: (seleccionados: T[]) => void
+  // Cómo leer cada elemento: así se usan los datos tal como vienen del back, sin convertirlos
+  idDe: (item: T) => number
+  textoDe: (item: T) => string
   // Para agrupar las opciones en la lista (ej: habilidades por especialidad)
-  grupo?: string
-  grupoId?: number
-}
-
-interface Props {
-  label: string
-  opciones: Opcion[]
-  seleccionados: Opcion[]
-  onChange: (seleccionados: Opcion[]) => void
+  grupoDe?: (item: T) => string | undefined
   disabled?: boolean
   // Texto de ayuda debajo (o el error, si hay)
   ayuda?: string
@@ -27,18 +24,31 @@ interface Props {
 }
 
 // Lista desplegable con búsqueda: cada opción elegida se agrega abajo como una "burbuja"
-// con una X para sacarla. Lo elegido se devuelve como array (ej: para idsEspecialidades).
-export default function SelectorConChips({ label, opciones, seleccionados, onChange, disabled, ayuda, error, required }: Props) {
+// con una X para sacarla. Es genérico (<T>): sirve para especialidades, habilidades o zonas
+export default function SelectorConChips<T>({
+  label,
+  opciones,
+  seleccionados,
+  onChange,
+  idDe,
+  textoDe,
+  grupoDe,
+  disabled,
+  ayuda,
+  error,
+  required,
+}: Props<T>) {
   const [texto, setTexto] = useState('')
-  const idsElegidos = new Set(seleccionados.map((s) => s.id))
-  const disponibles = opciones.filter((o) => !idsElegidos.has(o.id))
+  const idsElegidos = new Set(seleccionados.map(idDe))
+  const disponibles = opciones.filter((o) => !idsElegidos.has(idDe(o)))
 
   return (
     <Box>
       <Autocomplete
         options={disponibles}
-        groupBy={opciones.some((o) => o.grupo) ? (o) => o.grupo ?? '' : undefined}
-        getOptionLabel={(o) => o.label}
+        groupBy={grupoDe ? (o) => grupoDe(o) ?? '' : undefined}
+        getOptionLabel={textoDe}
+        isOptionEqualToValue={(a, b) => idDe(a) === idDe(b)}
         value={null}
         inputValue={texto}
         onInputChange={(_, valor, motivo) => setTexto(motivo === 'reset' ? '' : valor)}
@@ -70,11 +80,11 @@ export default function SelectorConChips({ label, opciones, seleccionados, onCha
         ) : (
           seleccionados.map((s) => (
             <Chip
-              key={s.id}
-              label={s.label}
+              key={idDe(s)}
+              label={textoDe(s)}
               color="primary"
               variant="outlined"
-              onDelete={() => onChange(seleccionados.filter((x) => x.id !== s.id))}
+              onDelete={() => onChange(seleccionados.filter((x) => idDe(x) !== idDe(s)))}
             />
           ))
         )}

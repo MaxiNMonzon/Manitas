@@ -13,12 +13,12 @@ import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
-import type { Opcion } from '../SelectorConChips'
+import type { EspecialidadResumen } from '../../types'
 import { MAX_DESCRIPCION_MATRICULA, MAX_NUMERO_MATRICULA, nuevaMatricula, type MatriculaForm } from './matriculas'
 
 interface Props {
   // Las especialidades elegidas: cada matrícula es de una de ellas
-  especialidades: Opcion[]
+  especialidades: EspecialidadResumen[]
   matriculas: MatriculaForm[]
   onChange: (matriculas: MatriculaForm[]) => void
   // Solo se muestran después de intentar guardar
@@ -51,8 +51,8 @@ export default function EditorMatriculas({ especialidades, matriculas, onChange,
                   error={errores[m.clave] === 'Elegí la especialidad'}
                 >
                   {especialidades.map((e) => (
-                    <MenuItem key={e.id} value={String(e.id)}>
-                      {e.label}
+                    <MenuItem key={e.idEspecialidad} value={String(e.idEspecialidad)}>
+                      {e.nombreEspecialidad}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -91,7 +91,7 @@ export default function EditorMatriculas({ especialidades, matriculas, onChange,
       </Stack>
       <Button
         startIcon={<AddIcon />}
-        onClick={() => onChange([...matriculas, nuevaMatricula(matriculas, especialidades.length === 1 ? especialidades[0].id : undefined)])}
+        onClick={() => onChange([...matriculas, nuevaMatricula(matriculas, especialidades.length === 1 ? especialidades[0].idEspecialidad : undefined)])}
         disabled={sinEspecialidades}
         sx={{ mt: 1 }}
       >

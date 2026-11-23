@@ -1,23 +1,28 @@
 import Grid from '@mui/material/Grid'
-import SelectorConChips, { type Opcion } from '../../SelectorConChips'
+import SelectorConChips from '../../SelectorConChips'
 import EditorMatriculas from '../EditorMatriculas'
 import { erroresMatriculas, type MatriculaForm } from '../matriculas'
+import type { EspecialidadResumen, HabilidadResumen, ZonaResumen } from '../../../types'
 
-interface Elegidos {
-  especialidades: Opcion[]
-  habilidades: Opcion[]
-  zonas: Opcion[]
+// Lo elegido, con la misma forma con la que viene en el perfil del back
+export interface Elegidos {
+  especialidades: EspecialidadResumen[]
+  habilidades: HabilidadResumen[]
+  zonas: ZonaResumen[]
   matriculas: MatriculaForm[]
 }
+
+// "Centro (Rosario)": la localidad evita confundir zonas con el mismo nombre
+export const textoZona = (z: ZonaResumen) => (z.localidad ? `${z.nombreZona} (${z.localidad.nombreLocalidad})` : z.nombreZona)
 
 interface Props {
   elegidos: Elegidos
   // Las opciones de cada lista (ver useCatalogos)
-  opciones: { especialidades: Opcion[]; habilidades: Opcion[]; zonas: Opcion[] }
+  opciones: { especialidades: EspecialidadResumen[]; habilidades: HabilidadResumen[]; zonas: ZonaResumen[] }
   errores: { especialidades?: string; zonas?: string }
   // Los errores de las matrículas se muestran recién después del primer intento
   mostrarErroresMatriculas: boolean
-  onCambiarEspecialidades: (elegidas: Opcion[]) => void
+  onCambiarEspecialidades: (elegidas: EspecialidadResumen[]) => void
   onCambiar: (cambios: Partial<Elegidos>) => void
   // Las zonas salen de la localidad elegida: qué decir si todavía no eligió una
   ayudaZonas?: string
@@ -47,6 +52,8 @@ export default function SelectoresDeTrabajo({
           opciones={opciones.especialidades}
           seleccionados={elegidos.especialidades}
           onChange={onCambiarEspecialidades}
+          idDe={(e) => e.idEspecialidad}
+          textoDe={(e) => e.nombreEspecialidad}
           error={errores.especialidades}
         />
       </Grid>
@@ -56,6 +63,9 @@ export default function SelectoresDeTrabajo({
           opciones={opciones.habilidades}
           seleccionados={elegidos.habilidades}
           onChange={(habilidades) => onCambiar({ habilidades })}
+          idDe={(h) => h.idServicio}
+          textoDe={(h) => h.nombreServicio}
+          grupoDe={(h) => h.especialidad?.nombreEspecialidad}
           disabled={sinEspecialidad}
           ayuda={sinEspecialidad ? 'Primero elegí una especialidad' : undefined}
         />
@@ -67,6 +77,8 @@ export default function SelectoresDeTrabajo({
           opciones={opciones.zonas}
           seleccionados={elegidos.zonas}
           onChange={(zonas) => onCambiar({ zonas })}
+          idDe={(z) => z.idZona}
+          textoDe={textoZona}
           disabled={zonasDeshabilitadas}
           ayuda={ayudaZonas}
           error={errores.zonas}
