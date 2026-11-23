@@ -84,7 +84,7 @@ const theme = createTheme(base, {
 })
 
 // El degradado de la marca (azul oscuro al naranja), usado en los paneles de presentación
-export const degradadoMarca = (t: Theme) =>
-  `linear-gradient(135deg, ${t.palette.primary.dark} 0%, ${t.palette.primary.main} 55%, ${t.palette.secondary.main} 130%)`
+export const degradadoMarca = (tema: Theme) =>
+  `linear-gradient(135deg, ${tema.palette.primary.dark} 0%, ${tema.palette.primary.main} 55%, ${tema.palette.secondary.main} 130%)`
 
 export default theme

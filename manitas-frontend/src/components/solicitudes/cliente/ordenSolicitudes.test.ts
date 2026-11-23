@@ -26,8 +26,8 @@ describe('Mis solicitudes del cliente', () => {
       solicitud({ idSolicitud: 2, estadoServicio: 'finalizado' }),
       solicitud({ idSolicitud: 3, estadoServicio: 'cancelado' }),
     ]
-    expect(delGrupo(todas, 'en_curso').map((s) => s.idSolicitud)).toEqual([1])
-    expect(delGrupo(todas, 'completadas').map((s) => s.idSolicitud)).toEqual([2, 3])
+    expect(delGrupo(todas, 'en_curso').map((unaSolicitud) => unaSolicitud.idSolicitud)).toEqual([1])
+    expect(delGrupo(todas, 'completadas').map((unaSolicitud) => unaSolicitud.idSolicitud)).toEqual([2, 3])
   })
 
   it('en curso pone arriba lo que espera una respuesta del cliente', () => {
@@ -35,7 +35,7 @@ describe('Mis solicitudes del cliente', () => {
       solicitud({ idSolicitud: 1, estadoServicio: 'agendado', fechaVisita: '2026-11-20T10:00:00' }),
       solicitud({ idSolicitud: 2, estadoServicio: 'presupuestado', costoEstimado: 45000 }),
     ]
-    expect(ordenar('en_curso', lista).map((s) => s.idSolicitud)).toEqual([2, 1])
+    expect(ordenar('en_curso', lista).map((unaSolicitud) => unaSolicitud.idSolicitud)).toEqual([2, 1])
     expect(cuantasEsperanRespuesta(lista)).toBe(1)
   })
 
@@ -44,7 +44,7 @@ describe('Mis solicitudes del cliente', () => {
       solicitud({ idSolicitud: 1, estadoServicio: 'finalizado', fechaFinReal: '2026-10-01T10:00:00' }),
       solicitud({ idSolicitud: 2, estadoServicio: 'finalizado', fechaFinReal: '2026-10-20T10:00:00' }),
     ]
-    expect(ordenar('completadas', lista).map((s) => s.idSolicitud)).toEqual([2, 1])
+    expect(ordenar('completadas', lista).map((unaSolicitud) => unaSolicitud.idSolicitud)).toEqual([2, 1])
   })
 
   it('un presupuesto recibido se puede aceptar o rechazar', () => {
@@ -59,7 +59,7 @@ describe('Mis solicitudes del cliente', () => {
   })
 
   it('si el profesional propone otro horario, el cliente lo puede aceptar', () => {
-    const s = solicitud({ estadoServicio: 'reprogramacion', propuestaDe: 'profesional' })
-    expect(accionesDelDetalle(s)).toContain('aceptarHorario')
+    const solicitudReprogramada = solicitud({ estadoServicio: 'reprogramacion', propuestaDe: 'profesional' })
+    expect(accionesDelDetalle(solicitudReprogramada)).toContain('aceptarHorario')
   })
 })

@@ -11,7 +11,7 @@ import type { SolicitudResumen } from '../../types'
 
 interface Props {
   solicitudes: SolicitudResumen[]
-  onResponder: (s: SolicitudResumen) => void
+  onResponder: (solicitud: SolicitudResumen) => void
 }
 
 // Las solicitudes nuevas que el profesional tiene que responder (como las urgencias, pero en azul).
@@ -21,7 +21,7 @@ export default function SolicitudesNuevas({ solicitudes, onResponder }: Props) {
   return (
     <Paper
       variant="outlined"
-      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'primary.main', bgcolor: (t) => alpha(t.palette.primary.main, 0.06) }}
+      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'primary.main', bgcolor: (tema) => alpha(tema.palette.primary.main, 0.06) }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'primary.main', mb: 2 }}>
         <NotificationsActiveIcon />
@@ -31,28 +31,28 @@ export default function SolicitudesNuevas({ solicitudes, onResponder }: Props) {
         <Chip size="small" color="primary" label={solicitudes.length} />
       </Stack>
       <Stack spacing={1.5}>
-        {solicitudes.map((s) => (
-          <Paper key={s.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'primary.main' }}>
+        {solicitudes.map((solicitud) => (
+          <Paper key={solicitud.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'primary.main' }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 600 }}>
-                  {s.cliente ? `${s.cliente.nombre} ${s.cliente.apellido}` : 'Cliente'}
-                  {s.especialidad && (
+                  {solicitud.cliente ? `${solicitud.cliente.nombre} ${solicitud.cliente.apellido}` : 'Cliente'}
+                  {solicitud.especialidad && (
                     <Typography component="span" color="text.secondary">
                       {' '}
-                      · {s.especialidad.nombreEspecialidad}
+                      · {solicitud.especialidad.nombreEspecialidad}
                     </Typography>
                   )}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  {s.descripcionProblema}
+                  {solicitud.descripcionProblema}
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 0.5 }}>
-                  {s.fechaVisita ? `Pedido de visita para el ${formatoFecha(s.fechaVisita)} · ` : ''}
-                  quedan {tiempoQueQueda(s)} para responder
+                  {solicitud.fechaVisita ? `Pedido de visita para el ${formatoFecha(solicitud.fechaVisita)} · ` : ''}
+                  quedan {tiempoQueQueda(solicitud)} para responder
                 </Typography>
               </Box>
-              <Button variant="contained" color="primary" onClick={() => onResponder(s)} sx={{ flexShrink: 0 }}>
+              <Button variant="contained" color="primary" onClick={() => onResponder(solicitud)} sx={{ flexShrink: 0 }}>
                 Responder
               </Button>
             </Stack>

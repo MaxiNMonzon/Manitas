@@ -6,7 +6,7 @@ import type { SolicitudResumen } from '../../../types'
 
 // En la tarjeta: el botón de la acción que le toca a cada estado (las nuevas se responden en el detalle)
 export function AccionTarjeta({
-  solicitud: s,
+  solicitud,
   onPresupuestar,
   onResponderHorario,
 }: {
@@ -14,14 +14,14 @@ export function AccionTarjeta({
   onPresupuestar: () => void
   onResponderHorario: () => void
 }) {
-  if (puedePresupuestar(s)) {
+  if (puedePresupuestar(solicitud)) {
     return (
       <Button size="small" variant="contained" color="secondary" startIcon={<RequestQuoteIcon />} onClick={onPresupuestar}>
         Enviar presupuesto
       </Button>
     )
   }
-  if (esperaRespuestaDeHorario(s)) {
+  if (esperaRespuestaDeHorario(solicitud)) {
     return (
       <Button size="small" variant="contained" color="warning" startIcon={<EventRepeatIcon />} onClick={onResponderHorario}>
         Responder horario
@@ -43,13 +43,13 @@ interface PropsDetalle {
 }
 
 // En el detalle: un botón por cada acción que permite el estado (ver acciones.ts)
-export function AccionesDetalle({ solicitud: s, ocupado, onReprogramar, onRechazar, onAceptar, onResponderHorario, onPresupuestar }: PropsDetalle) {
-  return accionesDelDetalle(s).map((accion) => {
+export function AccionesDetalle({ solicitud, ocupado, onReprogramar, onRechazar, onAceptar, onResponderHorario, onPresupuestar }: PropsDetalle) {
+  return accionesDelDetalle(solicitud).map((accion) => {
     switch (accion) {
       case 'reprogramar':
         return (
           <Button key={accion} startIcon={<EventRepeatIcon />} disabled={ocupado} onClick={onReprogramar} sx={{ mr: 'auto' }}>
-            {s.estadoServicio === 'reprogramacion' ? 'Proponer otro' : 'Proponer otro horario'}
+            {solicitud.estadoServicio === 'reprogramacion' ? 'Proponer otro' : 'Proponer otro horario'}
           </Button>
         )
       case 'rechazar':

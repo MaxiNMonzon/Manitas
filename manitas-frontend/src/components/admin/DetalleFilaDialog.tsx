@@ -19,8 +19,8 @@ interface Props {
   // En celular ocupa toda la pantalla
   angosto: boolean
   onClose: () => void
-  onEditar: (f: Fila) => void
-  onBorrar: (f: Fila) => void
+  onEditar: (fila: Fila) => void
+  onBorrar: (fila: Fila) => void
 }
 
 // Detalle de una fila del catálogo: todos sus datos (columnas + los extra del detalle) y, si se puede, editar o dar de baja
@@ -37,9 +37,9 @@ export default function DetalleFilaDialog({ catalogo, fila, angosto, onClose, on
           </DialogTitle>
           <DialogContent dividers>
             <Stack spacing={1}>
-              {[...catalogo.columnas.map((c) => [c.label, c.valor(fila)] as [string, string]), ...(catalogo.detalle?.(fila) ?? [])]
+              {[...catalogo.columnas.map((columna) => [columna.label, columna.valor(fila)] as [string, string]), ...(catalogo.detalle?.(fila) ?? [])]
                 // Sin repetir datos que ya están en las columnas
-                .filter(([label], i, todos) => todos.findIndex(([l]) => l === label) === i)
+                .filter(([label], indice, todos) => todos.findIndex(([otroLabel]) => otroLabel === label) === indice)
                 .map(([label, valor]) => (
                   <Stack key={label} direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>

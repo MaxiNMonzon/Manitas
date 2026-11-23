@@ -21,10 +21,10 @@ export default function CategoriasInicio({ categorias }: { categorias: Categoria
   return (
     <Seccion titulo="Categorías">
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))', gap: 1.5 }}>
-        {mostradas.map((c) => (
+        {mostradas.map((categoria) => (
           <ButtonBase
-            key={c.idEspecialidad}
-            onClick={() => navigate(`/app/profesionales?especialidad=${c.idEspecialidad}`)}
+            key={categoria.idEspecialidad}
+            onClick={() => navigate(`/app/profesionales?especialidad=${categoria.idEspecialidad}`)}
             sx={{
               flexDirection: 'column',
               gap: 0.5,
@@ -38,15 +38,15 @@ export default function CategoriasInicio({ categorias }: { categorias: Categoria
               '&:hover': { borderColor: 'primary.main', boxShadow: 2 },
             }}
           >
-            <IconoEspecialidad nombre={c.nombre} fontSize="large" />
+            <IconoEspecialidad nombre={categoria.nombre} fontSize="large" />
             <Typography variant="body2" color="text.primary">
-              {c.nombre}
+              {categoria.nombre}
             </Typography>
           </ButtonBase>
         ))}
         {categorias.length > CATEGORIAS_VISIBLES && (
           <ButtonBase
-            onClick={() => setVerTodas((v) => !v)}
+            onClick={() => setVerTodas((anterior) => !anterior)}
             sx={{
               flexDirection: 'column',
               gap: 0.5,

@@ -18,7 +18,7 @@ export function useListado<T>(url: string | null): { datos: T[]; error: string |
     api
       .get<T[]>(url)
       .then((datos) => vigente && setResultado({ url, datos, error: null }))
-      .catch((e: Error) => vigente && setResultado({ url, datos: [], error: e.message }))
+      .catch((error: Error) => vigente && setResultado({ url, datos: [], error: error.message }))
     return () => {
       vigente = false
     }

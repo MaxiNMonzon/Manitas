@@ -6,10 +6,10 @@ import { expect, type Page, type Route } from '@playwright/test'
 
 const hoy = new Date()
 const enDias = (dias: number, hora = 10) => {
-  const d = new Date(hoy)
-  d.setDate(d.getDate() + dias)
-  d.setHours(hora, 0, 0, 0)
-  return d.toISOString()
+  const fecha = new Date(hoy)
+  fecha.setDate(fecha.getDate() + dias)
+  fecha.setHours(hora, 0, 0, 0)
+  return fecha.toISOString()
 }
 
 const profesional = { idUsuario: 7, nombre: 'Raúl', apellido: 'Bustos', telefono: '3415550001' }
@@ -75,7 +75,7 @@ function responder(metodo: string, ruta: string): unknown {
   if (ruta === '/solicitud-de-servicio') return solicitudesCliente
   if (ruta.startsWith('/solicitud-de-servicio/')) {
     const id = Number(ruta.split('/')[2])
-    if (id) return solicitudesCliente.find((s) => s.idSolicitud === id) ?? {}
+    if (id) return solicitudesCliente.find((solicitud) => solicitud.idSolicitud === id) ?? {}
   }
   if (ruta === '/especialidad') return [{ idEspecialidad: 2, nombreEspecialidad: 'Plomería', palabrasClave: 'caño, canilla' }]
   return []

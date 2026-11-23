@@ -37,17 +37,17 @@ export default function PerfilCliente() {
     return <Alert severity="error">{perfil.error ?? 'No se pudo cargar tu perfil'}</Alert>
   }
 
-  const p = perfil.datos
+  const miPerfil = perfil.datos
   const { editando, errores, cambiar } = edicion
-  const datos = edicion.form ?? desdePerfil(p)
-  const ubicacion = textoUbicacion(p)
+  const datos = edicion.form ?? desdePerfil(miPerfil)
+  const ubicacion = textoUbicacion(miPerfil)
 
   const guardar = () =>
     edicion.guardar(async (form) => {
       const cambios = paraEnviar(form)
-      await guardarPerfilCliente(p.idUsuario, cambios)
+      await guardarPerfilCliente(miPerfil.idUsuario, cambios)
       // Si cambió el email, la sesión lo muestra actualizado (el próximo login es con el nuevo)
-      const cambioCorreo = cambios.correo !== p.correo
+      const cambioCorreo = cambios.correo !== miPerfil.correo
       if (cambioCorreo && sesion) actualizarCorreo(cambios.correo)
       setAviso({ texto: cambioCorreo ? 'Perfil actualizado. La próxima vez entrá con tu email nuevo' : 'Perfil actualizado', tipo: 'success' })
       perfil.recargar()
@@ -57,7 +57,7 @@ export default function PerfilCliente() {
     <BotonesEdicion
       editando={editando}
       guardando={edicion.guardando}
-      onEditar={() => edicion.empezar(desdePerfil(p))}
+      onEditar={() => edicion.empezar(desdePerfil(miPerfil))}
       onCancelar={edicion.cancelar}
       onGuardar={guardar}
     />
@@ -70,8 +70,8 @@ export default function PerfilCliente() {
       </Typography>
 
       {/* Encabezado: iniciales, nombre, email y dónde vive */}
-      <EncabezadoPerfil nombre={p.nombre} apellido={p.apellido} tamañoAvatar={88} acciones={botones}>
-        <Typography color="text.secondary">{p.correo}</Typography>
+      <EncabezadoPerfil nombre={miPerfil.nombre} apellido={miPerfil.apellido} tamañoAvatar={88} acciones={botones}>
+        <Typography color="text.secondary">{miPerfil.correo}</Typography>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary', mt: 0.5, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
           <PlaceIcon fontSize="small" />
           <Typography variant="body2">{ubicacion}</Typography>
@@ -91,19 +91,19 @@ export default function PerfilCliente() {
           errores={errores}
           editando={editando}
           cambiar={cambiar}
-          dni={p.dni}
-          fechaNacimiento={p.fechaNacimiento}
+          dni={miPerfil.dni}
+          fechaNacimiento={miPerfil.fechaNacimiento}
           ayudaTelefono="Con característica. El profesional te escribe por WhatsApp a este número"
         />
 
-        <SeccionDomicilio datos={datos} errores={errores} editando={editando} cambiar={cambiar} zonaActual={p.zonaResidencia} ubicacion={ubicacion} />
+        <SeccionDomicilio datos={datos} errores={errores} editando={editando} cambiar={cambiar} zonaActual={miPerfil.zonaResidencia} ubicacion={ubicacion} />
 
         {editando ? (
           <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
             {botones}
           </Stack>
         ) : (
-          <SeccionCuenta idUsuario={p.idUsuario} onContraseñaCambiada={() => setAviso({ texto: 'Contraseña cambiada', tipo: 'success' })} />
+          <SeccionCuenta idUsuario={miPerfil.idUsuario} onContraseñaCambiada={() => setAviso({ texto: 'Contraseña cambiada', tipo: 'success' })} />
         )}
       </Stack>
 

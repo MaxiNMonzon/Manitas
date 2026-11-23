@@ -31,22 +31,22 @@ export default function Pagos() {
       {!cargando && pendientes.length === 0 && <Typography color="text.secondary">No tenés nada para pagar.</Typography>}
 
       <Stack spacing={2}>
-        {pendientes.map((s) => (
-          <Paper key={s.idSolicitud} variant="outlined" sx={{ p: 2 }}>
+        {pendientes.map((solicitud) => (
+          <Paper key={solicitud.idSolicitud} variant="outlined" sx={{ p: 2 }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}>
               <div>
                 <Typography sx={{ fontWeight: 600 }}>
-                  {s.estadoServicio === 'rechazado' ? 'Visita' : 'Trabajo'} de {s.especialidad?.nombreEspecialidad ?? 'servicio'}
-                  {s.profesional ? ` con ${s.profesional.nombre}` : ''}
+                  {solicitud.estadoServicio === 'rechazado' ? 'Visita' : 'Trabajo'} de {solicitud.especialidad?.nombreEspecialidad ?? 'servicio'}
+                  {solicitud.profesional ? ` con ${solicitud.profesional.nombre}` : ''}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {s.descripcionProblema}
+                  {solicitud.descripcionProblema}
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  {formatoPesos(Number(s.costoFinal))}
+                  {formatoPesos(Number(solicitud.costoFinal))}
                 </Typography>
               </div>
-              <CheckoutButton idSolicitud={s.idSolicitud} />
+              <CheckoutButton idSolicitud={solicitud.idSolicitud} />
             </Stack>
           </Paper>
         ))}

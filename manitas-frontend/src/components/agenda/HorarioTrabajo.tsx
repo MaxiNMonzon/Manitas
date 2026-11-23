@@ -25,16 +25,16 @@ const DIAS = [
   { dia: 6, nombre: 'Sábado' },
   { dia: 0, nombre: 'Domingo' },
 ]
-const HORAS = Array.from({ length: 25 }, (_, h) => h)
-const hora = (h: number) => `${String(h).padStart(2, '0')}:00`
+const HORAS = Array.from({ length: 25 }, (_, horaDelDia) => horaDelDia)
+const hora = (horaDelDia: number) => `${String(horaDelDia).padStart(2, '0')}:00`
 const RANGO_NUEVO = { horaDesde: 9, horaHasta: 18 }
 
 // Algo mal cargado: la hora de fin antes de la de inicio, o dos rangos del mismo día que se pisan
 function errorDe(rangos: RangoHorario[]): string | null {
   for (const { dia, nombre } of DIAS) {
-    const delDia = rangos.filter((r) => r.diaSemana === dia).sort((a, b) => a.horaDesde - b.horaDesde)
-    if (delDia.some((r) => r.horaDesde >= r.horaHasta)) return `El ${nombre.toLowerCase()} la hora de inicio tiene que ser antes que la de fin`
-    if (delDia.some((r, i) => i > 0 && r.horaDesde < delDia[i - 1].horaHasta)) return `El ${nombre.toLowerCase()} hay horarios que se pisan`
+    const delDia = rangos.filter((rango) => rango.diaSemana === dia).sort((primero, segundo) => primero.horaDesde - segundo.horaDesde)
+    if (delDia.some((rango) => rango.horaDesde >= rango.horaHasta)) return `El ${nombre.toLowerCase()} la hora de inicio tiene que ser antes que la de fin`
+    if (delDia.some((rango, indice) => indice > 0 && rango.horaDesde < delDia[indice - 1].horaHasta)) return `El ${nombre.toLowerCase()} hay horarios que se pisan`
   }
   return null
 }
@@ -62,8 +62,8 @@ export default function HorarioTrabajo() {
       setEditado(null)
       guardado.recargar()
       setResultado({ tipo: 'success', texto: 'Horario guardado. Los clientes ya ven tus turnos libres.' })
-    } catch (e) {
-      setResultado({ tipo: 'error', texto: e instanceof Error ? e.message : 'No se pudo guardar el horario' })
+    } catch (fallo) {
+      setResultado({ tipo: 'error', texto: fallo instanceof Error ? fallo.message : 'No se pudo guardar el horario' })
     } finally {
       setEnviando(false)
     }
@@ -83,18 +83,18 @@ export default function HorarioTrabajo() {
       )}
 
       {DIAS.map(({ dia, nombre }) => {
-        const delDia = rangos.filter((r) => r.diaSemana === dia)
-        const otros = rangos.filter((r) => r.diaSemana !== dia)
+        const delDia = rangos.filter((rango) => rango.diaSemana === dia)
+        const otros = rangos.filter((rango) => rango.diaSemana !== dia)
         const trabaja = delDia.length > 0
-        const actualizar = (i: number, cambios: Partial<RangoHorario>) =>
-          cambiar([...otros, ...delDia.map((r, j) => (j === i ? { ...r, ...cambios } : r))])
+        const actualizar = (indice: number, cambios: Partial<RangoHorario>) =>
+          cambiar([...otros, ...delDia.map((rango, posicion) => (posicion === indice ? { ...rango, ...cambios } : rango))])
 
         return (
           <Stack key={dia} direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'flex-start' } }}>
             <Stack direction="row" sx={{ alignItems: 'center', minWidth: 150 }}>
               <Switch
                 checked={trabaja}
-                onChange={(e) => cambiar(e.target.checked ? [...otros, { diaSemana: dia, ...RANGO_NUEVO }] : otros)}
+                onChange={(evento) => cambiar(evento.target.checked ? [...otros, { diaSemana: dia, ...RANGO_NUEVO }] : otros)}
                 slotProps={{ input: { 'aria-label': nombre } }}
               />
               <Typography sx={{ fontWeight: trabaja ? 600 : 400, color: trabaja ? 'text.primary' : 'text.secondary' }}>
@@ -103,31 +103,31 @@ export default function HorarioTrabajo() {
             </Stack>
             {trabaja ? (
               <Stack spacing={1} sx={{ flexGrow: 1 }}>
-                {delDia.map((r, i) => (
-                  <Stack key={i} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                    <TextField select size="small" label="Desde" value={r.horaDesde} onChange={(e) => actualizar(i, { horaDesde: Number(e.target.value) })} sx={{ width: 110 }}>
-                      {HORAS.slice(0, 24).map((h) => (
-                        <MenuItem key={h} value={h}>
-                          {hora(h)}
+                {delDia.map((rango, indice) => (
+                  <Stack key={indice} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <TextField select size="small" label="Desde" value={rango.horaDesde} onChange={(evento) => actualizar(indice, { horaDesde: Number(evento.target.value) })} sx={{ width: 110 }}>
+                      {HORAS.slice(0, 24).map((horaDelDia) => (
+                        <MenuItem key={horaDelDia} value={horaDelDia}>
+                          {hora(horaDelDia)}
                         </MenuItem>
                       ))}
                     </TextField>
-                    <TextField select size="small" label="Hasta" value={r.horaHasta} onChange={(e) => actualizar(i, { horaHasta: Number(e.target.value) })} sx={{ width: 110 }}>
-                      {HORAS.slice(1).map((h) => (
-                        <MenuItem key={h} value={h}>
-                          {hora(h)}
+                    <TextField select size="small" label="Hasta" value={rango.horaHasta} onChange={(evento) => actualizar(indice, { horaHasta: Number(evento.target.value) })} sx={{ width: 110 }}>
+                      {HORAS.slice(1).map((horaDelDia) => (
+                        <MenuItem key={horaDelDia} value={horaDelDia}>
+                          {hora(horaDelDia)}
                         </MenuItem>
                       ))}
                     </TextField>
                     {delDia.length > 1 && (
-                      <IconButton aria-label="Quitar horario" onClick={() => cambiar([...otros, ...delDia.filter((_, j) => j !== i)])}>
+                      <IconButton aria-label="Quitar horario" onClick={() => cambiar([...otros, ...delDia.filter((_, posicion) => posicion !== indice)])}>
                         <DeleteOutlineIcon />
                       </IconButton>
                     )}
-                    {i === delDia.length - 1 && (
+                    {indice === delDia.length - 1 && (
                       <IconButton
                         aria-label="Agregar otro horario ese día (ej: a la tarde)"
-                        onClick={() => cambiar([...rangos, { diaSemana: dia, horaDesde: Math.min(r.horaHasta + 1, 23), horaHasta: Math.min(r.horaHasta + 4, 24) }])}
+                        onClick={() => cambiar([...rangos, { diaSemana: dia, horaDesde: Math.min(rango.horaHasta + 1, 23), horaHasta: Math.min(rango.horaHasta + 4, 24) }])}
                       >
                         <AddIcon />
                       </IconButton>

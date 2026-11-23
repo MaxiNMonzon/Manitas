@@ -16,9 +16,9 @@ export const formatoPesos = (monto: number) => pesos.format(monto)
 export const pesosCorto = (monto: number) => (monto >= 1000 ? `$${Math.round(monto / 1000)}k` : `$${monto}`)
 
 // Mes en el que cuenta un cobro: el del pago. Los que esperan el pago cuentan en el mes actual
-export function mesDe(c: Cobro): string {
-  return dayjs(c.fechaPago ?? undefined).format('YYYY-MM')
+export function mesDe(cobro: Cobro): string {
+  return dayjs(cobro.fechaPago ?? undefined).format('YYYY-MM')
 }
 
 // Número de comprobante armado con el id de la solicitud (ej: "0001-00000123")
-export const numeroComprobante = (c: Cobro) => `0001-${String(c.idSolicitud).padStart(8, '0')}`
+export const numeroComprobante = (cobro: Cobro) => `0001-${String(cobro.idSolicitud).padStart(8, '0')}`

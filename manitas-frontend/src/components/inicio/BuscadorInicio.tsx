@@ -17,8 +17,8 @@ export default function BuscadorInicio({ onUrgente }: { onUrgente: () => void })
   const navigate = useNavigate()
   const [busqueda, setBusqueda] = useState('')
 
-  const buscar = (e: FormEvent) => {
-    e.preventDefault()
+  const buscar = (evento: FormEvent) => {
+    evento.preventDefault()
     const texto = busqueda.trim()
     navigate(texto ? `/app/profesionales?q=${encodeURIComponent(texto)}` : '/app/profesionales')
   }
@@ -30,7 +30,7 @@ export default function BuscadorInicio({ onUrgente }: { onUrgente: () => void })
         p: { xs: 3, sm: 4 },
         borderRadius: 3,
         color: 'common.white',
-        background: (t) => `linear-gradient(135deg, ${t.palette.primary.dark}, ${t.palette.primary.main})`,
+        background: (tema) => `linear-gradient(135deg, ${tema.palette.primary.dark}, ${tema.palette.primary.main})`,
       }}
     >
       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap', mb: 2 }}>
@@ -45,7 +45,7 @@ export default function BuscadorInicio({ onUrgente }: { onUrgente: () => void })
         <TextField
           fullWidth
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(evento) => setBusqueda(evento.target.value)}
           placeholder="Ej: pérdida de agua, enchufe que no anda, pintar un cuarto..."
           sx={{ bgcolor: 'background.paper', borderRadius: 1 }}
           slotProps={{

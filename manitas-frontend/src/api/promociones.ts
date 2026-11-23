@@ -20,26 +20,26 @@ function colorDe(texto: string): string {
   return `hsl(${hash}, 60%, 40%)`
 }
 
-const fecha = (v: string) => new Date(`${v.slice(0, 10)}T00:00:00`).toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })
+const fecha = (valor: string) => new Date(`${valor.slice(0, 10)}T00:00:00`).toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })
 
 export async function traerPromocionesDelMes(): Promise<PromoBancaria[]> {
   const lista = await api.get<PromocionApi[]>('/promocion/del-mes')
-  return lista.map((p) => {
-    const medios = (p.metodosPago ?? []).map((m) => m.tipo)
+  return lista.map((promocion) => {
+    const medios = (promocion.metodosPago ?? []).map((metodo) => metodo.tipo)
     // Los métodos traen el banco en el nombre (ej: "Visa crédito - Banco Galicia"): si todos son del mismo, se muestra el banco
-    const bancos = new Set(medios.map((m) => m.split(' - ')[1] ?? m))
+    const bancos = new Set(medios.map((medio) => medio.split(' - ')[1] ?? medio))
     const banco = bancos.size === 1 ? [...bancos][0] : (medios[0] ?? 'Todos los medios de pago')
     return {
-      idPromocion: p.idPromocion,
+      idPromocion: promocion.idPromocion,
       banco,
-      titulo: `${Number(p.porcentajeDescuento)}% de reintegro`,
+      titulo: `${Number(promocion.porcentajeDescuento)}% de reintegro`,
       // Corto: el tope y las tarjetas están en la descripción; las fechas salen de la vigencia
-      detalle: `${p.descripcion} · Válido del ${fecha(p.fechaInicioVigencia)} al ${fecha(p.fechaFinVigencia)}`,
+      detalle: `${promocion.descripcion} · Válido del ${fecha(promocion.fechaInicioVigencia)} al ${fecha(promocion.fechaFinVigencia)}`,
       color: colorDe(banco),
-      condiciones: p.descripcion,
+      condiciones: promocion.descripcion,
       // Sin el banco, que ya está arriba (ej: "Visa crédito")
-      tarjetas: medios.map((m) => (bancos.size === 1 ? m.split(' - ')[0] : m)),
-      vigencia: `Del ${fecha(p.fechaInicioVigencia)} al ${fecha(p.fechaFinVigencia)}`,
+      tarjetas: medios.map((medio) => (bancos.size === 1 ? medio.split(' - ')[0] : medio)),
+      vigencia: `Del ${fecha(promocion.fechaInicioVigencia)} al ${fecha(promocion.fechaFinVigencia)}`,
     }
   })
 }

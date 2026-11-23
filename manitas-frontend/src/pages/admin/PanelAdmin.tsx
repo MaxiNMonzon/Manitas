@@ -39,10 +39,10 @@ export default function PanelAdmin() {
         Los catálogos que usa la app. Tocá uno para ver el listado, filtrarlo, ver el detalle y agregar, editar o dar de baja.
       </Typography>
       <Grid container spacing={2}>
-        {catalogos.map((c) => (
-          <Grid key={c.clave} size={{ xs: 12, sm: 6, md: 4 }}>
+        {catalogos.map((catalogo) => (
+          <Grid key={catalogo.clave} size={{ xs: 12, sm: 6, md: 4 }}>
             <ButtonBase
-              onClick={() => navigate(`/app/catalogos/${c.clave}`)}
+              onClick={() => navigate(`/app/catalogos/${catalogo.clave}`)}
               sx={{
                 width: '100%',
                 height: '100%',
@@ -57,13 +57,13 @@ export default function PanelAdmin() {
               }}
             >
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'primary.main', mb: 0.5 }}>
-                {iconos[c.clave]}
+                {iconos[catalogo.clave]}
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                  {c.titulo}
+                  {catalogo.titulo}
                 </Typography>
               </Stack>
               <Typography variant="body2" color="text.secondary">
-                {c.descripcion}
+                {catalogo.descripcion}
               </Typography>
             </ButtonBase>
           </Grid>

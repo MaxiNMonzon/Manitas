@@ -14,8 +14,8 @@ import { restablecerContraseña } from '../api/contrasena'
 
 // Se llega desde el link del mail (/restablecer-contrasena?codigo=...): se elige la contraseña nueva
 export default function RestablecerContrasena() {
-  const [params] = useSearchParams()
-  const codigo = params.get('codigo') ?? ''
+  const [parametros] = useSearchParams()
+  const codigo = parametros.get('codigo') ?? ''
   const [contraseña, setContraseña] = useState('')
   const [repetida, setRepetida] = useState('')
   const [ver, setVer] = useState(false)
@@ -26,15 +26,15 @@ export default function RestablecerContrasena() {
   const muyCorta = contraseña.length > 0 && contraseña.length < 8
   const noCoinciden = repetida.length > 0 && repetida !== contraseña
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (evento: FormEvent) => {
+    evento.preventDefault()
     setError(null)
     setEnviando(true)
     try {
       const { rol } = await restablecerContraseña(codigo, contraseña)
       setRolListo(rol)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo cambiar la contraseña')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo cambiar la contraseña')
     } finally {
       setEnviando(false)
     }
@@ -44,7 +44,7 @@ export default function RestablecerContrasena() {
     input: {
       endAdornment: (
         <InputAdornment position="end">
-          <IconButton aria-label={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setVer((v) => !v)} edge="end">
+          <IconButton aria-label={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setVer((anterior) => !anterior)} edge="end">
             {ver ? <VisibilityOff /> : <Visibility />}
           </IconButton>
         </InputAdornment>
@@ -84,7 +84,7 @@ export default function RestablecerContrasena() {
               required
               fullWidth
               value={contraseña}
-              onChange={(e) => setContraseña(e.target.value)}
+              onChange={(evento) => setContraseña(evento.target.value)}
               error={muyCorta}
               helperText={muyCorta ? 'Tiene que tener al menos 8 caracteres' : 'Mínimo 8 caracteres'}
               slotProps={ojito}
@@ -96,7 +96,7 @@ export default function RestablecerContrasena() {
               required
               fullWidth
               value={repetida}
-              onChange={(e) => setRepetida(e.target.value)}
+              onChange={(evento) => setRepetida(evento.target.value)}
               error={noCoinciden}
               helperText={noCoinciden ? 'No coinciden' : ' '}
             />

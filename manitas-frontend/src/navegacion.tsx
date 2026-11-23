@@ -53,5 +53,5 @@ export function pestañasDe(rol: Rol): Pestaña[] {
 // pestañas (ej: /app/profesionales) dejan marcado Inicio.
 export function pestañaActiva(pathname: string, pestañas: Pestaña[]): string {
   const primerTramo = pathname.replace(/^\/app\/?/, '').split('/')[0]
-  return pestañas.some((p) => p.path === primerTramo) ? primerTramo : ''
+  return pestañas.some((pestaña) => pestaña.path === primerTramo) ? primerTramo : ''
 }

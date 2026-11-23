@@ -10,7 +10,7 @@ import type { UrgenteDisponible } from '../../types'
 
 interface Props {
   urgentes: UrgenteDisponible[]
-  onTomar: (u: UrgenteDisponible) => void
+  onTomar: (urgencia: UrgenteDisponible) => void
   sx?: object
 }
 
@@ -21,7 +21,7 @@ export default function UrgenciasCerca({ urgentes, onTomar, sx }: Props) {
   return (
     <Paper
       variant="outlined"
-      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'error.main', bgcolor: (t) => alpha(t.palette.error.main, 0.06), ...sx }}
+      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'error.main', bgcolor: (tema) => alpha(tema.palette.error.main, 0.06), ...sx }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'error.main', mb: 2 }}>
         <WarningAmberIcon />
@@ -31,21 +31,21 @@ export default function UrgenciasCerca({ urgentes, onTomar, sx }: Props) {
         <Chip size="small" color="error" label={urgentes.length} />
       </Stack>
       <Stack spacing={1.5}>
-        {urgentes.map((u) => (
-          <Paper key={u.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'error.main' }}>
+        {urgentes.map((urgencia) => (
+          <Paper key={urgencia.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'error.main' }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
                   <Typography sx={{ fontWeight: 600 }}>
-                    {u.especialidad} · {u.zona}
+                    {urgencia.especialidad} · {urgencia.zona}
                   </Typography>
-                  <Chip size="small" color="error" variant="outlined" label={`Quedan ${u.minutosQueQuedan} min`} />
+                  <Chip size="small" color="error" variant="outlined" label={`Quedan ${urgencia.minutosQueQuedan} min`} />
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
-                  {u.cliente}: {u.descripcionProblema}
+                  {urgencia.cliente}: {urgencia.descripcionProblema}
                 </Typography>
               </Box>
-              <Button variant="contained" color="error" onClick={() => onTomar(u)} sx={{ flexShrink: 0 }}>
+              <Button variant="contained" color="error" onClick={() => onTomar(urgencia)} sx={{ flexShrink: 0 }}>
                 Aceptar
               </Button>
             </Stack>

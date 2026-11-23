@@ -6,7 +6,7 @@ import type { DatosPersonales } from './datosPersonales'
 export type PropsCampo = (nombre: keyof DatosPersonales) => {
   name: string
   value: string
-  onChange: (e: { target: { value: string } }) => void
+  onChange: (evento: { target: { value: string } }) => void
   error: boolean
   helperText?: string
   fullWidth: boolean

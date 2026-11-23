@@ -18,53 +18,53 @@ import { formatoFecha, formatoPesos } from './solicitudes/estados'
 import type { Rol, SolicitudResumen } from '../types'
 
 // Lo que importa del estado para avisar: el estado y, en un cambio de horario, quién lo propuso
-const firma = (s: SolicitudResumen) => `${s.estadoServicio}|${s.propuestaDe ?? ''}`
+const firma = (solicitud: SolicitudResumen) => `${solicitud.estadoServicio}|${solicitud.propuestaDe ?? ''}`
 
 
 // El aviso de un cambio que hizo la otra persona (null si no hay nada que avisar)
-function mensajeDe(rol: Rol, s: SolicitudResumen, antes: string): string | null {
-  const fecha = (f?: string | null) => (f ? formatoFecha(f) : '')
+function mensajeDe(rol: Rol, solicitud: SolicitudResumen, antes: string): string | null {
+  const fecha = (valor?: string | null) => (valor ? formatoFecha(valor) : '')
   if (rol === 'cliente') {
-    const p = s.profesional?.nombre ?? 'El profesional'
-    switch (s.estadoServicio) {
+    const nombreProfesional = solicitud.profesional?.nombre ?? 'El profesional'
+    switch (solicitud.estadoServicio) {
       case 'agendado':
-        if (antes === 'reprogramacion') return `${p} aceptó el nuevo horario: la visita queda para el ${fecha(s.fechaVisita)}`
-        if (s.urgente && s.fechaVisita) return `${p} tomó tu urgencia: llega a las ${dayjs(s.fechaVisita).format('HH:mm')}`
-        return `${p} confirmó tu visita del ${fecha(s.fechaVisita)}`
+        if (antes === 'reprogramacion') return `${nombreProfesional} aceptó el nuevo horario: la visita queda para el ${fecha(solicitud.fechaVisita)}`
+        if (solicitud.urgente && solicitud.fechaVisita) return `${nombreProfesional} tomó tu urgencia: llega a las ${dayjs(solicitud.fechaVisita).format('HH:mm')}`
+        return `${nombreProfesional} confirmó tu visita del ${fecha(solicitud.fechaVisita)}`
       case 'contratado':
-        return antes === 'reprogramacion' ? `${p} aceptó el nuevo horario del trabajo (${fecha(s.fechaInicio)})` : null
+        return antes === 'reprogramacion' ? `${nombreProfesional} aceptó el nuevo horario del trabajo (${fecha(solicitud.fechaInicio)})` : null
       case 'reprogramacion':
-        return s.propuestaDe === 'profesional' ? `${p} te propone otro horario: respondé en Mis solicitudes (tenés 24 h)` : null
+        return solicitud.propuestaDe === 'profesional' ? `${nombreProfesional} te propone otro horario: respondé en Mis solicitudes (tenés 24 h)` : null
       case 'presupuestado':
-        return `${p} te mandó un presupuesto de ${formatoPesos(s.costoFinal)}`
+        return `${nombreProfesional} te mandó un presupuesto de ${formatoPesos(solicitud.costoFinal)}`
       case 'rechazado':
-        return antes === 'solicitado' ? `${p} no puede tomar tu solicitud` : null
+        return antes === 'solicitado' ? `${nombreProfesional} no puede tomar tu solicitud` : null
       case 'cancelado':
-        return `Se canceló tu solicitud con ${p}`
+        return `Se canceló tu solicitud con ${nombreProfesional}`
       case 'expirado':
-        return `Tu solicitud con ${p} venció sin respuesta`
+        return `Tu solicitud con ${nombreProfesional} venció sin respuesta`
       default:
         return null
     }
   }
-  const c = s.cliente?.nombre ?? 'El cliente'
-  switch (s.estadoServicio) {
+  const nombreCliente = solicitud.cliente?.nombre ?? 'El cliente'
+  switch (solicitud.estadoServicio) {
     case 'contratado':
       return antes === 'reprogramacion'
-        ? `${c} aceptó el nuevo horario del trabajo (${fecha(s.fechaInicio)})`
-        : `${c} aceptó tu presupuesto de ${formatoPesos(s.costoFinal)}`
+        ? `${nombreCliente} aceptó el nuevo horario del trabajo (${fecha(solicitud.fechaInicio)})`
+        : `${nombreCliente} aceptó tu presupuesto de ${formatoPesos(solicitud.costoFinal)}`
     case 'agendado':
-      return antes === 'reprogramacion' ? `${c} aceptó el nuevo horario de la visita (${fecha(s.fechaVisita)})` : null
+      return antes === 'reprogramacion' ? `${nombreCliente} aceptó el nuevo horario de la visita (${fecha(solicitud.fechaVisita)})` : null
     case 'reprogramacion':
-      return s.propuestaDe === 'cliente' ? `${c} te propone otro horario: respondé en Solicitudes` : null
+      return solicitud.propuestaDe === 'cliente' ? `${nombreCliente} te propone otro horario: respondé en Solicitudes` : null
     case 'rechazado':
-      return antes === 'presupuestado' ? `${c} rechazó tu presupuesto` : null
+      return antes === 'presupuestado' ? `${nombreCliente} rechazó tu presupuesto` : null
     case 'cancelado':
-      return `${c} canceló la solicitud`
+      return `${nombreCliente} canceló la solicitud`
     case 'expirado':
-      return `La solicitud de ${c} venció`
+      return `La solicitud de ${nombreCliente} venció`
     case 'finalizado':
-      return `${c} pagó ${formatoPesos(s.costoFinal)}`
+      return `${nombreCliente} pagó ${formatoPesos(solicitud.costoFinal)}`
     default:
       return null
   }
@@ -87,19 +87,19 @@ export default function NovedadesInicio({ rol, sx }: { rol: Rol; sx?: object }) 
   useEffect(() => {
     if (!datos) return
     const actuales = estadosVistosStorage.get(rol, correo) ?? {}
-    const faltan = datos.filter((s) => actuales[s.idSolicitud] === undefined)
+    const faltan = datos.filter((solicitud) => actuales[solicitud.idSolicitud] === undefined)
     if (faltan.length > 0) {
-      faltan.forEach((s) => (actuales[s.idSolicitud] = firma(s)))
+      faltan.forEach((solicitud) => (actuales[solicitud.idSolicitud] = firma(solicitud)))
       estadosVistosStorage.set(rol, correo, actuales)
     }
   }, [datos, rol, correo])
 
   const novedades = vistos
     ? (datos ?? [])
-        .filter((s) => vistos[s.idSolicitud] !== undefined && vistos[s.idSolicitud] !== firma(s))
-        .filter((s) => !laCambieYo(s.idSolicitud, s.fechaCambioEstado))
-        .map((s) => ({ s, mensaje: mensajeDe(rol, s, vistos[s.idSolicitud].split('|')[0]) }))
-        .filter((n): n is { s: SolicitudResumen; mensaje: string } => n.mensaje !== null)
+        .filter((solicitud) => vistos[solicitud.idSolicitud] !== undefined && vistos[solicitud.idSolicitud] !== firma(solicitud))
+        .filter((solicitud) => !laCambieYo(solicitud.idSolicitud, solicitud.fechaCambioEstado))
+        .map((solicitud) => ({ solicitud, mensaje: mensajeDe(rol, solicitud, vistos[solicitud.idSolicitud].split('|')[0]) }))
+        .filter((novedad): novedad is { solicitud: SolicitudResumen; mensaje: string } => novedad.mensaje !== null)
     : []
 
   if (novedades.length === 0) return null
@@ -107,20 +107,20 @@ export default function NovedadesInicio({ rol, sx }: { rol: Rol; sx?: object }) 
   // Marca como vista (al tocar "Entendido" o "Ver")
   const marcarVistas = (cuales: SolicitudResumen[]) => {
     const todos = { ...(vistos ?? {}) }
-    cuales.forEach((s) => (todos[s.idSolicitud] = firma(s)))
+    cuales.forEach((solicitud) => (todos[solicitud.idSolicitud] = firma(solicitud)))
     estadosVistosStorage.set(rol, correo, todos)
-    setVersion((v) => v + 1)
+    setVersion((anterior) => anterior + 1)
   }
 
-  const ver = (s: SolicitudResumen) => {
-    marcarVistas([s])
-    navigate('/app/solicitudes', { state: { abrir: s.idSolicitud } })
+  const ver = (solicitud: SolicitudResumen) => {
+    marcarVistas([solicitud])
+    navigate('/app/solicitudes', { state: { abrir: solicitud.idSolicitud } })
   }
 
   return (
     <Paper
       variant="outlined"
-      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'info.main', bgcolor: (t) => alpha(t.palette.info.main, 0.06), ...sx }}
+      sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderColor: 'info.main', bgcolor: (tema) => alpha(tema.palette.info.main, 0.06), ...sx }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'info.main', mb: 2 }}>
         <CampaignIcon />
@@ -130,21 +130,21 @@ export default function NovedadesInicio({ rol, sx }: { rol: Rol; sx?: object }) 
         <Chip size="small" color="info" label={novedades.length} />
       </Stack>
       <Stack spacing={1.5}>
-        {novedades.map(({ s, mensaje }) => (
-          <Paper key={s.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'info.main' }}>
+        {novedades.map(({ solicitud, mensaje }) => (
+          <Paper key={solicitud.idSolicitud} variant="outlined" sx={{ p: 2, borderLeft: 5, borderLeftColor: 'info.main' }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 600 }}>{mensaje}</Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>
-                  {s.especialidad ? `${s.especialidad.nombreEspecialidad} · ` : ''}
-                  {s.descripcionProblema}
+                  {solicitud.especialidad ? `${solicitud.especialidad.nombreEspecialidad} · ` : ''}
+                  {solicitud.descripcionProblema}
                 </Typography>
               </Box>
               <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-                <Button variant="outlined" color="info" onClick={() => marcarVistas([s])}>
+                <Button variant="outlined" color="info" onClick={() => marcarVistas([solicitud])}>
                   Entendido
                 </Button>
-                <Button variant="contained" color="info" onClick={() => ver(s)}>
+                <Button variant="contained" color="info" onClick={() => ver(solicitud)}>
                   Ver
                 </Button>
               </Stack>

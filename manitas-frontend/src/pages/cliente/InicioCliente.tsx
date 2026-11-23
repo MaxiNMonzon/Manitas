@@ -31,7 +31,7 @@ export default function InicioCliente() {
   const cercanos = useCarga(`cercanos-${idZona}-${ubicacion.cargando}`, async () => {
     if (ubicacion.cargando) return []
     const lista = await buscarProfesionales({ idZona })
-    return lista.sort((a, b) => b.calificacion - a.calificacion).slice(0, PROFESIONALES_VISIBLES)
+    return lista.sort((primero, segundo) => segundo.calificacion - primero.calificacion).slice(0, PROFESIONALES_VISIBLES)
   })
   // CUU "Informar promociones bancarias del mes" (GET /promocion/del-mes)
   const promociones = useCarga('promociones-del-mes', traerPromocionesDelMes)
@@ -53,9 +53,9 @@ export default function InicioCliente() {
       <PerfilProfesionalDialog
         profesional={perfilAbierto}
         onClose={() => setPerfilAbierto(null)}
-        onSolicitar={(p) => {
+        onSolicitar={(profesional) => {
           setPerfilAbierto(null)
-          setASolicitar(p)
+          setASolicitar(profesional)
         }}
       />
       <SolicitarPresupuestoDialog profesional={aSolicitar} onClose={() => setASolicitar(null)} onCreada={irASolicitudes} />

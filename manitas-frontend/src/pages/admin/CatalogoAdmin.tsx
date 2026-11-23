@@ -24,7 +24,7 @@ import FormularioCatalogoDialog from '../../components/admin/FormularioCatalogoD
 import { useOpciones, type Opcion } from '../../components/admin/useOpciones'
 import { catalogoPorClave, type Catalogo } from './catalogos'
 
-const normalizar = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 // Pantalla de un catálogo del administrador: listado con filtro y búsqueda, detalle, alta, edición y baja.
 // Cuál catálogo se muestra sale de la URL (/app/catalogos/:clave) y de su configuración en catalogos.ts
@@ -58,9 +58,9 @@ function PantallaCatalogo({ catalogo }: { catalogo: Catalogo }) {
   // La búsqueda mira todas las columnas, sin tildes ni mayúsculas
   const buscado = normalizar(busqueda.trim())
   const visibles = (filas.datos ?? []).filter(
-    (f) => !buscado || normalizar(catalogo.columnas.map((c) => c.valor(f)).join(' ')).includes(buscado),
+    (fila) => !buscado || normalizar(catalogo.columnas.map((columna) => columna.valor(fila)).join(' ')).includes(buscado),
   )
-  const titulo = (f: Fila) => catalogo.columnas[0].valor(f)
+  const titulo = (fila: Fila) => catalogo.columnas[0].valor(fila)
 
   const confirmarBorrado = async () => {
     if (!aBorrar) return
@@ -71,8 +71,8 @@ function PantallaCatalogo({ catalogo }: { catalogo: Catalogo }) {
       setABorrar(null)
       setDetalle(null)
       filas.recargar()
-    } catch (e) {
-      setAviso({ texto: e instanceof Error ? e.message : 'No se pudo dar de baja', tipo: 'error' })
+    } catch (error) {
+      setAviso({ texto: error instanceof Error ? error.message : 'No se pudo dar de baja', tipo: 'error' })
     } finally {
       setBorrando(false)
     }
@@ -104,7 +104,7 @@ function PantallaCatalogo({ catalogo }: { catalogo: Catalogo }) {
             size="small"
             placeholder={`Buscar ${catalogo.titulo.toLowerCase()}`}
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(evento) => setBusqueda(evento.target.value)}
             slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> } }}
           />
           {filtro && (
@@ -113,10 +113,10 @@ function PantallaCatalogo({ catalogo }: { catalogo: Catalogo }) {
               sx={{ minWidth: { md: 300 } }}
               loading={opcionesFiltro.cargando}
               options={opcionesFiltro.opciones}
-              value={opcionesFiltro.opciones.find((o) => o.id === idFiltro) ?? null}
+              value={opcionesFiltro.opciones.find((opcion) => opcion.id === idFiltro) ?? null}
               onChange={(_, elegida) => setIdFiltro(elegida?.id ?? null)}
-              isOptionEqualToValue={(a, b) => a.id === b.id}
-              renderInput={(p) => <TextField {...p} label={`Filtrar por ${filtro.label.toLowerCase()}`} />}
+              isOptionEqualToValue={(primera, segunda) => primera.id === segunda.id}
+              renderInput={(parametros) => <TextField {...parametros} label={`Filtrar por ${filtro.label.toLowerCase()}`} />}
             />
           )}
         </Stack>
@@ -144,7 +144,7 @@ function PantallaCatalogo({ catalogo }: { catalogo: Catalogo }) {
         fila={detalle}
         angosto={angosto}
         onClose={() => setDetalle(null)}
-        onEditar={(f) => setFormulario({ fila: f, version: Date.now() })}
+        onEditar={(fila) => setFormulario({ fila, version: Date.now() })}
         onBorrar={setABorrar}
       />
 

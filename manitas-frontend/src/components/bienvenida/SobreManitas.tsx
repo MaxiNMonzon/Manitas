@@ -150,13 +150,13 @@ export default function SobreManitas() {
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack spacing={2}>
-              {puntosQueEs.map((v) => (
-                <Paper key={v.titulo} variant="outlined" sx={estilos.tarjetaConIcono}>
-                  <Icono color="secondary">{v.icono}</Icono>
+              {puntosQueEs.map((punto) => (
+                <Paper key={punto.titulo} variant="outlined" sx={estilos.tarjetaConIcono}>
+                  <Icono color="secondary">{punto.icono}</Icono>
                   <Box>
-                    <Typography sx={{ fontWeight: 700 }}>{v.titulo}</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>{punto.titulo}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {v.texto}
+                      {punto.texto}
                     </Typography>
                   </Box>
                 </Paper>
@@ -170,16 +170,16 @@ export default function SobreManitas() {
       <Seccion fondo="grey.50">
         <Titulo chico="Cómo funciona">Si necesitás un arreglo</Titulo>
         <Grid container spacing={3}>
-          {pasosCliente.map((p, i) => (
-            <Grid key={p.titulo} size={{ xs: 12, sm: 6, md: 3 }}>
+          {pasosCliente.map((paso, indice) => (
+            <Grid key={paso.titulo} size={{ xs: 12, sm: 6, md: 3 }}>
               <Paper variant="outlined" sx={estilos.tarjetaPaso}>
-                <Typography sx={estilos.numeroPaso}>{i + 1}</Typography>
-                <Icono>{p.icono}</Icono>
+                <Typography sx={estilos.numeroPaso}>{indice + 1}</Typography>
+                <Icono>{paso.icono}</Icono>
                 <Typography variant="h6" sx={estilos.tituloPaso}>
-                  {p.titulo}
+                  {paso.titulo}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {p.texto}
+                  {paso.texto}
                 </Typography>
               </Paper>
             </Grid>
@@ -202,11 +202,11 @@ export default function SobreManitas() {
           </Grid>
           <Grid size={{ xs: 12, md: 7 }}>
             <Grid container spacing={2}>
-              {ventajasProfesional.map((v) => (
-                <Grid key={v.texto} size={{ xs: 12, sm: 6 }}>
+              {ventajasProfesional.map((ventaja) => (
+                <Grid key={ventaja.texto} size={{ xs: 12, sm: 6 }}>
                   <Paper variant="outlined" sx={estilos.tarjetaVentaja}>
-                    <Icono color="secondary">{v.icono}</Icono>
-                    <Typography sx={{ mt: 1.5 }}>{v.texto}</Typography>
+                    <Icono color="secondary">{ventaja.icono}</Icono>
+                    <Typography sx={{ mt: 1.5 }}>{ventaja.texto}</Typography>
                   </Paper>
                 </Grid>
               ))}

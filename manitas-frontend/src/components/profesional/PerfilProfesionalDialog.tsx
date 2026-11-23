@@ -40,7 +40,7 @@ export default function PerfilProfesionalDialog({
   const pantallaChica = useMediaQuery(theme.breakpoints.down('sm'))
   const id = profesional?.idUsuario ?? null
   const calificaciones = useCarga(`calificaciones-${id}`, () => (id ? traerCalificaciones(id) : Promise.resolve(null)))
-  const reseñas = (calificaciones.datos?.reseñas ?? []).filter((r) => r.reseña)
+  const reseñas = (calificaciones.datos?.reseñas ?? []).filter((reseña) => reseña.reseña)
 
   return (
     <Dialog open={profesional !== null} onClose={onClose} fullWidth maxWidth="sm" fullScreen={pantallaChica}>
@@ -67,8 +67,8 @@ export default function PerfilProfesionalDialog({
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
-                {profesional.especialidades.map((e) => (
-                  <Chip key={e} label={e} color="primary" variant="outlined" />
+                {profesional.especialidades.map((especialidad) => (
+                  <Chip key={especialidad} label={especialidad} color="primary" variant="outlined" />
                 ))}
               </Stack>
               <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
@@ -102,16 +102,16 @@ export default function PerfilProfesionalDialog({
               </Typography>
             ) : (
               <Stack spacing={1.5}>
-                {reseñas.slice(0, RESEÑAS_VISIBLES).map((r, i) => (
-                  <Box key={i}>
+                {reseñas.slice(0, RESEÑAS_VISIBLES).map((reseña, indice) => (
+                  <Box key={indice}>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                      <Rating value={r.calificacion} readOnly size="small" />
+                      <Rating value={reseña.calificacion} readOnly size="small" />
                       <Typography variant="caption" color="text.secondary">
-                        {r.cliente}
-                        {r.fecha ? ` · ${dayjs(r.fecha).format('DD/MM/YYYY')}` : ''}
+                        {reseña.cliente}
+                        {reseña.fecha ? ` · ${dayjs(reseña.fecha).format('DD/MM/YYYY')}` : ''}
                       </Typography>
                     </Stack>
-                    <Typography variant="body2">{r.reseña}</Typography>
+                    <Typography variant="body2">{reseña.reseña}</Typography>
                   </Box>
                 ))}
               </Stack>

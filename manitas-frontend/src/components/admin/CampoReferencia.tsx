@@ -6,7 +6,7 @@ import type { Campo } from '../../pages/admin/catalogos'
 interface Props {
   campo: Campo
   valor: unknown
-  onChange: (v: unknown) => void
+  onChange: (valor: unknown) => void
   error?: string
 }
 
@@ -22,10 +22,10 @@ export default function CampoReferencia({ campo, valor, onChange, error }: Props
         multiple
         loading={cargando}
         options={opciones}
-        value={opciones.filter((o) => ids.includes(o.id))}
-        onChange={(_, elegidas) => onChange(elegidas.map((o) => o.id))}
-        isOptionEqualToValue={(a, b) => a.id === b.id}
-        renderInput={(p) => <TextField {...p} label={etiqueta} error={Boolean(error)} helperText={error ?? campo.ayuda} />}
+        value={opciones.filter((opcion) => ids.includes(opcion.id))}
+        onChange={(_, elegidas) => onChange(elegidas.map((opcion) => opcion.id))}
+        isOptionEqualToValue={(primera, segunda) => primera.id === segunda.id}
+        renderInput={(parametros) => <TextField {...parametros} label={etiqueta} error={Boolean(error)} helperText={error ?? campo.ayuda} />}
       />
     )
   }
@@ -33,10 +33,10 @@ export default function CampoReferencia({ campo, valor, onChange, error }: Props
     <Autocomplete<Opcion>
       loading={cargando}
       options={opciones}
-      value={opciones.find((o) => o.id === Number(valor)) ?? null}
+      value={opciones.find((opcion) => opcion.id === Number(valor)) ?? null}
       onChange={(_, elegida) => onChange(elegida?.id ?? null)}
-      isOptionEqualToValue={(a, b) => a.id === b.id}
-      renderInput={(p) => <TextField {...p} label={etiqueta} error={Boolean(error)} helperText={error ?? campo.ayuda} />}
+      isOptionEqualToValue={(primera, segunda) => primera.id === segunda.id}
+      renderInput={(parametros) => <TextField {...parametros} label={etiqueta} error={Boolean(error)} helperText={error ?? campo.ayuda} />}
     />
   )
 }

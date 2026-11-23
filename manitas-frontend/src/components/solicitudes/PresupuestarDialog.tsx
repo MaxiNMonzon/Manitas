@@ -16,7 +16,7 @@ import type { SolicitudResumen } from '../../types'
 // Las horas se eligen de una lista: la agenda trabaja con turnos de 1 hora, así que van enteras.
 // Hasta 7 h una por una; después, en jornadas de 8 h (el back acepta hasta 200)
 const OPCIONES_HORAS: { horas: number; texto: string }[] = [
-  ...[1, 2, 3, 4, 5, 6, 7].map((h) => ({ horas: h, texto: h === 1 ? '1 hora' : `${h} horas` })),
+  ...[1, 2, 3, 4, 5, 6, 7].map((horas) => ({ horas, texto: horas === 1 ? '1 hora' : `${horas} horas` })),
   ...[1, 2, 3, 4, 5, 10, 15, 20, 25].map((dias) => ({
     horas: dias * 8,
     texto: `${dias * 8} horas (${dias === 1 ? '1 jornada' : `${dias} jornadas`})`,
@@ -57,9 +57,9 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
       await presupuestar(solicitud.idSolicitud, Number(monto), cambioDePrecio ? undefined : Number(horas))
       cerrar()
       onEnviado()
-    } catch (e) {
+    } catch (fallo) {
       // Ej: "Todavia no fue la visita: el presupuesto se pasa despues de ver el problema"
-      setError(e instanceof Error ? e.message : 'No se pudo enviar el presupuesto')
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo enviar el presupuesto')
     } finally {
       setEnviando(false)
     }
@@ -82,7 +82,7 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
             fullWidth
             label={cambioDePrecio ? 'Precio nuevo del trabajo' : 'Precio del trabajo'}
             value={monto}
-            onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))}
+            onChange={(evento) => setMonto(evento.target.value.replace(/\D/g, ''))}
             slotProps={{
               htmlInput: { inputMode: 'numeric' },
               input: { startAdornment: <InputAdornment position="start">$</InputAdornment> },
@@ -94,12 +94,12 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
               fullWidth
               label="¿Cuánto tiempo lleva?"
               value={horas}
-              onChange={(e) => setHoras(e.target.value)}
+              onChange={(evento) => setHoras(evento.target.value)}
               helperText="Se reservan esas horas seguidas en tu agenda (una jornada = 8 h). Si es 1 hora, el cliente puede pedir que lo hagas en el momento"
             >
-              {OPCIONES_HORAS.map((o) => (
-                <MenuItem key={o.horas} value={String(o.horas)}>
-                  {o.texto}
+              {OPCIONES_HORAS.map((opcion) => (
+                <MenuItem key={opcion.horas} value={String(opcion.horas)}>
+                  {opcion.texto}
                 </MenuItem>
               ))}
             </TextField>

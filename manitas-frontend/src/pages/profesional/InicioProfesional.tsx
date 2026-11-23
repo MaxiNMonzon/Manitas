@@ -35,8 +35,8 @@ export default function InicioProfesional() {
 
   // Las nuevas que tiene que responder: las que vencen antes, primero
   const nuevas = (solicitudes.datos ?? [])
-    .filter((s) => s.estadoServicio === 'solicitado')
-    .sort((a, b) => new Date(a.fechaCambioEstado).getTime() - new Date(b.fechaCambioEstado).getTime())
+    .filter((solicitud) => solicitud.estadoServicio === 'solicitado')
+    .sort((primera, segunda) => new Date(primera.fechaCambioEstado).getTime() - new Date(segunda.fechaCambioEstado).getTime())
   const error = solicitudes.error ?? agendaHoy.error ?? urgentes.error ?? calificacion.error
 
   // Se acepta después de elegir en cuánto llega (TiempoLlegadaDialog)
@@ -47,9 +47,9 @@ export default function InicioProfesional() {
       await aceptarSolicitud(aTomar.idSolicitud, minutos)
       const llegada = dayjs().add(minutos, 'minute').format('HH:mm')
       setAviso({ texto: `¡La tomaste! Le avisamos a ${aTomar.cliente} que llegás a las ${llegada}.`, tipo: 'success' })
-    } catch (e) {
+    } catch (fallo) {
       // Ej: "Otro profesional ya tomó esta urgente"
-      setAviso({ texto: e instanceof Error ? e.message : 'No se pudo aceptar', tipo: 'error' })
+      setAviso({ texto: fallo instanceof Error ? fallo.message : 'No se pudo aceptar', tipo: 'error' })
     } finally {
       setAceptando(false)
       setATomar(null)
@@ -79,11 +79,11 @@ export default function InicioProfesional() {
       {/* Urgencias: solo si hay */}
       <UrgenciasCerca
         urgentes={urgentes.datos ?? []}
-        onTomar={(u) => setATomar({ idSolicitud: u.idSolicitud, cliente: u.cliente, descripcionProblema: u.descripcionProblema })}
+        onTomar={(urgencia) => setATomar({ idSolicitud: urgencia.idSolicitud, cliente: urgencia.cliente, descripcionProblema: urgencia.descripcionProblema })}
       />
 
       {/* Solicitudes nuevas: solo si hay */}
-      <SolicitudesNuevas solicitudes={nuevas} onResponder={(s) => navigate('/app/solicitudes', { state: { abrir: s.idSolicitud } })} />
+      <SolicitudesNuevas solicitudes={nuevas} onResponder={(solicitud) => navigate('/app/solicitudes', { state: { abrir: solicitud.idSolicitud } })} />
 
       {/* Lo que cambió por algo que hizo el cliente (aceptó el presupuesto, pagó...): solo si hay */}
       <NovedadesInicio rol="profesional" />

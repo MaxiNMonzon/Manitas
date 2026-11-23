@@ -20,21 +20,21 @@ interface Props {
 
 // Un cobro de la lista (boceto "Mis cobros"): cliente, trabajo y monto; a la derecha el estado,
 // el comprobante y cuándo se deposita
-export default function TarjetaCobro({ cobro: c, cuentaDeposito, onVerComprobante }: Props) {
-  const { label, color } = estadosCobro[c.estado]
+export default function TarjetaCobro({ cobro, cuentaDeposito, onVerComprobante }: Props) {
+  const { label, color } = estadosCobro[cobro.estado]
   const cuenta = cuentaDeposito ? `tu CBU/CVU terminado en ${cuentaDeposito}` : 'tu CBU/CVU'
 
   // Debajo del botón: qué pasa con la plata
   const nota =
-    c.estado === 'cobrado'
-      ? { texto: `Depositado el ${dayjs(c.depositoEstimado).format('DD/MM')}`, ayuda: `Se depositó en ${cuenta}.` }
-      : c.fechaPago
+    cobro.estado === 'cobrado'
+      ? { texto: `Depositado el ${dayjs(cobro.depositoEstimado).format('DD/MM')}`, ayuda: `Se depositó en ${cuenta}.` }
+      : cobro.fechaPago
         ? {
-            texto: `Depósito estimado: ${dayjs(c.depositoEstimado).format('DD/MM')}`,
-            ayuda: `El cliente pagó el ${dayjs(c.fechaPago).format('DD/MM')}. Se deposita en ${cuenta} a los 3 días hábiles del pago.`,
+            texto: `Depósito estimado: ${dayjs(cobro.depositoEstimado).format('DD/MM')}`,
+            ayuda: `El cliente pagó el ${dayjs(cobro.fechaPago).format('DD/MM')}. Se deposita en ${cuenta} a los 3 días hábiles del pago.`,
           }
         : {
-            texto: c.fechaServicio ? `Trabajo del ${dayjs(c.fechaServicio).format('DD/MM')}` : 'Trabajo aceptado',
+            texto: cobro.fechaServicio ? `Trabajo del ${dayjs(cobro.fechaServicio).format('DD/MM')}` : 'Trabajo aceptado',
             ayuda: 'El cliente paga desde la app cuando terminás el trabajo. Después se deposita a los 3 días hábiles.',
           }
 
@@ -42,27 +42,27 @@ export default function TarjetaCobro({ cobro: c, cuentaDeposito, onVerComprobant
     <Paper variant="outlined" sx={{ p: 2 }}>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
         <Stack direction="row" spacing={2} sx={{ flexGrow: 1, minWidth: 0, alignItems: 'center' }}>
-          <AvatarPersona nombre={c.cliente.nombre} apellido={c.cliente.apellido} tamaño={52} />
+          <AvatarPersona nombre={cobro.cliente.nombre} apellido={cobro.cliente.apellido} tamaño={52} />
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontWeight: 600 }} noWrap>
-              {c.cliente.nombre} {c.cliente.apellido}
+              {cobro.cliente.nombre} {cobro.cliente.apellido}
             </Typography>
             <Typography variant="body2" color="text.secondary" noWrap>
-              {c.descripcionProblema}
+              {cobro.descripcionProblema}
             </Typography>
             <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', mt: 0.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                {formatoPesos(c.monto)}
+                {formatoPesos(cobro.monto)}
               </Typography>
-              {c.especialidad && <Chip size="small" variant="outlined" label={c.especialidad} />}
-              {c.concepto === 'visita' && <Chip size="small" variant="outlined" color="secondary" label="Visita" />}
+              {cobro.especialidad && <Chip size="small" variant="outlined" label={cobro.especialidad} />}
+              {cobro.concepto === 'visita' && <Chip size="small" variant="outlined" color="secondary" label="Visita" />}
             </Stack>
           </Box>
         </Stack>
 
         <Stack spacing={0.75} sx={{ alignItems: { xs: 'stretch', sm: 'flex-end' }, flexShrink: 0, minWidth: { sm: 200 } }}>
           <Chip color={color} label={label} sx={{ fontWeight: 600, alignSelf: { xs: 'flex-start', sm: 'flex-end' } }} />
-          {c.fechaPago && (
+          {cobro.fechaPago && (
             <Button size="small" variant="outlined" startIcon={<ReceiptLongIcon />} onClick={onVerComprobante}>
               Ver comprobante
             </Button>

@@ -22,15 +22,15 @@ export function useCatalogos({ activo, idProvincia, idLocalidad, especialidades:
   const zonas = useListado<Zona>(activo && idLocalidad ? `/zona?localidad=${idLocalidad}` : null)
 
   // Habilidades: solo las de las especialidades elegidas, ordenadas por especialidad y nombre
-  const idsEspecialidades = new Set(elegidas.map((e) => e.idEspecialidad))
+  const idsEspecialidades = new Set(elegidas.map((especialidad) => especialidad.idEspecialidad))
   const opcionesHabilidades: HabilidadResumen[] = tiposDeServicio.datos
-    .filter((t) => idsEspecialidades.has(t.especialidad.idEspecialidad))
-    .sort((a, b) => a.especialidad.nombreEspecialidad.localeCompare(b.especialidad.nombreEspecialidad) || a.nombreServicio.localeCompare(b.nombreServicio))
+    .filter((habilidad) => idsEspecialidades.has(habilidad.especialidad.idEspecialidad))
+    .sort((primero, segundo) => primero.especialidad.nombreEspecialidad.localeCompare(segundo.especialidad.nombreEspecialidad) || primero.nombreServicio.localeCompare(segundo.nombreServicio))
 
   // Zonas de la localidad elegida. Se les agrega su localidad (como en el perfil) para
   // que la burbuja diga "Centro (Rosario)" y no se confundan zonas de distintas localidades
-  const localidadElegida = localidades.datos.find((l) => String(l.idLocalidad) === idLocalidad)
-  const opcionesZonas: ZonaResumen[] = zonas.datos.map((z) => ({ ...z, localidad: localidadElegida }))
+  const localidadElegida = localidades.datos.find((localidad) => String(localidad.idLocalidad) === idLocalidad)
+  const opcionesZonas: ZonaResumen[] = zonas.datos.map((zona) => ({ ...zona, localidad: localidadElegida }))
   const opcionesEspecialidades: EspecialidadResumen[] = especialidades.datos
 
   return {

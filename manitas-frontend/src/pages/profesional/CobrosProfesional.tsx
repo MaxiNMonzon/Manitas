@@ -52,7 +52,7 @@ export default function CobrosProfesional() {
       <ResumenCobros resumen={resumen} hoy={hoy} cargando={carga.cargando} />
 
       <Paper variant="outlined" sx={{ mb: 2 }}>
-        <Tabs value={vista} onChange={(_, v: Vista) => setVista(v)} variant="fullWidth">
+        <Tabs value={vista} onChange={(_, elegida: Vista) => setVista(elegida)} variant="fullWidth">
           <Tab value="cobros" label="Cobros" />
           <Tab value="historial" label="Historial" />
         </Tabs>
@@ -70,7 +70,7 @@ export default function CobrosProfesional() {
           meses={resumen.meses}
           mes={mes}
           hoy={hoy}
-          onCambiarMes={(m) => setMes(m.startOf('month'))}
+          onCambiarMes={(nuevoMes) => setMes(nuevoMes.startOf('month'))}
           cuentaDeposito={cuentaDeposito}
           onVerComprobante={setComprobante}
         />
@@ -79,8 +79,8 @@ export default function CobrosProfesional() {
           resumen={resumen}
           cuentaDeposito={cuentaDeposito}
           // Desde el historial, al tocar un mes se ven sus cobros
-          onElegirMes={(m) => {
-            setMes(m.startOf('month'))
+          onElegirMes={(nuevoMes) => {
+            setMes(nuevoMes.startOf('month'))
             setVista('cobros')
           }}
         />

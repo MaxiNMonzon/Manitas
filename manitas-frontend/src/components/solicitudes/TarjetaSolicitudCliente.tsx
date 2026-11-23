@@ -22,12 +22,12 @@ interface Props {
 
 // Una solicitud en la lista del cliente (boceto "Mis solicitudes"): foto del profesional, su nombre,
 // el trabajo, la fecha y la dirección a la izquierda; el estado y "Ver detalles" a la derecha
-export default function TarjetaSolicitudCliente({ solicitud: s, direccion, onVerDetalles }: Props) {
-  const estado = estadosCliente[s.estadoServicio]
-  const fecha = fechaClave(s)
-  const terminada = estaTerminada(s.estadoServicio)
-  const pendienteDeRespuesta = leTocaAlCliente(s)
-  const nombre = s.profesional ? `${s.profesional.nombre} ${s.profesional.apellido}`.trim() : 'Buscando profesional'
+export default function TarjetaSolicitudCliente({ solicitud, direccion, onVerDetalles }: Props) {
+  const estado = estadosCliente[solicitud.estadoServicio]
+  const fecha = fechaClave(solicitud)
+  const terminada = estaTerminada(solicitud.estadoServicio)
+  const pendienteDeRespuesta = leTocaAlCliente(solicitud)
+  const nombre = solicitud.profesional ? `${solicitud.profesional.nombre} ${solicitud.profesional.apellido}`.trim() : 'Buscando profesional'
 
   return (
     <Paper
@@ -35,15 +35,15 @@ export default function TarjetaSolicitudCliente({ solicitud: s, direccion, onVer
       sx={{
         p: 2,
         // Lo que espera una respuesta del cliente se marca con un borde de color; las urgentes en rojo
-        borderLeft: (s.urgente && !terminada) || pendienteDeRespuesta ? 5 : undefined,
-        borderLeftColor: s.urgente && !terminada ? 'error.main' : 'secondary.main',
-        opacity: terminada && s.estadoServicio !== 'finalizado' ? 0.8 : 1,
+        borderLeft: (solicitud.urgente && !terminada) || pendienteDeRespuesta ? 5 : undefined,
+        borderLeftColor: solicitud.urgente && !terminada ? 'error.main' : 'secondary.main',
+        opacity: terminada && solicitud.estadoServicio !== 'finalizado' ? 0.8 : 1,
       }}
     >
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
         <Stack direction="row" spacing={2} sx={{ flexGrow: 1, minWidth: 0 }}>
-          {s.profesional ? (
-            <AvatarPersona nombre={s.profesional.nombre} apellido={s.profesional.apellido} tamaño={56} />
+          {solicitud.profesional ? (
+            <AvatarPersona nombre={solicitud.profesional.nombre} apellido={solicitud.profesional.apellido} tamaño={56} />
           ) : (
             <Avatar sx={{ width: 56, height: 56, bgcolor: 'grey.300', color: 'grey.700' }}>
               <PersonSearchIcon />
@@ -54,15 +54,15 @@ export default function TarjetaSolicitudCliente({ solicitud: s, direccion, onVer
               <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
                 {nombre}
               </Typography>
-              {s.urgente && <Chip size="small" color="error" label="Urgente" />}
-              {s.fechaPago && <Chip size="small" color="success" variant="outlined" label="Pagado" />}
+              {solicitud.urgente && <Chip size="small" color="error" label="Urgente" />}
+              {solicitud.fechaPago && <Chip size="small" color="success" variant="outlined" label="Pagado" />}
             </Stack>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {s.descripcionProblema}
+              {solicitud.descripcionProblema}
             </Typography>
-            {s.especialidad && (
+            {solicitud.especialidad && (
               <Typography variant="caption" color="text.secondary" component="div" sx={{ mb: 0.5 }}>
-                {s.especialidad.nombreEspecialidad}
+                {solicitud.especialidad.nombreEspecialidad}
               </Typography>
             )}
             {fecha && (
@@ -83,7 +83,7 @@ export default function TarjetaSolicitudCliente({ solicitud: s, direccion, onVer
               variant="body2"
               sx={{ mt: 0.5, fontWeight: 500, color: pendienteDeRespuesta ? 'secondary.dark' : 'text.primary' }}
             >
-              {proximoPasoCliente(s)}
+              {proximoPasoCliente(solicitud)}
             </Typography>
           </Box>
         </Stack>

@@ -29,33 +29,33 @@ interface Props {
   onCambiarMes: (mes: Dayjs) => void
   // Últimos números del CBU/CVU (para el detalle del depósito)
   cuentaDeposito: string | null
-  onVerComprobante: (c: Cobro) => void
+  onVerComprobante: (cobro: Cobro) => void
 }
 
 // Barra apilada: cuánto del mes está cobrado y cuánto pendiente, con su referencia abajo.
 // Los montos vienen del back; acá solo se reparte el ancho de la barra
 function BarraEstados({ mes }: { mes: CobrosDelMesBack | undefined }) {
   const partes = ORDEN_ESTADOS.map((estado) => ({ estado, monto: mes ? (estado === 'cobrado' ? mes.cobrado : mes.pendiente) : 0 }))
-  const suma = partes.reduce((s, p) => s + p.monto, 0)
+  const suma = partes.reduce((acumulado, parte) => acumulado + parte.monto, 0)
   return (
     <>
       <Box sx={{ display: 'flex', height: 14, borderRadius: 7, overflow: 'hidden', bgcolor: 'action.hover', my: 1.5 }}>
         {suma > 0 &&
           partes.map(
-            (p) =>
-              p.monto > 0 && (
-                <Tooltip key={p.estado} title={`${estadosCobro[p.estado].label}: ${formatoPesos(p.monto)}`} arrow>
-                  <Box sx={{ width: `${(p.monto / suma) * 100}%`, bgcolor: `${estadosCobro[p.estado].color}.main`, transition: 'width .4s' }} />
+            (parte) =>
+              parte.monto > 0 && (
+                <Tooltip key={parte.estado} title={`${estadosCobro[parte.estado].label}: ${formatoPesos(parte.monto)}`} arrow>
+                  <Box sx={{ width: `${(parte.monto / suma) * 100}%`, bgcolor: `${estadosCobro[parte.estado].color}.main`, transition: 'width .4s' }} />
                 </Tooltip>
               ),
           )}
       </Box>
       <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: 'wrap' }}>
-        {partes.map((p) => (
-          <Stack key={p.estado} direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: `${estadosCobro[p.estado].color}.main` }} />
+        {partes.map((parte) => (
+          <Stack key={parte.estado} direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: `${estadosCobro[parte.estado].color}.main` }} />
             <Typography variant="caption" color="text.secondary">
-              {estadosCobro[p.estado].label}: <strong>{formatoPesos(p.monto)}</strong>
+              {estadosCobro[parte.estado].label}: <strong>{formatoPesos(parte.monto)}</strong>
             </Typography>
           </Stack>
         ))}
@@ -73,10 +73,10 @@ export default function CobrosDelMes({ todos, meses, mes, hoy, onCambiarMes, cue
   const [anclaFiltros, setAnclaFiltros] = useState<HTMLElement | null>(null)
 
   const delMes = cobrosDelMes(todos, mes, hoy)
-  const filtrados = delMes.filter((c) => pasaFiltros(c, filtros))
-  const especialidades = [...new Set(todos.map((c) => c.especialidad).filter((e): e is string => !!e))].sort()
+  const filtrados = delMes.filter((cobro) => pasaFiltros(cobro, filtros))
+  const especialidades = [...new Set(todos.map((cobro) => cobro.especialidad).filter((especialidad): especialidad is string => !!especialidad))].sort()
   // Las cuentas del mes elegido (las hizo el back). No se puede ir más atrás que el primer mes que manda el back
-  const cuentasDelMes = meses.find((m) => m.mes === mes.format('YYYY-MM'))
+  const cuentasDelMes = meses.find((resumenMes) => resumenMes.mes === mes.format('YYYY-MM'))
   const primerMes = meses.length ? dayjs(meses[0].mes + '-01') : hoy.startOf('month')
   const esMesActual = mes.format('YYYY-MM') === hoy.format('YYYY-MM')
   const cantidadVisible = pagina.mes === mes.format('YYYY-MM') ? pagina.cantidad : POR_PAGINA
@@ -97,7 +97,7 @@ export default function CobrosDelMes({ todos, meses, mes, hoy, onCambiarMes, cue
           </IconButton>
           <Box sx={{ flexGrow: 1 }} />
           <Badge badgeContent={cantidadDeFiltros(filtros)} color="primary">
-            <Button variant="outlined" startIcon={<FilterListIcon />} onClick={(e) => setAnclaFiltros(e.currentTarget)}>
+            <Button variant="outlined" startIcon={<FilterListIcon />} onClick={(evento) => setAnclaFiltros(evento.currentTarget)}>
               Filtros
             </Button>
           </Badge>
@@ -121,8 +121,8 @@ export default function CobrosDelMes({ todos, meses, mes, hoy, onCambiarMes, cue
         </Paper>
       ) : (
         <Stack spacing={1.5}>
-          {filtrados.slice(0, cantidadVisible).map((c) => (
-            <TarjetaCobro key={c.idSolicitud} cobro={c} cuentaDeposito={cuentaDeposito} onVerComprobante={() => onVerComprobante(c)} />
+          {filtrados.slice(0, cantidadVisible).map((cobro) => (
+            <TarjetaCobro key={cobro.idSolicitud} cobro={cobro} cuentaDeposito={cuentaDeposito} onVerComprobante={() => onVerComprobante(cobro)} />
           ))}
         </Stack>
       )}

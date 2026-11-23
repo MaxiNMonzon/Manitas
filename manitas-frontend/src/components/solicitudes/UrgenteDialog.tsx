@@ -48,8 +48,8 @@ export default function UrgenteDialog({ abierto, especialidades, idEspecialidadI
       await crearUrgente(idEspecialidad, descripcion.trim())
       cerrar()
       onCreada('Urgencia enviada a los profesionales de tu zona. Te avisamos apenas uno la tome y cuándo llega.')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo pedir la urgencia')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo pedir la urgencia')
     } finally {
       setEnviando(false)
     }
@@ -67,10 +67,10 @@ export default function UrgenteDialog({ abierto, especialidades, idEspecialidadI
         </Typography>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
-          <TextField select label="¿Qué necesitás?" value={idEspecialidad} onChange={(e) => setIdEspecialidad(Number(e.target.value))}>
-            {especialidades.map((e) => (
-              <MenuItem key={e.idEspecialidad} value={e.idEspecialidad}>
-                {e.nombre}
+          <TextField select label="¿Qué necesitás?" value={idEspecialidad} onChange={(evento) => setIdEspecialidad(Number(evento.target.value))}>
+            {especialidades.map((categoria) => (
+              <MenuItem key={categoria.idEspecialidad} value={categoria.idEspecialidad}>
+                {categoria.nombre}
               </MenuItem>
             ))}
           </TextField>
@@ -80,7 +80,7 @@ export default function UrgenteDialog({ abierto, especialidades, idEspecialidadI
             multiline
             minRows={3}
             value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value.slice(0, MAX_DESCRIPCION))}
+            onChange={(evento) => setDescripcion(evento.target.value.slice(0, MAX_DESCRIPCION))}
           />
         </Stack>
       </DialogContent>

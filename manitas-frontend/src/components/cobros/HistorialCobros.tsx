@@ -27,7 +27,7 @@ export default function HistorialCobros({ resumen, cuentaDeposito, onElegirMes }
   const theme = useTheme()
   const cantidadMeses = resumen.promedioPorTrabajo.meses
   // Los últimos 6 meses, con la fecha lista para mostrar
-  const meses = resumen.meses.slice(-cantidadMeses).map((m) => ({ ...m, fecha: dayjs(m.mes + '-01') }))
+  const meses = resumen.meses.slice(-cantidadMeses).map((mes) => ({ ...mes, fecha: dayjs(mes.mes + '-01') }))
   const coloresTorta = [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.success.main, theme.palette.warning.main, theme.palette.info.main, theme.palette.error.light]
 
   return (
@@ -38,11 +38,11 @@ export default function HistorialCobros({ resumen, cuentaDeposito, onElegirMes }
             height={280}
             borderRadius={6}
             margin={{ left: 0, right: 8 }}
-            xAxis={[{ scaleType: 'band', data: meses.map((m) => capitalizar(m.fecha.format('MMM'))) }]}
-            yAxis={[{ valueFormatter: (v: number) => pesosCorto(v), width: 48 }]}
+            xAxis={[{ scaleType: 'band', data: meses.map((mes) => capitalizar(mes.fecha.format('MMM'))) }]}
+            yAxis={[{ valueFormatter: (valor: number) => pesosCorto(valor), width: 48 }]}
             series={[
-              { data: meses.map((m) => m.trabajos), label: 'Trabajos', stack: 'total', color: theme.palette.primary.main, valueFormatter: (v) => formatoPesos(v ?? 0) },
-              { data: meses.map((m) => m.visitas), label: 'Visitas', stack: 'total', color: theme.palette.secondary.main, valueFormatter: (v) => formatoPesos(v ?? 0) },
+              { data: meses.map((mes) => mes.trabajos), label: 'Trabajos', stack: 'total', color: theme.palette.primary.main, valueFormatter: (valor) => formatoPesos(valor ?? 0) },
+              { data: meses.map((mes) => mes.visitas), label: 'Visitas', stack: 'total', color: theme.palette.secondary.main, valueFormatter: (valor) => formatoPesos(valor ?? 0) },
             ]}
             onItemClick={(_, item) => onElegirMes(meses[item.dataIndex].fecha)}
           />
@@ -55,25 +55,25 @@ export default function HistorialCobros({ resumen, cuentaDeposito, onElegirMes }
       <Grid size={{ xs: 12, md: 5 }}>
         <SeccionTarjeta titulo="Resumen por mes">
           <Stack spacing={0.5}>
-            {[...meses].reverse().map((m) => {
-              const cambio = m.variacion
+            {[...meses].reverse().map((mes) => {
+              const cambio = mes.variacion
               return (
                 <ButtonBase
-                  key={m.mes}
-                  onClick={() => onElegirMes(m.fecha)}
+                  key={mes.mes}
+                  onClick={() => onElegirMes(mes.fecha)}
                   sx={{ justifyContent: 'stretch', textAlign: 'left', borderRadius: 1, px: 1, py: 1, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', width: '100%' }}>
                     <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {capitalizar(m.fecha.format('MMMM YYYY'))}
+                        {capitalizar(mes.fecha.format('MMMM YYYY'))}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {m.cantidad} cobro{m.cantidad === 1 ? '' : 's'}
+                        {mes.cantidad} cobro{mes.cantidad === 1 ? '' : 's'}
                       </Typography>
                     </Box>
                     {cambio != null && <Chip size="small" variant="outlined" color={cambio >= 0 ? 'success' : 'error'} label={`${cambio >= 0 ? '+' : ''}${cambio}%`} />}
-                    <Typography sx={{ fontWeight: 700, minWidth: 96, textAlign: 'right' }}>{formatoPesos(m.total)}</Typography>
+                    <Typography sx={{ fontWeight: 700, minWidth: 96, textAlign: 'right' }}>{formatoPesos(mes.total)}</Typography>
                     <ChevronRightIcon fontSize="small" color="action" />
                   </Stack>
                 </ButtonBase>

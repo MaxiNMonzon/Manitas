@@ -18,7 +18,7 @@ export default function Torta({ datos, colores }: { datos: PorcionCobros[]; colo
           margin={0}
           series={[
             {
-              data: datos.map((d, i) => ({ id: d.nombre, value: d.monto, label: d.nombre, color: colores[i % colores.length] })),
+              data: datos.map((porcion, indice) => ({ id: porcion.nombre, value: porcion.monto, label: porcion.nombre, color: colores[indice % colores.length] })),
               innerRadius: 48,
               outerRadius: 80,
               paddingAngle: 2,
@@ -29,17 +29,17 @@ export default function Torta({ datos, colores }: { datos: PorcionCobros[]; colo
         />
       </Box>
       <Stack spacing={1} sx={{ width: '100%', minWidth: 0 }}>
-        {datos.map((d, i) => (
-          <Stack key={d.nombre} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colores[i % colores.length], flexShrink: 0 }} />
+        {datos.map((porcion, indice) => (
+          <Stack key={porcion.nombre} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colores[indice % colores.length], flexShrink: 0 }} />
             <Typography variant="body2" noWrap sx={{ flexGrow: 1 }}>
-              {d.nombre}
+              {porcion.nombre}
             </Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {formatoPesos(d.monto)}
+              {formatoPesos(porcion.monto)}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ width: 36, textAlign: 'right' }}>
-              {d.porcentaje}%
+              {porcion.porcentaje}%
             </Typography>
           </Stack>
         ))}

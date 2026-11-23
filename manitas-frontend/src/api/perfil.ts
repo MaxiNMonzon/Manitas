@@ -20,19 +20,19 @@ export async function guardarPerfilCliente(id: number, cambios: CambiosPerfilCli
 
 // Cliente: dónde vive (sale de su perfil)
 export async function traerUbicacionCliente(): Promise<UbicacionCliente> {
-  const p = await api.get<PerfilCliente>('/auth/perfil')
+  const perfil = await api.get<PerfilCliente>('/auth/perfil')
   return {
-    direccion: armarDireccion(p),
-    idZona: p.zonaResidencia?.idZona ?? null,
-    nombreZona: p.zonaResidencia?.nombreZona ?? null,
+    direccion: armarDireccion(perfil),
+    idZona: perfil.zonaResidencia?.idZona ?? null,
+    nombreZona: perfil.zonaResidencia?.nombreZona ?? null,
   }
 }
 
-function armarDireccion(p: PerfilCliente): string {
-  const partes = [`${p.calle} ${p.altura}`]
-  if (p.piso) partes.push(`piso ${p.piso}`)
-  if (p.depto) partes.push(`depto ${p.depto}`)
-  if (p.zonaResidencia?.nombreZona) partes.push(p.zonaResidencia.nombreZona)
+function armarDireccion(perfil: PerfilCliente): string {
+  const partes = [`${perfil.calle} ${perfil.altura}`]
+  if (perfil.piso) partes.push(`piso ${perfil.piso}`)
+  if (perfil.depto) partes.push(`depto ${perfil.depto}`)
+  if (perfil.zonaResidencia?.nombreZona) partes.push(perfil.zonaResidencia.nombreZona)
   return partes.join(', ')
 }
 

@@ -14,16 +14,16 @@ export type AccionCliente =
   | 'calificar'
 
 // Las acciones del detalle, en el orden en que se muestran los botones
-export function accionesDelDetalle(s: SolicitudResumen): AccionCliente[] {
+export function accionesDelDetalle(solicitud: SolicitudResumen): AccionCliente[] {
   const acciones: AccionCliente[] = []
-  if (puedeCancelar(s)) acciones.push('cancelar')
-  if (s.estadoServicio === 'presupuestado') acciones.push('rechazarPresupuesto', 'aceptarPresupuesto')
+  if (puedeCancelar(solicitud)) acciones.push('cancelar')
+  if (solicitud.estadoServicio === 'presupuestado') acciones.push('rechazarPresupuesto', 'aceptarPresupuesto')
   // Proponer otro horario (o una contrapropuesta al del profesional)
-  if (puedeReprogramar(s, 'cliente') && s.profesional) acciones.push('reprogramar')
+  if (puedeReprogramar(solicitud, 'cliente') && solicitud.profesional) acciones.push('reprogramar')
   // Si el que propuso fue el profesional, el cliente no puede quedarse con el suyo: acepta, propone otro o cancela
-  if (s.estadoServicio === 'reprogramacion' && s.propuestaDe === 'profesional') acciones.push('aceptarHorario')
-  if (debePagar(s)) acciones.push('pagar')
-  if (s.estadoServicio === 'finalizado' && s.calificacionServicio == null) acciones.push('calificar')
+  if (solicitud.estadoServicio === 'reprogramacion' && solicitud.propuestaDe === 'profesional') acciones.push('aceptarHorario')
+  if (debePagar(solicitud)) acciones.push('pagar')
+  if (solicitud.estadoServicio === 'finalizado' && solicitud.calificacionServicio == null) acciones.push('calificar')
   return acciones
 }
 
@@ -35,12 +35,12 @@ export interface Confirmacion {
   ok: string
 }
 
-export function confirmacionCancelar(s: SolicitudResumen): Confirmacion {
-  const nombre = s.profesional?.nombre ?? 'el profesional'
+export function confirmacionCancelar(solicitud: SolicitudResumen): Confirmacion {
+  const nombre = solicitud.profesional?.nombre ?? 'el profesional'
   return {
     titulo: '¿Cancelar la solicitud?',
     texto:
-      s.estadoServicio === 'solicitado'
+      solicitud.estadoServicio === 'solicitado'
         ? 'La solicitud se cancela y se libera el horario que habías elegido.'
         : `Le avisamos a ${nombre} y se liberan los horarios reservados. No se puede deshacer.`,
     boton: 'Cancelar solicitud',
@@ -48,11 +48,11 @@ export function confirmacionCancelar(s: SolicitudResumen): Confirmacion {
   }
 }
 
-export function confirmacionRechazarPresupuesto(s: SolicitudResumen): Confirmacion {
-  const nombre = s.profesional?.nombre ?? 'el profesional'
+export function confirmacionRechazarPresupuesto(solicitud: SolicitudResumen): Confirmacion {
+  const nombre = solicitud.profesional?.nombre ?? 'el profesional'
   return {
     titulo: '¿Rechazar el presupuesto?',
-    texto: s.costoVisita
+    texto: solicitud.costoVisita
       ? `La solicitud termina acá. Igual queda por pagar la visita de ${nombre}.`
       : 'La solicitud termina acá y no se puede deshacer.',
     boton: 'Rechazar',

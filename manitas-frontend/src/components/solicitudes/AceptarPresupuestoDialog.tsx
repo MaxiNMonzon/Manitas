@@ -24,10 +24,10 @@ interface Props {
 
 // Confirmar el servicio (PATCH /:id/aceptar-presupuesto): se hace en el momento, en la visita
 // (si lleva hasta 1 hora), o se elige desde qué turno libre del profesional arranca
-export default function AceptarPresupuestoDialog({ solicitud: s, onClose, onAceptado }: Props) {
+export default function AceptarPresupuestoDialog({ solicitud, onClose, onAceptado }: Props) {
   // Si ya tenía fecha de trabajo, es un cambio de precio a mitad del trabajo: solo se confirma
-  const soloConfirmar = !!s?.fechaInicio
-  const entraEnLaVisita = s?.horasTrabajo == null || s.horasTrabajo <= 1
+  const soloConfirmar = !!solicitud?.fechaInicio
+  const entraEnLaVisita = solicitud?.horasTrabajo == null || solicitud.horasTrabajo <= 1
   const [modo, setModo] = useState<'momento' | 'turno'>('turno')
   const [inicio, setInicio] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -41,12 +41,12 @@ export default function AceptarPresupuestoDialog({ solicitud: s, onClose, onAcep
   }
 
   const confirmar = async () => {
-    if (!s) return
+    if (!solicitud) return
     const enElMomento = !soloConfirmar && modo === 'momento'
     setEnviando(true)
     setError(null)
     try {
-      await aceptarPresupuesto(s.idSolicitud, soloConfirmar || enElMomento ? null : new Date(inicio!))
+      await aceptarPresupuesto(solicitud.idSolicitud, soloConfirmar || enElMomento ? null : new Date(inicio!))
       cerrar()
       onAceptado(
         soloConfirmar
@@ -55,9 +55,9 @@ export default function AceptarPresupuestoDialog({ solicitud: s, onClose, onAcep
             ? 'Servicio confirmado: el profesional hace el trabajo ahora.'
             : `Servicio confirmado para el ${dayjs(inicio).format('dddd DD/MM [a las] HH:mm')}.`,
       )
-    } catch (e) {
+    } catch (fallo) {
       // Ej: "No entran las horas seguidas desde ese horario (el próximo inicio posible es ...)"
-      setError(e instanceof Error ? e.message : 'No se pudo confirmar')
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo confirmar')
     } finally {
       setEnviando(false)
     }
@@ -66,21 +66,21 @@ export default function AceptarPresupuestoDialog({ solicitud: s, onClose, onAcep
   const listo = soloConfirmar || (modo === 'momento' ? entraEnLaVisita : inicio !== null)
 
   return (
-    <Dialog open={s !== null} onClose={cerrar} fullWidth maxWidth="xs">
+    <Dialog open={solicitud !== null} onClose={cerrar} fullWidth maxWidth="xs">
       <DialogTitle>{soloConfirmar ? 'Aceptar el nuevo precio' : 'Confirmar el servicio'}</DialogTitle>
       <DialogContent>
-        {s && (
+        {solicitud && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              {s.profesional ? `${s.profesional.nombre} ${s.profesional.apellido} · ` : ''}
-              {s.descripcionProblema}
+              {solicitud.profesional ? `${solicitud.profesional.nombre} ${solicitud.profesional.apellido} · ` : ''}
+              {solicitud.descripcionProblema}
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, mt: 1 }}>
-              {formatoPesos(s.costoFinal)}
+              {formatoPesos(solicitud.costoFinal)}
             </Typography>
-            {s.horasTrabajo != null && (
+            {solicitud.horasTrabajo != null && (
               <Typography variant="body2" color="text.secondary">
-                Lleva {s.horasTrabajo} {s.horasTrabajo === 1 ? 'hora' : 'horas'} de trabajo
+                Lleva {solicitud.horasTrabajo} {solicitud.horasTrabajo === 1 ? 'hora' : 'horas'} de trabajo
               </Typography>
             )}
           </Box>
@@ -96,7 +96,7 @@ export default function AceptarPresupuestoDialog({ solicitud: s, onClose, onAcep
           <Typography>El trabajo sigue con el mismo horario; solo cambia el precio.</Typography>
         ) : (
           <>
-            <RadioGroup value={modo} onChange={(e) => setModo(e.target.value as 'momento' | 'turno')} sx={{ mb: 1 }}>
+            <RadioGroup value={modo} onChange={(evento) => setModo(evento.target.value as 'momento' | 'turno')} sx={{ mb: 1 }}>
               <FormControlLabel value="turno" control={<Radio />} label="Elegir cuándo arranca" />
               <FormControlLabel
                 value="momento"
@@ -105,9 +105,9 @@ export default function AceptarPresupuestoDialog({ solicitud: s, onClose, onAcep
                 label={entraEnLaVisita ? 'Ahora, en la visita' : 'Ahora, en la visita (lleva más de 1 hora)'}
               />
             </RadioGroup>
-            {modo === 'turno' && s && (
+            {modo === 'turno' && solicitud && (
               <SelectorTurno
-                idProfesional={s.profesional?.idUsuario ?? null}
+                idProfesional={solicitud.profesional?.idUsuario ?? null}
                 valor={inicio}
                 onChange={setInicio}
                 etiquetaHora="Hora de inicio (se reservan las horas seguidas)"

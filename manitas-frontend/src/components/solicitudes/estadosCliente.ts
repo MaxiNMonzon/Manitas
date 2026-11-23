@@ -24,66 +24,66 @@ export const estaTerminada = (estado: EstadoSolicitud) => terminadas.includes(es
 export const grupoCliente = (estado: EstadoSolicitud): GrupoCliente => (estaTerminada(estado) ? 'completadas' : 'en_curso')
 
 // Lo que espera una respuesta del cliente (va primero y se resalta)
-export function leTocaAlCliente(s: SolicitudResumen): boolean {
-  if (s.estadoServicio === 'presupuestado') return true
-  if (s.estadoServicio === 'reprogramacion') return s.propuestaDe === 'profesional'
-  return debePagar(s)
+export function leTocaAlCliente(solicitud: SolicitudResumen): boolean {
+  if (solicitud.estadoServicio === 'presupuestado') return true
+  if (solicitud.estadoServicio === 'reprogramacion') return solicitud.propuestaDe === 'profesional'
+  return debePagar(solicitud)
 }
 
 // Trabajo ya empezado sin pagar, o la visita de un presupuesto rechazado (si el profesional la cobra)
-export function debePagar(s: SolicitudResumen): boolean {
-  if (s.fechaPago) return false
-  if (s.estadoServicio === 'contratado') return !!s.fechaInicio && new Date(s.fechaInicio) <= new Date()
-  if (s.estadoServicio === 'rechazado') return !!s.costoFinal && !s.fechaInicio
+export function debePagar(solicitud: SolicitudResumen): boolean {
+  if (solicitud.fechaPago) return false
+  if (solicitud.estadoServicio === 'contratado') return !!solicitud.fechaInicio && new Date(solicitud.fechaInicio) <= new Date()
+  if (solicitud.estadoServicio === 'rechazado') return !!solicitud.costoFinal && !solicitud.fechaInicio
   return false
 }
 
 // Reglas del back para que el cliente cancele: en solicitado (una urgente, solo mientras nadie la tomó),
 // en agendado siempre y en contratado dentro de las 6 h de aceptar el presupuesto y antes de que arranque
 const HORAS_ARREPENTIMIENTO = 6
-export function puedeCancelar(s: SolicitudResumen): boolean {
-  const estado = s.estadoServicio === 'reprogramacion' ? s.estadoAnterior : s.estadoServicio
+export function puedeCancelar(solicitud: SolicitudResumen): boolean {
+  const estado = solicitud.estadoServicio === 'reprogramacion' ? solicitud.estadoAnterior : solicitud.estadoServicio
   if (estado === 'solicitado') return true
-  if (s.urgente) return false
+  if (solicitud.urgente) return false
   if (estado === 'agendado') return true
   if (estado === 'contratado') {
-    const yaArranco = !!s.fechaInicio && new Date(s.fechaInicio) <= new Date()
-    const horas = s.fechaAceptacion ? (Date.now() - new Date(s.fechaAceptacion).getTime()) / 3600000 : Infinity
+    const yaArranco = !!solicitud.fechaInicio && new Date(solicitud.fechaInicio) <= new Date()
+    const horas = solicitud.fechaAceptacion ? (Date.now() - new Date(solicitud.fechaAceptacion).getTime()) / 3600000 : Infinity
     return !yaArranco && horas <= HORAS_ARREPENTIMIENTO
   }
   return false
 }
 
 // La fecha que le importa al cliente: la del trabajo si ya lo contrató, si no la de la visita
-export function fechaClave(s: SolicitudResumen): { que: 'Visita' | 'Trabajo' | 'Terminado'; fecha: string } | null {
-  if (s.fechaFinReal) return { que: 'Terminado', fecha: s.fechaFinReal }
-  if (s.fechaInicio && s.costoEstimado != null) return { que: 'Trabajo', fecha: s.fechaInicio }
-  if (s.fechaVisita) return { que: 'Visita', fecha: s.fechaVisita }
+export function fechaClave(solicitud: SolicitudResumen): { que: 'Visita' | 'Trabajo' | 'Terminado'; fecha: string } | null {
+  if (solicitud.fechaFinReal) return { que: 'Terminado', fecha: solicitud.fechaFinReal }
+  if (solicitud.fechaInicio && solicitud.costoEstimado != null) return { que: 'Trabajo', fecha: solicitud.fechaInicio }
+  if (solicitud.fechaVisita) return { que: 'Visita', fecha: solicitud.fechaVisita }
   return null
 }
 
-export function proximoPasoCliente(s: SolicitudResumen): string {
+export function proximoPasoCliente(solicitud: SolicitudResumen): string {
   // Describe en qué situación está la solicitud (no le da órdenes al cliente: para eso están los botones)
-  switch (s.estadoServicio) {
+  switch (solicitud.estadoServicio) {
     case 'solicitado':
-      return s.urgente && !s.profesional ? 'Buscando un profesional cerca tuyo (hasta 1 hora)' : 'Esperando confirmación del profesional'
+      return solicitud.urgente && !solicitud.profesional ? 'Buscando un profesional cerca tuyo (hasta 1 hora)' : 'Esperando confirmación del profesional'
     case 'agendado':
-      if (s.urgente && s.fechaVisita) return `Profesional en camino · llega a las ${dayjs(s.fechaVisita).format('HH:mm')}`
-      if (s.costoEstimado != null) return `Trabajo confirmado · ${formatoPesos(s.costoFinal)}`
-      return yaFueLaVisita(s) ? 'Visita en curso · presupuesto pendiente' : 'Presupuesto pendiente'
+      if (solicitud.urgente && solicitud.fechaVisita) return `Profesional en camino · llega a las ${dayjs(solicitud.fechaVisita).format('HH:mm')}`
+      if (solicitud.costoEstimado != null) return `Trabajo confirmado · ${formatoPesos(solicitud.costoFinal)}`
+      return yaFueLaVisita(solicitud) ? 'Visita en curso · presupuesto pendiente' : 'Presupuesto pendiente'
     case 'presupuestado':
-      return `Presupuesto recibido: ${formatoPesos(s.costoFinal)} · esperando tu respuesta`
+      return `Presupuesto recibido: ${formatoPesos(solicitud.costoFinal)} · esperando tu respuesta`
     case 'contratado':
-      if (debePagar(s)) return `Trabajo en curso · ${formatoPesos(s.costoFinal)} a pagar`
-      return s.fechaInicio ? `Trabajo agendado para el ${formatoFecha(s.fechaInicio)} · ${formatoPesos(s.costoFinal)}` : `Trabajo contratado · ${formatoPesos(s.costoFinal)}`
+      if (debePagar(solicitud)) return `Trabajo en curso · ${formatoPesos(solicitud.costoFinal)} a pagar`
+      return solicitud.fechaInicio ? `Trabajo agendado para el ${formatoFecha(solicitud.fechaInicio)} · ${formatoPesos(solicitud.costoFinal)}` : `Trabajo contratado · ${formatoPesos(solicitud.costoFinal)}`
     case 'reprogramacion':
-      return s.propuestaDe === 'profesional'
+      return solicitud.propuestaDe === 'profesional'
         ? 'Cambio de horario propuesto por el profesional · se cancela si no respondés en 24 h'
         : 'Cambio de horario propuesto · esperando respuesta del profesional'
     case 'finalizado':
-      return s.calificacionServicio ? `Trabajo finalizado · pagado ${formatoPesos(s.costoFinal)}` : 'Trabajo finalizado · falta tu calificación'
+      return solicitud.calificacionServicio ? `Trabajo finalizado · pagado ${formatoPesos(solicitud.costoFinal)}` : 'Trabajo finalizado · falta tu calificación'
     case 'rechazado':
-      return debePagar(s) ? `Rechazada · visita a pagar: ${formatoPesos(s.costoFinal)}` : 'Rechazada'
+      return debePagar(solicitud) ? `Rechazada · visita a pagar: ${formatoPesos(solicitud.costoFinal)}` : 'Rechazada'
     case 'cancelado':
       return 'Cancelada'
     case 'expirado':

@@ -49,12 +49,12 @@ export default function Ayuda() {
 
   const buscado = normalizar(busqueda.trim())
   const visibles = temas
-    .filter((t) => !temaFiltro || t.tema === temaFiltro)
-    .map((t) => ({
-      ...t,
-      preguntas: t.preguntas.filter((p) => !buscado || normalizar(`${p.pregunta} ${p.respuesta}`).includes(buscado)),
+    .filter((temaAyuda) => !temaFiltro || temaAyuda.tema === temaFiltro)
+    .map((temaAyuda) => ({
+      ...temaAyuda,
+      preguntas: temaAyuda.preguntas.filter((pregunta) => !buscado || normalizar(`${pregunta.pregunta} ${pregunta.respuesta}`).includes(buscado)),
     }))
-    .filter((t) => t.preguntas.length > 0)
+    .filter((temaAyuda) => temaAyuda.preguntas.length > 0)
 
   const errores = {
     correo: !/^\S+@\S+\.\S+$/.test(correo.trim()) ? 'Ingresá un email válido para poder responderte' : null,
@@ -63,8 +63,8 @@ export default function Ayuda() {
   }
   const hayErrores = Object.values(errores).some(Boolean)
 
-  const enviar = async (e: FormEvent) => {
-    e.preventDefault()
+  const enviar = async (evento: FormEvent) => {
+    evento.preventDefault()
     setIntento(true)
     setResultado(null)
     if (hayErrores) return
@@ -79,8 +79,8 @@ export default function Ayuda() {
       setMensaje('')
       setTema('')
       setIntento(false)
-    } catch (err) {
-      setResultado({ tipo: 'error', texto: err instanceof Error ? err.message : 'No se pudo enviar la consulta' })
+    } catch (error) {
+      setResultado({ tipo: 'error', texto: error instanceof Error ? error.message : 'No se pudo enviar la consulta' })
     } finally {
       setEnviando(false)
     }
@@ -101,7 +101,7 @@ export default function Ayuda() {
           size="small"
           placeholder="Buscá tu duda (ej: cancelar, pagar, horario)"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(evento) => setBusqueda(evento.target.value)}
           slotProps={{
             input: {
               startAdornment: (
@@ -114,13 +114,13 @@ export default function Ayuda() {
         />
         <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', mt: 1.5 }}>
           <Chip label="Todos" color={temaFiltro === null ? 'primary' : 'default'} onClick={() => setTemaFiltro(null)} />
-          {temas.map((t) => (
+          {temas.map((temaAyuda) => (
             <Chip
-              key={t.tema}
-              label={t.tema}
-              color={temaFiltro === t.tema ? 'primary' : 'default'}
-              variant={temaFiltro === t.tema ? 'filled' : 'outlined'}
-              onClick={() => setTemaFiltro(temaFiltro === t.tema ? null : t.tema)}
+              key={temaAyuda.tema}
+              label={temaAyuda.tema}
+              color={temaFiltro === temaAyuda.tema ? 'primary' : 'default'}
+              variant={temaFiltro === temaAyuda.tema ? 'filled' : 'outlined'}
+              onClick={() => setTemaFiltro(temaFiltro === temaAyuda.tema ? null : temaAyuda.tema)}
             />
           ))}
         </Stack>
@@ -132,13 +132,13 @@ export default function Ayuda() {
         </Paper>
       ) : (
         <Stack spacing={3} sx={{ mb: 3 }}>
-          {visibles.map((t) => (
-            <Box key={t.tema}>
+          {visibles.map((temaAyuda) => (
+            <Box key={temaAyuda.tema}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                {t.tema}
+                {temaAyuda.tema}
               </Typography>
-              {t.preguntas.map((p) => {
-                const clave = `${t.tema}-${p.pregunta}`
+              {temaAyuda.preguntas.map((pregunta) => {
+                const clave = `${temaAyuda.tema}-${pregunta.pregunta}`
                 return (
                   <Accordion
                     key={clave}
@@ -150,10 +150,10 @@ export default function Ayuda() {
                     sx={{ '&:not(:last-of-type)': { borderBottom: 0 } }}
                   >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography sx={{ fontWeight: 500 }}>{p.pregunta}</Typography>
+                      <Typography sx={{ fontWeight: 500 }}>{pregunta.pregunta}</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                      <Typography color="text.secondary">{p.respuesta}</Typography>
+                      <Typography color="text.secondary">{pregunta.respuesta}</Typography>
                     </AccordionDetails>
                   </Accordion>
                 )
@@ -176,7 +176,7 @@ export default function Ayuda() {
                 type="email"
                 label="Tu email"
                 value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
+                onChange={(evento) => setCorreo(evento.target.value)}
                 error={intento && Boolean(errores.correo)}
                 helperText={(intento && errores.correo) || 'Te respondemos a este correo'}
               />
@@ -187,13 +187,13 @@ export default function Ayuda() {
                 fullWidth
                 label="Tema"
                 value={tema}
-                onChange={(e) => setTema(e.target.value)}
+                onChange={(evento) => setTema(evento.target.value)}
                 error={intento && Boolean(errores.tema)}
                 helperText={intento && errores.tema}
               >
-                {[...temas.map((t) => t.tema), OTRO_TEMA].map((t) => (
-                  <MenuItem key={t} value={t}>
-                    {t}
+                {[...temas.map((temaAyuda) => temaAyuda.tema), OTRO_TEMA].map((nombreTema) => (
+                  <MenuItem key={nombreTema} value={nombreTema}>
+                    {nombreTema}
                   </MenuItem>
                 ))}
               </TextField>
@@ -206,7 +206,7 @@ export default function Ayuda() {
                 label="Tu consulta"
                 placeholder="Contanos qué pasó o qué necesitás saber"
                 value={mensaje}
-                onChange={(e) => setMensaje(e.target.value.slice(0, MAX_MENSAJE))}
+                onChange={(evento) => setMensaje(evento.target.value.slice(0, MAX_MENSAJE))}
                 error={intento && Boolean(errores.mensaje)}
                 helperText={(intento && errores.mensaje) || `${mensaje.length}/${MAX_MENSAJE}`}
               />

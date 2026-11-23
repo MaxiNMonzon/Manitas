@@ -25,20 +25,20 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (evento: FormEvent) => {
+    evento.preventDefault()
     setError(null)
     setEnviando(true)
     try {
       await login({ correo, contraseña })
       navigate('/app')
-    } catch (err) {
+    } catch (fallo) {
       // 3 intentos fallidos: la cuenta queda bloqueada un rato y se vuelve al inicio con el aviso
-      if (err instanceof ApiError && err.status === 429) {
-        navigate('/', { replace: true, state: { aviso: err.message } })
+      if (fallo instanceof ApiError && fallo.status === 429) {
+        navigate('/', { replace: true, state: { aviso: fallo.message } })
         return
       }
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión')
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo iniciar sesión')
     } finally {
       setEnviando(false)
     }
@@ -60,7 +60,7 @@ export default function Login() {
           required
           fullWidth
           value={correo}
-          onChange={(e) => setCorreo(e.target.value)}
+          onChange={(evento) => setCorreo(evento.target.value)}
         />
         <TextField
           label="Contraseña"
@@ -69,14 +69,14 @@ export default function Login() {
           required
           fullWidth
           value={contraseña}
-          onChange={(e) => setContraseña(e.target.value)}
+          onChange={(evento) => setContraseña(evento.target.value)}
           slotProps={{
             input: {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
                     aria-label={verContraseña ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                    onClick={() => setVerContraseña((v) => !v)}
+                    onClick={() => setVerContraseña((anterior) => !anterior)}
                     edge="end"
                   >
                     {verContraseña ? <VisibilityOff /> : <Visibility />}

@@ -40,8 +40,8 @@ function Formulario({ onClose, onCambiada }: Omit<Props, 'open'>) {
   }
   const hayErrores = Object.values(errores).some(Boolean)
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (evento: FormEvent) => {
+    evento.preventDefault()
     setIntento(true)
     setError(null)
     if (hayErrores) return
@@ -49,18 +49,18 @@ function Formulario({ onClose, onCambiada }: Omit<Props, 'open'>) {
     try {
       await cambiarContraseña(actual, nueva)
       onCambiada()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo cambiar la contraseña')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo cambiar la contraseña')
     } finally {
       setEnviando(false)
     }
   }
 
-  const props = (valor: string, set: (v: string) => void, err: string | undefined) => ({
+  const props = (valor: string, set: (nuevoValor: string) => void, mensajeError: string | undefined) => ({
     value: valor,
-    onChange: (e: { target: { value: string } }) => set(e.target.value),
-    error: intento && Boolean(err),
-    helperText: intento ? err : undefined,
+    onChange: (evento: { target: { value: string } }) => set(evento.target.value),
+    error: intento && Boolean(mensajeError),
+    helperText: intento ? mensajeError : undefined,
     type: 'password',
     fullWidth: true,
   })

@@ -9,7 +9,7 @@ type EventoAgendaApi = Omit<EventoAgenda, 'inicio' | 'fin'> & { inicio: string; 
 // desde / hasta: 'AAAA-MM-DD', los dos días incluidos
 export async function traerAgenda(desde: string, hasta: string): Promise<EventoAgenda[]> {
   const eventos = await api.get<EventoAgendaApi[]>(`/solicitud-de-servicio/agenda?desde=${desde}&hasta=${hasta}`)
-  return eventos.map((e) => ({ ...e, inicio: new Date(e.inicio), fin: new Date(e.fin) }))
+  return eventos.map((evento) => ({ ...evento, inicio: new Date(evento.inicio), fin: new Date(evento.fin) }))
 }
 
 export async function traerMisSolicitudes(): Promise<SolicitudResumen[]> {
@@ -155,6 +155,6 @@ export async function traerTurnosLibres(idProfesional: number, desde: string, ha
 
 // Fecha y hora local sin zona horaria ("2026-10-20T10:00:00"), como la espera el back
 function fechaLocal(fecha: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${fecha.getFullYear()}-${p(fecha.getMonth() + 1)}-${p(fecha.getDate())}T${p(fecha.getHours())}:${p(fecha.getMinutes())}:00`
+  const dosDigitos = (numero: number) => String(numero).padStart(2, '0')
+  return `${fecha.getFullYear()}-${dosDigitos(fecha.getMonth() + 1)}-${dosDigitos(fecha.getDate())}T${dosDigitos(fecha.getHours())}:${dosDigitos(fecha.getMinutes())}:00`
 }

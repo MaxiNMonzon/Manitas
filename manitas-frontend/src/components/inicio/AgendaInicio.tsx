@@ -56,8 +56,8 @@ export default function AgendaInicio({ hoy, proximos }: Props) {
               <Typography color="text.secondary">Por ahora no tenés nada agendado para los próximos 30 días.</Typography>
             ) : (
               <Stack spacing={1.5}>
-                {proximos.eventos.slice(0, PROXIMOS_VISIBLES).map((ev) => (
-                  <ItemAgenda key={`${ev.idSolicitud}-${ev.tipo}-${ev.inicio.getTime()}`} evento={ev} mostrarFecha />
+                {proximos.eventos.slice(0, PROXIMOS_VISIBLES).map((evento) => (
+                  <ItemAgenda key={`${evento.idSolicitud}-${evento.tipo}-${evento.inicio.getTime()}`} evento={evento} mostrarFecha />
                 ))}
               </Stack>
             )}

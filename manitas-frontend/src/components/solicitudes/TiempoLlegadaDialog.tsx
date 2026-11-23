@@ -62,9 +62,9 @@ function Contenido({ urgente, cargando, onClose, onConfirmar }: Props & { urgent
             onChange={(_, valor: number | null) => valor && setMinutos(valor)}
             sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}
           >
-            {OPCIONES.map((m) => (
-              <ToggleButton key={m} value={m} sx={{ fontWeight: 600 }}>
-                {m < 60 ? `${m} min` : m === 60 ? '1 h' : `${m / 60} h`.replace('.5', ' ½')}
+            {OPCIONES.map((opcion) => (
+              <ToggleButton key={opcion} value={opcion} sx={{ fontWeight: 600 }}>
+                {opcion < 60 ? `${opcion} min` : opcion === 60 ? '1 h' : `${opcion / 60} h`.replace('.5', ' ½')}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>

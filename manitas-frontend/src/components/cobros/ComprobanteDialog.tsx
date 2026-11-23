@@ -27,10 +27,10 @@ function Fila({ label, valor }: { label: string; valor: string }) {
 
 // Comprobante del pago que hizo el cliente por la app ("Ver factura" del boceto).
 // Es un comprobante interno: la app no emite facturas fiscales
-export default function ComprobanteDialog({ cobro: c, cuentaDeposito, onClose }: { cobro: Cobro | null; cuentaDeposito: string | null; onClose: () => void }) {
+export default function ComprobanteDialog({ cobro, cuentaDeposito, onClose }: { cobro: Cobro | null; cuentaDeposito: string | null; onClose: () => void }) {
   return (
-    <Dialog open={c !== null} onClose={onClose} maxWidth="xs" fullWidth>
-      {c && (
+    <Dialog open={cobro !== null} onClose={onClose} maxWidth="xs" fullWidth>
+      {cobro && (
         <>
           <DialogContent>
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -40,37 +40,37 @@ export default function ComprobanteDialog({ cobro: c, cuentaDeposito, onClose }:
                   Comprobante de pago
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Nº {numeroComprobante(c)}
+                  Nº {numeroComprobante(cobro)}
                 </Typography>
               </Box>
             </Stack>
 
             <Stack spacing={1}>
-              <Fila label="Fecha de pago" valor={dayjs(c.fechaPago).format('DD/MM/YYYY HH:mm')} />
-              <Fila label="Cliente" valor={`${c.cliente.nombre} ${c.cliente.apellido}`} />
-              <Fila label="Concepto" valor={c.concepto === 'visita' ? 'Visita' : 'Trabajo'} />
-              {c.especialidad && <Fila label="Especialidad" valor={c.especialidad} />}
+              <Fila label="Fecha de pago" valor={dayjs(cobro.fechaPago).format('DD/MM/YYYY HH:mm')} />
+              <Fila label="Cliente" valor={`${cobro.cliente.nombre} ${cobro.cliente.apellido}`} />
+              <Fila label="Concepto" valor={cobro.concepto === 'visita' ? 'Visita' : 'Trabajo'} />
+              {cobro.especialidad && <Fila label="Especialidad" valor={cobro.especialidad} />}
               <Typography variant="body2" sx={{ pt: 0.5 }}>
-                {c.descripcionProblema}
+                {cobro.descripcionProblema}
               </Typography>
               <Divider sx={{ my: 1 }} />
-              <Fila label="Medio de pago" valor={c.medioDePago ?? 'Mercado Pago'} />
+              <Fila label="Medio de pago" valor={cobro.medioDePago ?? 'Mercado Pago'} />
               <Fila label="Se deposita en" valor={cuentaDeposito ? `CBU/CVU terminado en ${cuentaDeposito}` : 'Tu CBU/CVU'} />
               <Fila
-                label={c.estado === 'cobrado' ? 'Depositado el' : 'Depósito estimado'}
-                valor={dayjs(c.depositoEstimado).format('DD/MM/YYYY')}
+                label={cobro.estado === 'cobrado' ? 'Depositado el' : 'Depósito estimado'}
+                valor={dayjs(cobro.depositoEstimado).format('DD/MM/YYYY')}
               />
               <Divider sx={{ my: 1 }} />
               <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography sx={{ fontWeight: 700 }}>Total</Typography>
                 <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                  {formatoPesos(c.monto)}
+                  {formatoPesos(cobro.monto)}
                 </Typography>
               </Stack>
               <Chip
                 size="small"
-                color={estadosCobro[c.estado].color}
-                label={estadosCobro[c.estado].label}
+                color={estadosCobro[cobro.estado].color}
+                label={estadosCobro[cobro.estado].label}
                 sx={{ alignSelf: 'flex-end', fontWeight: 600 }}
               />
             </Stack>

@@ -25,8 +25,8 @@ export function propsCampo<F>({ datos, errores, editando, cambiar }: Estado<F>, 
   return {
     label,
     value: datos[nombre] as string,
-    onChange: (e: { target: { value: string } }) => {
-      let valor = e.target.value
+    onChange: (evento: { target: { value: string } }) => {
+      let valor = evento.target.value
       if (extra.soloNumeros) valor = valor.replace(/\D/g, '').slice(0, extra.soloNumeros)
       if (extra.max) valor = valor.slice(0, extra.max)
       cambiar({ [nombre]: valor } as Partial<F>)

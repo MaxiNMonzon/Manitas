@@ -34,8 +34,8 @@ export default function BajaCuentaButton({ idUsuario }: { idUsuario: number }) {
       await darDeBajaCuenta(rol, idUsuario)
       logout()
       navigate('/')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo dar de baja la cuenta')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo dar de baja la cuenta')
       setEnviando(false)
     }
   }
@@ -63,7 +63,7 @@ export default function BajaCuentaButton({ idUsuario }: { idUsuario: number }) {
             fullWidth
             label={`Escribí ${PALABRA} para confirmar`}
             value={confirmacion}
-            onChange={(e) => setConfirmacion(e.target.value)}
+            onChange={(evento) => setConfirmacion(evento.target.value)}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

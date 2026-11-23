@@ -5,7 +5,7 @@ export type Errores<F> = Partial<Record<keyof F, string>>
 // Lo que comparten "Mi perfil" del cliente y del profesional: se ve todo en solo lectura y con
 // "Editar perfil" se pasa a un formulario. form = null es "viendo"; con datos es "editando".
 // Los errores se muestran recién después del primer intento de guardar.
-export function useEdicionPerfil<F>(validar: (f: F) => Errores<F>) {
+export function useEdicionPerfil<F>(validar: (formulario: F) => Errores<F>) {
   const [form, setForm] = useState<F | null>(null)
   const [intentoGuardar, setIntentoGuardar] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -20,11 +20,11 @@ export function useEdicionPerfil<F>(validar: (f: F) => Errores<F>) {
     setError(null)
   }
 
-  const cambiar = (cambios: Partial<F>) => setForm((f) => (f ? { ...f, ...cambios } : f))
+  const cambiar = (cambios: Partial<F>) => setForm((anterior) => (anterior ? { ...anterior, ...cambios } : anterior))
 
   // Valida y, si está todo bien, manda los cambios. Si el back responde un error
   // (ej: "Ese correo ya está registrado en otra cuenta"), se muestra y sigue editando
-  const guardar = async (enviar: (f: F) => Promise<void>) => {
+  const guardar = async (enviar: (formulario: F) => Promise<void>) => {
     if (!form) return
     setIntentoGuardar(true)
     setError(null)
@@ -33,8 +33,8 @@ export function useEdicionPerfil<F>(validar: (f: F) => Errores<F>) {
     try {
       await enviar(form)
       setForm(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo guardar')
     } finally {
       setGuardando(false)
     }

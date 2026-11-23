@@ -41,8 +41,8 @@ export default function FormularioCatalogoDialog({ catalogo, fila, onClose, onGu
       if (fila) await editar(catalogo.path, Number(fila[catalogo.id]), cuerpo)
       else await crear(catalogo.path, cuerpo)
       onGuardado(fila ? 'Cambios guardados.' : 'Alta guardada.')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar')
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo guardar')
     } finally {
       setGuardando(false)
     }
@@ -54,30 +54,30 @@ export default function FormularioCatalogoDialog({ catalogo, fila, onClose, onGu
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
-          {catalogo.campos.map((c) => {
-            const err = intento ? errores[c.clave] : undefined
-            const cambiar = (v: unknown) => setValores((actual) => ({ ...actual, [c.clave]: v }))
-            if (c.tipo === 'referencia' || c.tipo === 'referencias') {
-              return <CampoReferencia key={c.clave} campo={c} valor={valores[c.clave]} onChange={cambiar} error={err} />
+          {catalogo.campos.map((campo) => {
+            const mensajeError = intento ? errores[campo.clave] : undefined
+            const cambiar = (valor: unknown) => setValores((actual) => ({ ...actual, [campo.clave]: valor }))
+            if (campo.tipo === 'referencia' || campo.tipo === 'referencias') {
+              return <CampoReferencia key={campo.clave} campo={campo} valor={valores[campo.clave]} onChange={cambiar} error={mensajeError} />
             }
             return (
               <TextField
-                key={c.clave}
-                select={c.tipo === 'opciones'}
-                label={c.label}
-                required={c.requerido}
-                type={c.tipo === 'numero' ? 'number' : c.tipo === 'fecha' ? 'date' : 'text'}
-                multiline={c.tipo === 'textoLargo'}
-                minRows={c.tipo === 'textoLargo' ? 2 : undefined}
-                value={valores[c.clave] ?? ''}
-                onChange={(e) => cambiar(e.target.value)}
-                error={Boolean(err)}
-                helperText={err ?? c.ayuda}
-                slotProps={c.tipo === 'fecha' ? { inputLabel: { shrink: true } } : undefined}
+                key={campo.clave}
+                select={campo.tipo === 'opciones'}
+                label={campo.label}
+                required={campo.requerido}
+                type={campo.tipo === 'numero' ? 'number' : campo.tipo === 'fecha' ? 'date' : 'text'}
+                multiline={campo.tipo === 'textoLargo'}
+                minRows={campo.tipo === 'textoLargo' ? 2 : undefined}
+                value={valores[campo.clave] ?? ''}
+                onChange={(evento) => cambiar(evento.target.value)}
+                error={Boolean(mensajeError)}
+                helperText={mensajeError ?? campo.ayuda}
+                slotProps={campo.tipo === 'fecha' ? { inputLabel: { shrink: true } } : undefined}
               >
-                {(c.opciones ?? []).map((o) => (
-                  <MenuItem key={o} value={o}>
-                    {o}
+                {(campo.opciones ?? []).map((opcion) => (
+                  <MenuItem key={opcion} value={opcion}>
+                    {opcion}
                   </MenuItem>
                 ))}
               </TextField>

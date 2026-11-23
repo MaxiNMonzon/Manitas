@@ -25,7 +25,7 @@ describe('ordenar las solicitudes del profesional', () => {
     const nueva = solicitud({ idSolicitud: 2, fechaCambioEstado: '2026-11-01T12:00:00' })
     const urgente = solicitud({ idSolicitud: 3, urgente: true, fechaCambioEstado: '2026-11-01T13:00:00' })
 
-    const orden = ordenar('nuevas', [nueva, urgente, vieja]).map((s) => s.idSolicitud)
+    const orden = ordenar('nuevas', [nueva, urgente, vieja]).map((unaSolicitud) => unaSolicitud.idSolicitud)
 
     expect(orden).toEqual([3, 1, 2])
   })
@@ -37,7 +37,7 @@ describe('ordenar las solicitudes del profesional', () => {
       solicitud({ idSolicitud: 3, estadoServicio: 'reprogramacion' }),
     ])
 
-    const carpetas = enCarpetas('en_curso', lista).map((c) => c.clave)
+    const carpetas = enCarpetas('en_curso', lista).map((carpeta) => carpeta.clave)
 
     expect(carpetas).toEqual([URGENTES, 'reprogramacion', 'presupuestado'])
   })
@@ -49,9 +49,9 @@ describe('ordenar las solicitudes del profesional', () => {
       solicitud({ idSolicitud: 3, estadoServicio: 'finalizado' }),
     ]
 
-    expect(delGrupo(todas, 'nuevas').map((s) => s.idSolicitud)).toEqual([1])
-    expect(delGrupo(todas, 'en_curso').map((s) => s.idSolicitud)).toEqual([2])
-    expect(delGrupo(todas, 'historial').map((s) => s.idSolicitud)).toEqual([3])
+    expect(delGrupo(todas, 'nuevas').map((unaSolicitud) => unaSolicitud.idSolicitud)).toEqual([1])
+    expect(delGrupo(todas, 'en_curso').map((unaSolicitud) => unaSolicitud.idSolicitud)).toEqual([2])
+    expect(delGrupo(todas, 'historial').map((unaSolicitud) => unaSolicitud.idSolicitud)).toEqual([3])
   })
 })
 

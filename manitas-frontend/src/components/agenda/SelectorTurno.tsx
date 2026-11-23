@@ -32,9 +32,9 @@ export default function SelectorTurno({ idProfesional, valor, onChange, etiqueta
     idProfesional ? traerTurnosLibres(idProfesional, hoy, dayjs().add(DIAS_A_MOSTRAR, 'day').format('YYYY-MM-DD')) : Promise.resolve([]),
   )
 
-  const turnos = (libres.datos ?? []).filter((t) => !desde || dayjs(t.inicio).isAfter(desde))
-  const diasConTurnos = new Set(turnos.map((t) => dayjs(t.inicio).format('YYYY-MM-DD')))
-  const delDia = dia ? turnos.filter((t) => dayjs(t.inicio).isSame(dia, 'day')) : []
+  const turnos = (libres.datos ?? []).filter((turno) => !desde || dayjs(turno.inicio).isAfter(desde))
+  const diasConTurnos = new Set(turnos.map((turno) => dayjs(turno.inicio).format('YYYY-MM-DD')))
+  const delDia = dia ? turnos.filter((turno) => dayjs(turno.inicio).isSame(dia, 'day')) : []
 
   if (libres.cargando) return <Skeleton variant="rounded" height={320} />
   if (libres.error) return <Alert severity="error">{libres.error}</Alert>
@@ -47,15 +47,15 @@ export default function SelectorTurno({ idProfesional, valor, onChange, etiqueta
       <Paper variant="outlined">
         <DateCalendar
           value={dia}
-          onChange={(d) => {
-            setDia(d)
+          onChange={(nuevoDia) => {
+            setDia(nuevoDia)
             onChange(null)
           }}
           // Solo días (sin la lista de años): los turnos son de los próximos 3 meses, se pasa de mes con las flechas
           views={['day']}
           disablePast
           maxDate={dayjs().add(DIAS_A_MOSTRAR, 'day')}
-          shouldDisableDate={(d) => !diasConTurnos.has(d.format('YYYY-MM-DD'))}
+          shouldDisableDate={(fecha) => !diasConTurnos.has(fecha.format('YYYY-MM-DD'))}
         />
       </Paper>
       {!dia && (
@@ -74,13 +74,13 @@ export default function SelectorTurno({ idProfesional, valor, onChange, etiqueta
             </Typography>
           ) : (
             <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-              {delDia.map((t) => (
+              {delDia.map((turno) => (
                 <Chip
-                  key={t.inicio}
-                  label={dayjs(t.inicio).format('HH:mm')}
-                  color={valor === t.inicio ? 'primary' : 'default'}
-                  variant={valor === t.inicio ? 'filled' : 'outlined'}
-                  onClick={() => onChange(t.inicio)}
+                  key={turno.inicio}
+                  label={dayjs(turno.inicio).format('HH:mm')}
+                  color={valor === turno.inicio ? 'primary' : 'default'}
+                  variant={valor === turno.inicio ? 'filled' : 'outlined'}
+                  onClick={() => onChange(turno.inicio)}
                 />
               ))}
             </Stack>

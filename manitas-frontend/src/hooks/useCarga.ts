@@ -12,7 +12,7 @@ interface Estado<T> {
 export function useCarga<T>(clave: string, cargar: () => Promise<T>, cadaMs?: number) {
   const [estado, setEstado] = useState<Estado<T> | null>(null)
   const [version, setVersion] = useState(0)
-  const recargar = useCallback(() => setVersion((v) => v + 1), [])
+  const recargar = useCallback(() => setVersion((anterior) => anterior + 1), [])
 
   // `cargar` cambia en cada render; se guarda la última y lo que decide cuándo recargar es la clave
   const cargarActual = useRef(cargar)
@@ -25,7 +25,7 @@ export function useCarga<T>(clave: string, cargar: () => Promise<T>, cadaMs?: nu
     const traer = () =>
       cargarActual.current()
         .then((datos) => vigente && setEstado({ clave, datos, error: null }))
-        .catch((e: Error) => vigente && setEstado((prev) => ({ clave, datos: prev?.clave === clave ? prev.datos : null, error: e.message })))
+        .catch((error: Error) => vigente && setEstado((anterior) => ({ clave, datos: anterior?.clave === clave ? anterior.datos : null, error: error.message })))
     traer()
     const intervalo = cadaMs ? setInterval(traer, cadaMs) : undefined
     return () => {

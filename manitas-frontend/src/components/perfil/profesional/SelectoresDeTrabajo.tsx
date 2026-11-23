@@ -50,8 +50,8 @@ export default function SelectoresDeTrabajo({
           opciones={opciones.especialidades}
           seleccionados={elegidos.especialidades}
           onChange={onCambiarEspecialidades}
-          idDe={(e) => e.idEspecialidad}
-          textoDe={(e) => e.nombreEspecialidad}
+          idDe={(especialidad) => especialidad.idEspecialidad}
+          textoDe={(especialidad) => especialidad.nombreEspecialidad}
           error={errores.especialidades}
         />
       </Grid>
@@ -61,9 +61,9 @@ export default function SelectoresDeTrabajo({
           opciones={opciones.habilidades}
           seleccionados={elegidos.habilidades}
           onChange={(habilidades) => onCambiar({ habilidades })}
-          idDe={(h) => h.idServicio}
-          textoDe={(h) => h.nombreServicio}
-          grupoDe={(h) => h.especialidad?.nombreEspecialidad}
+          idDe={(habilidad) => habilidad.idServicio}
+          textoDe={(habilidad) => habilidad.nombreServicio}
+          grupoDe={(habilidad) => habilidad.especialidad?.nombreEspecialidad}
           disabled={sinEspecialidad}
           ayuda={sinEspecialidad ? 'Primero elegí una especialidad' : undefined}
         />
@@ -75,7 +75,7 @@ export default function SelectoresDeTrabajo({
           opciones={opciones.zonas}
           seleccionados={elegidos.zonas}
           onChange={(zonas) => onCambiar({ zonas })}
-          idDe={(z) => z.idZona}
+          idDe={(zona) => zona.idZona}
           textoDe={textoZona}
           disabled={zonasDeshabilitadas}
           ayuda={ayudaZonas}

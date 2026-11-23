@@ -20,9 +20,9 @@ interface Props {
   cargando: boolean
   // Texto cuando la pestaña no tiene solicitudes
   vacio: string
-  onVerDetalles: (s: SolicitudResumen) => void
+  onVerDetalles: (solicitud: SolicitudResumen) => void
   // El botón de la tarjeta (ej: "Enviar presupuesto"), si corresponde
-  accionDe: (s: SolicitudResumen) => ReactNode
+  accionDe: (solicitud: SolicitudResumen) => ReactNode
 }
 
 // La lista de una pestaña: las del mismo estado (o las urgentes) juntas en una carpeta de su color,
@@ -33,8 +33,8 @@ export default function ListaSolicitudes({ grupo, lista, cargando, vacio, onVerD
   const [cantidadVisible, setCantidadVisible] = useState(POR_PAGINA)
 
   const alternar = (clave: string) =>
-    setCerradas((c) => {
-      const nuevas = new Set(c)
+    setCerradas((anterior) => {
+      const nuevas = new Set(anterior)
       if (nuevas.has(clave)) nuevas.delete(clave)
       else nuevas.add(clave)
       return nuevas
@@ -61,12 +61,12 @@ export default function ListaSolicitudes({ grupo, lista, cargando, vacio, onVerD
     <>
       <Stack spacing={1.5}>
         {enCarpetas(grupo, lista.slice(0, cantidadVisible)).map(({ clave, titulo, color, items }) => {
-          const tarjetas = items.map((s) => (
+          const tarjetas = items.map((solicitud) => (
             <TarjetaSolicitud
-              key={s.idSolicitud}
-              solicitud={s}
-              onVerDetalles={() => onVerDetalles(s)}
-              acciones={accionDe(s)}
+              key={solicitud.idSolicitud}
+              solicitud={solicitud}
+              onVerDetalles={() => onVerDetalles(solicitud)}
+              acciones={accionDe(solicitud)}
               // El estado ya lo dice la carpeta (o la pestaña, en Nuevas); en la de urgentes se mezclan
               mostrarEstado={clave === URGENTES}
             />
@@ -78,7 +78,7 @@ export default function ListaSolicitudes({ grupo, lista, cargando, vacio, onVerD
               key={clave}
               titulo={titulo}
               color={color}
-              cantidad={lista.filter((s) => claveDe(grupo, s) === clave).length}
+              cantidad={lista.filter((solicitud) => claveDe(grupo, solicitud) === clave).length}
               abierto={!cerradas.has(clave)}
               onAlternar={() => alternar(clave)}
             >
@@ -90,7 +90,7 @@ export default function ListaSolicitudes({ grupo, lista, cargando, vacio, onVerD
 
       {lista.length > cantidadVisible && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button onClick={() => setCantidadVisible((c) => c + POR_PAGINA)}>Ver más ({lista.length - cantidadVisible})</Button>
+          <Button onClick={() => setCantidadVisible((anterior) => anterior + POR_PAGINA)}>Ver más ({lista.length - cantidadVisible})</Button>
         </Box>
       )}
     </>
