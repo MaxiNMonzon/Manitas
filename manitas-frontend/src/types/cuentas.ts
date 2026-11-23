@@ -2,7 +2,7 @@
 
 export type Rol = 'cliente' | 'profesional' | 'admin'
 
-// POST /auth/login/{cliente|profesional|admin}
+// POST /auth/login (uno solo para todos)
 export interface LoginRequest {
   correo: string
   contraseña: string
@@ -11,6 +11,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   correo: string
+  rol: Rol // lo averigua el back con el correo
 }
 
 // POST /auth/register/cliente

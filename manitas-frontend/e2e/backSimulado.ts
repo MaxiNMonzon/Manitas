@@ -70,7 +70,7 @@ const perfilCliente = {
 
 // Qué contesta cada pedido. Lo que no está acá responde una lista vacía
 function responder(metodo: string, ruta: string): unknown {
-  if (metodo === 'POST' && ruta.startsWith('/auth/login/')) return { token: 'token-de-prueba', correo: perfilCliente.correo }
+  if (metodo === 'POST' && ruta === '/auth/login') return { token: 'token-de-prueba', correo: perfilCliente.correo, rol: 'cliente' }
   if (ruta === '/auth/perfil') return perfilCliente
   if (ruta === '/solicitud-de-servicio') return solicitudesCliente
   if (ruta.startsWith('/solicitud-de-servicio/')) {

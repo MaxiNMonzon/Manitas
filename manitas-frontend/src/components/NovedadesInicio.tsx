@@ -11,6 +11,7 @@ import CampaignIcon from '@mui/icons-material/Campaign'
 import dayjs from 'dayjs'
 import { traerMisSolicitudes, traerSolicitudesCliente } from '../api/solicitudes'
 import { laCambieYo } from '../api/misAcciones'
+import { estadosVistosStorage } from '../api/almacenamiento'
 import { useAuth } from '../auth/useAuth'
 import { useCarga } from '../hooks/useCarga'
 import { formatoFecha, formatoPesos } from './solicitudes/estados'
@@ -19,23 +20,6 @@ import type { Rol, SolicitudResumen } from '../types'
 // Lo que importa del estado para avisar: el estado y, en un cambio de horario, quién lo propuso
 const firma = (s: SolicitudResumen) => `${s.estadoServicio}|${s.propuestaDe ?? ''}`
 
-// Cómo estaba cada solicitud la última vez que la viste (en el navegador, por cuenta)
-function leer(clave: string): Record<string, string> | null {
-  try {
-    const guardado = localStorage.getItem(clave)
-    return guardado ? JSON.parse(guardado) : null
-  } catch {
-    return null
-  }
-}
-
-function guardar(clave: string, vistos: Record<string, string>) {
-  try {
-    localStorage.setItem(clave, JSON.stringify(vistos))
-  } catch {
-    // Sin almacenamiento (ej: ventana privada): no se recuerdan, no pasa nada
-  }
-}
 
 // El aviso de un cambio que hizo la otra persona (null si no hay nada que avisar)
 function mensajeDe(rol: Rol, s: SolicitudResumen, antes: string): string | null {
@@ -93,21 +77,22 @@ function mensajeDe(rol: Rol, s: SolicitudResumen, antes: string): string | null 
 export default function NovedadesInicio({ rol, sx }: { rol: Rol; sx?: object }) {
   const navigate = useNavigate()
   const { sesion } = useAuth()
-  const clave = `manitas.estadosVistos.${rol}.${sesion?.correo ?? ''}`
+  // Cómo estaba cada solicitud la última vez que la viste (en el navegador, por cuenta)
+  const correo = sesion?.correo ?? ''
   const [, setVersion] = useState(0)
   const { datos } = useCarga(`novedades-${rol}`, rol === 'cliente' ? traerSolicitudesCliente : traerMisSolicitudes)
-  const vistos = leer(clave)
+  const vistos = estadosVistosStorage.get(rol, correo)
 
   // La primera vez se guarda cómo está todo (sin avisar), y las solicitudes nuevas se van sumando
   useEffect(() => {
     if (!datos) return
-    const actuales = leer(clave) ?? {}
+    const actuales = estadosVistosStorage.get(rol, correo) ?? {}
     const faltan = datos.filter((s) => actuales[s.idSolicitud] === undefined)
     if (faltan.length > 0) {
       faltan.forEach((s) => (actuales[s.idSolicitud] = firma(s)))
-      guardar(clave, actuales)
+      estadosVistosStorage.set(rol, correo, actuales)
     }
-  }, [datos, clave])
+  }, [datos, rol, correo])
 
   const novedades = vistos
     ? (datos ?? [])
@@ -123,7 +108,7 @@ export default function NovedadesInicio({ rol, sx }: { rol: Rol; sx?: object }) 
   const marcarVistas = (cuales: SolicitudResumen[]) => {
     const todos = { ...(vistos ?? {}) }
     cuales.forEach((s) => (todos[s.idSolicitud] = firma(s)))
-    guardar(clave, todos)
+    estadosVistosStorage.set(rol, correo, todos)
     setVersion((v) => v + 1)
   }
 

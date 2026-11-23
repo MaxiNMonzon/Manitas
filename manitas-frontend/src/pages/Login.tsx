@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
@@ -7,23 +7,18 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import AuthLayout from '../components/AuthLayout'
 import { useAuth } from '../auth/useAuth'
 import { ApiError } from '../api/client'
-import type { Rol } from '../types'
 
+// Un solo ingreso para clientes, profesionales y el administrador:
+// con el correo, el back averigua qué cuenta es y devuelve su rol
 export default function Login() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const [params] = useSearchParams()
-
-  const rolInicial = params.get('rol')
-  const [rol, setRol] = useState<Rol>(rolInicial === 'profesional' || rolInicial === 'admin' ? rolInicial : 'cliente')
   const [correo, setCorreo] = useState('')
   const [contraseña, setContraseña] = useState('')
   const [verContraseña, setVerContraseña] = useState(false)
@@ -35,7 +30,7 @@ export default function Login() {
     setError(null)
     setEnviando(true)
     try {
-      await login(rol, { correo, contraseña })
+      await login({ correo, contraseña })
       navigate('/app')
     } catch (err) {
       // 3 intentos fallidos: la cuenta queda bloqueada un rato y se vuelve al inicio con el aviso
@@ -52,23 +47,9 @@ export default function Login() {
   return (
     <AuthLayout volverA="/">
       <Stack component="form" spacing={2.5} onSubmit={onSubmit} noValidate>
-        {rol === 'admin' ? (
-          <Alert severity="info" icon={false} action={<Button size="small" onClick={() => setRol('cliente')}>Volver</Button>}>
-            Ingreso de administrador
-          </Alert>
-        ) : (
-          <ToggleButtonGroup
-            exclusive
-            fullWidth
-            color="primary"
-            size="small"
-            value={rol}
-            onChange={(_, valor: Rol | null) => valor && setRol(valor)}
-          >
-            <ToggleButton value="cliente">Soy cliente</ToggleButton>
-            <ToggleButton value="profesional">Soy profesional</ToggleButton>
-          </ToggleButtonGroup>
-        )}
+        <Typography variant="h5" sx={{ fontWeight: 700, textAlign: 'center' }}>
+          Iniciar sesión
+        </Typography>
 
         {error && <Alert severity="error">{error}</Alert>}
 
@@ -117,12 +98,10 @@ export default function Login() {
           Continuar
         </Button>
 
-        {/* El admin no tiene recuperación: su contraseña está en el .env del back */}
-        {rol !== 'admin' && (
-          <Link component={RouterLink} to={`/olvide-contrasena?rol=${rol}`} variant="body2" sx={{ alignSelf: 'center' }}>
-            ¿Olvidaste tu contraseña?
-          </Link>
-        )}
+        {/* Para clientes y profesionales (la contraseña del admin está en el .env del back) */}
+        <Link component={RouterLink} to="/olvide-contrasena" variant="body2" sx={{ alignSelf: 'center' }}>
+          ¿Olvidaste tu contraseña?
+        </Link>
       </Stack>
 
       <Stack spacing={0.5} sx={{ mt: 4, alignItems: 'center' }}>
@@ -135,11 +114,6 @@ export default function Login() {
         <Link component={RouterLink} to="/registro/profesional" variant="body2">
           Registrate como profesional
         </Link>
-        {rol !== 'admin' && (
-          <Link component="button" type="button" variant="caption" color="text.secondary" onClick={() => setRol('admin')} sx={{ pt: 1.5 }}>
-            Ingreso de administrador
-          </Link>
-        )}
       </Stack>
 
     </AuthLayout>
