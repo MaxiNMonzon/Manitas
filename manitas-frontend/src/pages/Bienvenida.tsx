@@ -12,6 +12,7 @@ import EngineeringIcon from '@mui/icons-material/Engineering'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import AuthLayout from '../components/AuthLayout'
 import SobreManitas from '../components/bienvenida/SobreManitas'
+import { botonFlotante, iconoQueRebota } from '../estilos'
 
 // Pantalla de entrada: arriba, ingresar o registrarse. Al tocar la flecha (o bajar) se explica qué es Manitas
 // y cómo funciona, para el que llega sin conocer la app
@@ -79,21 +80,12 @@ export default function Bienvenida() {
         <ButtonBase
           onClick={bajar}
           aria-label="Conocé Manitas"
-          sx={{
-            position: 'absolute',
-            bottom: { xs: 12, md: 20 },
-            left: '50%',
-            transform: 'translateX(-50%)',
-            flexDirection: 'column',
-            px: 2,
-            py: 0.5,
-            borderRadius: 3,
-            color: 'primary.main',
-            bgcolor: 'rgba(255,255,255,0.9)',
-            boxShadow: 2,
-            '@keyframes rebote': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(5px)' } },
-            '& svg': { animation: 'rebote 1.6s ease-in-out infinite' },
-          }}
+          sx={[
+            botonFlotante,
+            iconoQueRebota(5),
+            // Abajo y centrado, encima de la tarjeta
+            { position: 'absolute', bottom: { xs: 12, md: 20 }, left: '50%', transform: 'translateX(-50%)' },
+          ]}
         >
           <Typography variant="caption" sx={{ fontWeight: 600 }}>
             Conocé Manitas
