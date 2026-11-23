@@ -15,7 +15,10 @@ import { AuthGuard } from '../auth/guard/auth.guard';
 import { Rol } from '../common/enums/rol.enum';
 import { UsuarioActivo } from '../common/decorators/usuario-activo.decorator';
 import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
+import { sinDatosPrivados } from './respuesta-solicitud';
 
+// Las respuestas que devuelven una solicitud pasan por sinDatosPrivados: del profesional y del cliente
+// solo sale lo que usa el front (sin DNI, correo, fecha de nacimiento ni CBU)
 const ESTADO_INCORRECTO = 'La solicitud no esta en el estado que hace falta para este paso';
 
 @ApiTags('Solicitudes de servicio')
@@ -29,8 +32,8 @@ export class SolicitudDeServicioController {
     summary: 'Solicitar presupuesto',
     description: 'El cliente le pide un trabajo a un profesional: la especialidad que necesita (el profesional tiene que hacerla y trabajar en la zona del cliente), el problema y el turno de la visita (uno de los libres del profesional, ver GET /turnos/libres). El turno queda bloqueado. Queda en estado "solicitado"; el profesional tiene 48 hs (o hasta el turno) para responder.',
   })
-  create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.create(createSolicitudDeServicioDto, usuario.sub);
+  async create(@Body() createSolicitudDeServicioDto: CreateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.create(createSolicitudDeServicioDto, usuario.sub));
   }
 
   @Post('urgente')
@@ -41,8 +44,8 @@ export class SolicitudDeServicioController {
       'Sin elegir profesional: le aparece a todos los que hacen esa especialidad en la zona del cliente. ' +
       'No usa turnos (es para ahora). El primero que acepta se la queda y dice en cuantos minutos llega (pasa a agendado). Si nadie acepta en 1 hora, vence.',
   })
-  crearUrgente(@Body() createUrgenteDto: CreateUrgenteDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.crearUrgente(createUrgenteDto, usuario.sub);
+  async crearUrgente(@Body() createUrgenteDto: CreateUrgenteDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.crearUrgente(createUrgenteDto, usuario.sub));
   }
 
   // Tiene que ir antes de ':id'
@@ -64,8 +67,9 @@ export class SolicitudDeServicioController {
     description: 'Las del cliente o las del profesional logueado. Las que pasaron 48 hs sin respuesta (o sin fecha cargada) se marcan como "expirado".',
   })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
-  findAll(@UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.findAll(usuario);
+  async findAll(@UsuarioActivo() usuario: UsuarioActivoInterface) {
+    const solicitudes = await this.solicitudDeServicioService.findAll(usuario);
+    return solicitudes.map((solicitud) => sinDatosPrivados(solicitud));
   }
 
   // Tiene que ir antes de ':id', si no Nest piensa que "avisos" es un id
@@ -123,8 +127,8 @@ export class SolicitudDeServicioController {
   })
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
-  findOne(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.detalle(id, usuario);
+  async findOne(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.detalle(id, usuario));
   }
 
   @Patch(':id')
@@ -134,8 +138,8 @@ export class SolicitudDeServicioController {
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'Solo el cliente de la solicitud' })
   @ApiBadRequestResponse({ description: 'El profesional ya la acepto' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.update(id, updateSolicitudDeServicioDto, usuario);
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateSolicitudDeServicioDto: UpdateSolicitudDeServicioDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.update(id, updateSolicitudDeServicioDto, usuario));
   }
 
   // Pasos del profesional
@@ -151,16 +155,16 @@ export class SolicitudDeServicioController {
       'Una urgente no usa turnos (es para ahora): hay que mandar minutosLlegada y la visita queda a esa hora; al cliente le llega el aviso de cuando llega.',
   })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, otro profesional ya tomo la urgente, o falta minutosLlegada en una urgente` })
-  aceptar(@Param('id', ParseIntPipe) id: number, @Body() aceptarDto: AceptarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.aceptar(id, aceptarDto, usuario);
+  async aceptar(@Param('id', ParseIntPipe) id: number, @Body() aceptarDto: AceptarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.aceptar(id, aceptarDto, usuario));
   }
 
   @Patch(':id/rechazar')
   @Auth(Rol.PROFESIONAL)
   @ApiOperation({ summary: 'Rechazar la solicitud', description: 'solicitado → rechazado (por ejemplo, no hace ese trabajo).' })
   @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
-  rechazar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.rechazar(id, usuario);
+  async rechazar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.rechazar(id, usuario));
   }
 
   @Patch(':id/presupuestar')
@@ -172,8 +176,8 @@ export class SolicitudDeServicioController {
       'En contratado es un cambio de precio a mitad del trabajo: solo cambia costoFinal y el cliente lo tiene que volver a aceptar.',
   })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, todavia no fue la visita, o falta horasTrabajo` })
-  presupuestar(@Param('id', ParseIntPipe) id: number, @Body() presupuestarDto: PresupuestarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.presupuestar(id, presupuestarDto, usuario);
+  async presupuestar(@Param('id', ParseIntPipe) id: number, @Body() presupuestarDto: PresupuestarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.presupuestar(id, presupuestarDto, usuario));
   }
 
   // Pasos del cliente
@@ -189,8 +193,8 @@ export class SolicitudDeServicioController {
   })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o falta elegir inicioTrabajo` })
   @ApiConflictResponse({ description: 'No entran las horas seguidas desde ese horario (dice cual es el proximo inicio posible)' })
-  aceptarPresupuesto(@Param('id', ParseIntPipe) id: number, @Body() aceptarPresupuestoDto: AceptarPresupuestoDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.aceptarPresupuesto(id, aceptarPresupuestoDto, usuario);
+  async aceptarPresupuesto(@Param('id', ParseIntPipe) id: number, @Body() aceptarPresupuestoDto: AceptarPresupuestoDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.aceptarPresupuesto(id, aceptarPresupuestoDto, usuario));
   }
 
   @Patch(':id/rechazar-presupuesto')
@@ -200,16 +204,16 @@ export class SolicitudDeServicioController {
     description: 'presupuestado → rechazado. Si el profesional cobra la visita, queda para pagar solo la visita.',
   })
   @ApiBadRequestResponse({ description: ESTADO_INCORRECTO })
-  rechazarPresupuesto(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.rechazarPresupuesto(id, usuario);
+  async rechazarPresupuesto(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.rechazarPresupuesto(id, usuario));
   }
 
   @Patch(':id/calificar')
   @Auth(Rol.CLIENTE)
   @ApiOperation({ summary: 'Calificar profesional', description: 'De 1 a 5 estrellas y una reseña opcional. Solo en "finalizado" y una sola vez.' })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o ya fue calificada` })
-  calificar(@Param('id', ParseIntPipe) id: number, @Body() calificarDto: CalificarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.calificar(id, calificarDto, usuario);
+  async calificar(@Param('id', ParseIntPipe) id: number, @Body() calificarDto: CalificarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.calificar(id, calificarDto, usuario));
   }
 
   // Pasos de los dos (findOne ya controla que participe de la solicitud)
@@ -229,8 +233,8 @@ export class SolicitudDeServicioController {
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, faltan menos de 12 hs, o el horario no sirve` })
   @ApiConflictResponse({ description: 'El horario esta tomado o no entran las horas seguidas' })
-  reprogramar(@Param('id', ParseIntPipe) id: number, @Body() reprogramarDto: ReprogramarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.reprogramar(id, reprogramarDto, usuario);
+  async reprogramar(@Param('id', ParseIntPipe) id: number, @Body() reprogramarDto: ReprogramarDto, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.reprogramar(id, reprogramarDto, usuario));
   }
 
   @Patch(':id/aceptar-reprogramacion')
@@ -243,8 +247,8 @@ export class SolicitudDeServicioController {
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o el horario lo propusiste vos` })
-  aceptarReprogramacion(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.aceptarReprogramacion(id, usuario);
+  async aceptarReprogramacion(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.aceptarReprogramacion(id, usuario));
   }
 
   @Patch(':id/rechazar-reprogramacion')
@@ -257,8 +261,8 @@ export class SolicitudDeServicioController {
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
   @ApiBadRequestResponse({ description: `${ESTADO_INCORRECTO}, o el horario lo propusiste vos` })
-  rechazarReprogramacion(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.rechazarReprogramacion(id, usuario);
+  async rechazarReprogramacion(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.rechazarReprogramacion(id, usuario));
   }
 
   @Patch(':id/cancelar')
@@ -274,7 +278,7 @@ export class SolicitudDeServicioController {
   @ApiUnauthorizedResponse({ description: 'Falta el token o es invalido' })
   @ApiForbiddenResponse({ description: 'No participas de esta solicitud' })
   @ApiBadRequestResponse({ description: 'Ya no se puede cancelar (paso el plazo, estado incorrecto o le corresponde rechazar)' })
-  cancelar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
-    return this.solicitudDeServicioService.cancelar(id, usuario);
+  async cancelar(@Param('id', ParseIntPipe) id: number, @UsuarioActivo() usuario: UsuarioActivoInterface) {
+    return sinDatosPrivados(await this.solicitudDeServicioService.cancelar(id, usuario));
   }
 }
