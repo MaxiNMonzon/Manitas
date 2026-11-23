@@ -20,7 +20,7 @@ import type { Cobro } from '../../types'
 type Vista = 'cobros' | 'historial'
 
 // Pestaña "Cobros" del profesional (boceto "Mis cobros"): resumen, cobros del mes y estadísticas.
-// Esta página solo coordina: las cuentas están en cobros/calculos.ts y cada parte en su componente
+// Esta página solo coordina: las cuentas de plata las hace el back (resumen) y cada parte está en su componente
 export default function CobrosProfesional() {
   const [hoy] = useState(() => dayjs())
   const [vista, setVista] = useState<Vista>('cobros')
@@ -30,6 +30,7 @@ export default function CobrosProfesional() {
   const carga = useCarga('mis-cobros', traerCobros)
   const todos = carga.datos?.cobros ?? []
   const cuentaDeposito = carga.datos?.cuentaDeposito ?? null
+  const resumen = carga.datos?.resumen ?? null
 
   return (
     <>
@@ -48,7 +49,7 @@ export default function CobrosProfesional() {
         </Alert>
       )}
 
-      <ResumenCobros todos={todos} hoy={hoy} cargando={carga.cargando} />
+      <ResumenCobros resumen={resumen} hoy={hoy} cargando={carga.cargando} />
 
       <Paper variant="outlined" sx={{ mb: 2 }}>
         <Tabs value={vista} onChange={(_, v: Vista) => setVista(v)} variant="fullWidth">
@@ -57,7 +58,7 @@ export default function CobrosProfesional() {
         </Tabs>
       </Paper>
 
-      {carga.cargando ? (
+      {carga.cargando || !resumen ? (
         <Stack spacing={1.5}>
           <Skeleton variant="rounded" height={120} />
           <Skeleton variant="rounded" height={110} />
@@ -66,6 +67,7 @@ export default function CobrosProfesional() {
       ) : vista === 'cobros' ? (
         <CobrosDelMes
           todos={todos}
+          meses={resumen.meses}
           mes={mes}
           hoy={hoy}
           onCambiarMes={(m) => setMes(m.startOf('month'))}
@@ -74,8 +76,7 @@ export default function CobrosProfesional() {
         />
       ) : (
         <HistorialCobros
-          todos={todos}
-          hoy={hoy}
+          resumen={resumen}
           cuentaDeposito={cuentaDeposito}
           // Desde el historial, al tocar un mes se ven sus cobros
           onElegirMes={(m) => {

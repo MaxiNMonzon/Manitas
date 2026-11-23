@@ -4,6 +4,7 @@ import Alert from '@mui/material/Alert'
 import dayjs from 'dayjs'
 import { aceptarSolicitud, traerAgenda, traerMiCalificacion, traerMisSolicitudes, traerUrgentes } from '../../api/solicitudes'
 import { useCarga } from '../../hooks/useCarga'
+import { traerCobros } from '../../api/cobros'
 import AvisoFlotante, { type Aviso } from '../../components/AvisoFlotante'
 import UrgenciasCerca from '../../components/solicitudes/UrgenciasCerca'
 import SolicitudesNuevas from '../../components/solicitudes/SolicitudesNuevas'
@@ -26,6 +27,8 @@ export default function InicioProfesional() {
   const solicitudes = useCarga('mis-solicitudes', traerMisSolicitudes)
   const urgentes = useCarga('urgentes', traerUrgentes, CADA_UN_MINUTO)
   const calificacion = useCarga('mi-calificacion', traerMiCalificacion)
+  // Lo pendiente de cobro lo calcula el back (mismo número que en la pestaña Cobros)
+  const cobros = useCarga('mis-cobros', traerCobros)
   const agendaHoy = useCarga(`hoy-${hoy}`, () => traerAgenda(hoy, hoy))
   // Si hoy no tiene nada, se muestran las próximas (de los próximos 30 días) para que el inicio no quede vacío
   const proximos = useCarga(`proximos-${hoy}`, () => traerAgenda(dayjs().add(1, 'day').format('YYYY-MM-DD'), dayjs().add(30, 'day').format('YYYY-MM-DD')))
@@ -52,6 +55,7 @@ export default function InicioProfesional() {
       setATomar(null)
       urgentes.recargar()
       solicitudes.recargar()
+      cobros.recargar()
       agendaHoy.recargar()
       proximos.recargar()
     }
@@ -67,8 +71,9 @@ export default function InicioProfesional() {
 
       <ResumenProfesional
         solicitudes={solicitudes.datos ?? []}
+        pendiente={cobros.datos?.resumen.pendiente ?? null}
         calificacion={calificacion.datos ?? null}
-        cargando={solicitudes.cargando || calificacion.cargando}
+        cargando={solicitudes.cargando || calificacion.cargando || cobros.cargando}
       />
 
       {/* Urgencias: solo si hay */}

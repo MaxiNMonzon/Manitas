@@ -3,11 +3,11 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { PieChart } from '@mui/x-charts/PieChart'
 import { formatoPesos } from './estadosCobro'
+import type { PorcionCobros } from '../../types'
 
-// Torta (dona) con su referencia al lado: nombre, monto y porcentaje
-export default function Torta({ datos, colores }: { datos: { nombre: string; monto: number }[]; colores: string[] }) {
-  const suma = datos.reduce((s, d) => s + d.monto, 0)
-  if (suma === 0) return <Typography color="text.secondary">Todavía no hay cobros para mostrar.</Typography>
+// Torta (dona) con su referencia al lado: nombre, monto y porcentaje (los calcula el back)
+export default function Torta({ datos, colores }: { datos: PorcionCobros[]; colores: string[] }) {
+  if (datos.length === 0) return <Typography color="text.secondary">Todavía no hay cobros para mostrar.</Typography>
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'center' }}>
       <Box sx={{ width: 170, height: 170, flexShrink: 0 }}>
@@ -39,7 +39,7 @@ export default function Torta({ datos, colores }: { datos: { nombre: string; mon
               {formatoPesos(d.monto)}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ width: 36, textAlign: 'right' }}>
-              {Math.round((d.monto / suma) * 100)}%
+              {d.porcentaje}%
             </Typography>
           </Stack>
         ))}

@@ -92,7 +92,9 @@ export class SolicitudDeServicioController {
       'Los trabajos y visitas que cobro o tiene para cobrar, de lo mas nuevo a lo mas viejo. Cada uno con su estado: ' +
       'pendiente_cobro (el cliente todavia no pago, o pago y falta el deposito; fechaPago dice cual) o cobrado (ya depositado). ' +
       'El deposito se simula a los 3 dias habiles del pago. Del medio de pago se ve si fue con Mercado Pago. ' +
-      'Tambien devuelve los ultimos 4 numeros del CBU/CVU donde se deposita (cuentaDeposito).',
+      'Tambien devuelve los ultimos 4 numeros del CBU/CVU donde se deposita (cuentaDeposito) y el resumen ya calculado (resumen): ' +
+      'ingresos del mes y cuanto cambio, pendiente de cobro y proximo deposito, promedio por trabajo, un renglon por mes ' +
+      '(cobrado, pendiente, trabajos, visitas) y los montos por especialidad y por medio de pago de los ultimos 6 meses.',
   })
   cobros(@UsuarioActivo() usuario: UsuarioActivoInterface) {
     return this.solicitudDeServicioService.cobros(usuario);

@@ -10,10 +10,9 @@ import CalculateIcon from '@mui/icons-material/Calculate'
 import PaymentsIcon from '@mui/icons-material/Payments'
 import TrendingDownIcon from '@mui/icons-material/TrendingDown'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { formatoPesos } from './estadosCobro'
-import { MESES_HISTORIAL, resumen, total } from './calculos'
-import type { Cobro } from '../../types'
+import type { ResumenCobros as Resumen } from '../../types'
 
 // Una tarjeta del resumen: ícono, título, número grande y un detalle chico
 function Metrica({ icono, titulo, valor, detalle, color }: { icono: ReactElement; titulo: string; valor: string; detalle: ReactNode; color: string }) {
@@ -33,9 +32,10 @@ function Metrica({ icono, titulo, valor, detalle, color }: { icono: ReactElement
   )
 }
 
-// Arriba de "Mis cobros": ingresos del mes (y cuánto cambió), pendiente de cobro y promedio por trabajo
-export default function ResumenCobros({ todos, hoy, cargando }: { todos: Cobro[]; hoy: Dayjs; cargando: boolean }) {
-  if (cargando) {
+// Arriba de "Mis cobros": ingresos del mes (y cuánto cambió), pendiente de cobro y promedio por trabajo.
+// Los números ya vienen calculados del back (resumen de GET /solicitud-de-servicio/cobros)
+export default function ResumenCobros({ resumen: r, hoy, cargando }: { resumen: Resumen | null; hoy: Dayjs; cargando: boolean }) {
+  if (cargando || !r) {
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[0, 1, 2].map((i) => (
@@ -47,7 +47,7 @@ export default function ResumenCobros({ todos, hoy, cargando }: { todos: Cobro[]
     )
   }
 
-  const r = resumen(todos, hoy)
+  const mesAnterior = hoy.subtract(1, 'month')
 
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -58,14 +58,14 @@ export default function ResumenCobros({ todos, hoy, cargando }: { todos: Cobro[]
           valor={formatoPesos(r.ingresosMes)}
           color="success.main"
           detalle={
-            r.variacion == null ? (
+            r.variacionMes == null ? (
               'Sin cobros el mes anterior'
             ) : (
-              <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: r.variacion >= 0 ? 'success.main' : 'error.main' }}>
-                {r.variacion >= 0 ? <TrendingUpIcon sx={{ fontSize: 16 }} /> : <TrendingDownIcon sx={{ fontSize: 16 }} />}
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: r.variacionMes >= 0 ? 'success.main' : 'error.main' }}>
+                {r.variacionMes >= 0 ? <TrendingUpIcon sx={{ fontSize: 16 }} /> : <TrendingDownIcon sx={{ fontSize: 16 }} />}
                 <span>
-                  {r.variacion >= 0 ? '+' : ''}
-                  {r.variacion}% vs {r.mesAnterior.format('MMMM')}
+                  {r.variacionMes >= 0 ? '+' : ''}
+                  {r.variacionMes}% vs {mesAnterior.format('MMMM')}
                 </span>
               </Stack>
             )
@@ -76,13 +76,13 @@ export default function ResumenCobros({ todos, hoy, cargando }: { todos: Cobro[]
         <Metrica
           icono={<AccountBalanceIcon />}
           titulo="Pendiente de cobro"
-          valor={formatoPesos(total(r.pendientes))}
+          valor={formatoPesos(r.pendiente.monto)}
           color="warning.main"
           detalle={
-            r.pendientes.length === 0
+            r.pendiente.cantidad === 0
               ? 'No tenés cobros pendientes'
-              : `${r.pendientes.length} cobro${r.pendientes.length === 1 ? '' : 's'}` +
-                (r.proximoDeposito ? ` · próximo depósito: ${r.proximoDeposito.format('ddd DD/MM')}` : '')
+              : `${r.pendiente.cantidad} cobro${r.pendiente.cantidad === 1 ? '' : 's'}` +
+                (r.pendiente.proximoDeposito ? ` · próximo depósito: ${dayjs(r.pendiente.proximoDeposito).format('ddd DD/MM')}` : '')
           }
         />
       </Grid>
@@ -90,9 +90,9 @@ export default function ResumenCobros({ todos, hoy, cargando }: { todos: Cobro[]
         <Metrica
           icono={<CalculateIcon />}
           titulo="Promedio por trabajo"
-          valor={formatoPesos(r.promedio)}
+          valor={formatoPesos(r.promedioPorTrabajo.monto)}
           color="primary.main"
-          detalle={`${r.trabajosRecientes.length} trabajos en los últimos ${MESES_HISTORIAL} meses`}
+          detalle={`${r.promedioPorTrabajo.trabajos} trabajos en los últimos ${r.promedioPorTrabajo.meses} meses`}
         />
       </Grid>
     </Grid>

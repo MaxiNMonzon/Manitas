@@ -19,6 +19,7 @@ import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.inte
 import { AgendaQueryDto } from './dto/agenda-query.dto';
 import { Franja, TurnoService } from '../turno/turno.service';
 import { Turno } from '../turno/entities/turno.entity';
+import { resumirCobros } from './resumen-cobros';
 
 // Los turnos son de una hora
 const DURACION_TURNO_MIN = 60;
@@ -855,6 +856,8 @@ export class SolicitudDeServicioService {
     return {
       cuentaDeposito: profesional.cbu ? profesional.cbu.slice(-4) : null,
       cobros: cobros.sort((a, b) => orden(b) - orden(a)),
+      // Las cuentas (ingresos, pendiente, promedio, por mes y por especialidad) las hace el back
+      resumen: resumirCobros(cobros, ahora),
     };
   }
 
