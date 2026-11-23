@@ -94,7 +94,7 @@ export default function RegistroCliente() {
     try {
       await api.post('/auth/register/cliente', datos)
       // Ya registrado: inicia sesión directamente
-      await login('cliente', { correo: datos.correo, contraseña: datos.contraseña })
+      await login({ correo: datos.correo, contraseña: datos.contraseña })
       navigate('/app')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo completar el registro')

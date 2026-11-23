@@ -1,13 +1,8 @@
 // Cliente HTTP mínimo para hablar con el backend NestJS (tiene CORS habilitado).
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
-const TOKEN_KEY = 'manitas.token'
-
-export const tokenStorage = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
-}
+// El token se guarda en el navegador desde almacenamiento.ts (todo lo guardado pasa por ahí)
+import { tokenStorage } from './almacenamiento'
 
 export class ApiError extends Error {
   status: number

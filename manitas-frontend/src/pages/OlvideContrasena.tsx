@@ -1,19 +1,15 @@
 import { useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
 import AuthLayout from '../components/AuthLayout'
 import { pedirLinkDeContraseña } from '../api/contrasena'
 
-// Pantalla de "¿Olvidaste tu contraseña?": se pone el correo y llega un mail con un link para crear una nueva
+// Pantalla de "¿Olvidaste tu contraseña?": se pone el correo y llega un mail con un link para crear una nueva.
+// No se elige si es cliente o profesional: el back lo averigua con el correo
 export default function OlvideContrasena() {
-  const [params] = useSearchParams()
-  const [rol, setRol] = useState<'cliente' | 'profesional'>(params.get('rol') === 'profesional' ? 'profesional' : 'cliente')
   const [correo, setCorreo] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [listo, setListo] = useState<string | null>(null)
@@ -26,7 +22,7 @@ export default function OlvideContrasena() {
     setError(null)
     setEnviando(true)
     try {
-      const { mensaje } = await pedirLinkDeContraseña(rol, correo)
+      const { mensaje } = await pedirLinkDeContraseña(correo)
       setListo(mensaje)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo mandar el pedido')
@@ -36,7 +32,7 @@ export default function OlvideContrasena() {
   }
 
   return (
-    <AuthLayout volverA={`/login?rol=${rol}`}>
+    <AuthLayout volverA="/login">
       <Stack component="form" spacing={2.5} onSubmit={onSubmit} noValidate>
         <div>
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
@@ -51,17 +47,6 @@ export default function OlvideContrasena() {
           <Alert severity="success">{listo}</Alert>
         ) : (
           <>
-            <ToggleButtonGroup
-              exclusive
-              fullWidth
-              color="primary"
-              size="small"
-              value={rol}
-              onChange={(_, valor: 'cliente' | 'profesional' | null) => valor && setRol(valor)}
-            >
-              <ToggleButton value="cliente">Soy cliente</ToggleButton>
-              <ToggleButton value="profesional">Soy profesional</ToggleButton>
-            </ToggleButtonGroup>
 
             {error && <Alert severity="error">{error}</Alert>}
 

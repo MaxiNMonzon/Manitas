@@ -10,27 +10,21 @@ import type { SolicitudResumen } from '../../types'
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
-// Números del resumen, calculados con las solicitudes del profesional
-function resumen(solicitudes: SolicitudResumen[]) {
-  const enCurso = solicitudes.filter((s) => ['agendado', 'presupuestado', 'contratado', 'reprogramacion'].includes(s.estadoServicio))
-  // Por cobrar: trabajos con presupuesto aceptado que todavía no se pagaron
-  const porCobrar = solicitudes.filter((s) => (s.estadoServicio === 'contratado' || s.estadoServicio === 'agendado') && s.costoEstimado != null && !s.fechaPago)
-  return {
-    activas: enCurso.length,
-    porCobrar: porCobrar.reduce((total, s) => total + (s.costoFinal ?? 0), 0),
-    cantidadPorCobrar: porCobrar.length,
-  }
-}
+// Solicitudes activas: las que están en curso (agendadas, presupuestadas, contratadas o cambiando de horario)
+const activas = (solicitudes: SolicitudResumen[]) =>
+  solicitudes.filter((s) => ['agendado', 'presupuestado', 'contratado', 'reprogramacion'].includes(s.estadoServicio)).length
 
 interface Props {
   solicitudes: SolicitudResumen[]
+  // Lo pendiente de cobro ya calculado por el back (el mismo número que en "Mis cobros")
+  pendiente: { monto: number; cantidad: number } | null
   calificacion: { promedio: number | null; cantidad: number } | null
   cargando: boolean
 }
 
 // Arriba del Inicio del profesional: solicitudes activas, cobros pendientes y su calificación.
 // Cada tarjeta lleva a su pestaña
-export default function ResumenProfesional({ solicitudes, calificacion, cargando }: Props) {
+export default function ResumenProfesional({ solicitudes, pendiente, calificacion, cargando }: Props) {
   const navigate = useNavigate()
 
   if (cargando) {
@@ -45,8 +39,7 @@ export default function ResumenProfesional({ solicitudes, calificacion, cargando
     )
   }
 
-  const datos = resumen(solicitudes)
-  const plural = datos.cantidadPorCobrar === 1 ? '' : 's'
+  const cantidadPendiente = pendiente?.cantidad ?? 0
 
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -54,7 +47,7 @@ export default function ResumenProfesional({ solicitudes, calificacion, cargando
         <TarjetaDato
           icono={<AssignmentIcon />}
           titulo="Solicitudes activas"
-          valor={String(datos.activas)}
+          valor={String(activas(solicitudes))}
           detalle="Agendadas, presupuestadas o contratadas"
           color="primary"
           onClick={() => navigate('/app/solicitudes')}
@@ -64,8 +57,8 @@ export default function ResumenProfesional({ solicitudes, calificacion, cargando
         <TarjetaDato
           icono={<RequestQuoteIcon />}
           titulo="Cobros pendientes"
-          valor={pesos.format(datos.porCobrar)}
-          detalle={`${datos.cantidadPorCobrar} trabajo${plural} aceptado${plural} sin pagar`}
+          valor={pesos.format(pendiente?.monto ?? 0)}
+          detalle={cantidadPendiente === 0 ? 'No tenés cobros pendientes' : `${cantidadPendiente} cobro${cantidadPendiente === 1 ? '' : 's'} sin pagar o sin depositar`}
           color="secondary"
           onClick={() => navigate('/app/cobros')}
         />

@@ -9,13 +9,13 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import NotificationsIcon from '@mui/icons-material/Notifications'
 import { traerAvisos } from '../api/solicitudes'
+import { avisosLeidosStorage } from '../api/almacenamiento'
 import { useAuth } from '../auth/useAuth'
 import { useCarga } from '../hooks/useCarga'
 import type { Aviso } from '../types'
 
 // Los avisos se consultan al abrir la app y cada 1 minuto (no hay notificaciones push)
 const CADA_UN_MINUTO = 60 * 1000
-const LEIDOS_KEY = 'manitas.avisosLeidos'
 
 // El back arma los avisos en el momento y no los guarda, así que "leído" se recuerda en el
 // navegador. Se sacan los números de la clave porque el texto cambia solo ("quedan 42 minutos")
@@ -23,20 +23,12 @@ function claveDe(aviso: Aviso) {
   return `${aviso.idSolicitud}|${aviso.mensaje.replace(/\d+/g, '#')}`
 }
 
-function leerLeidos(): Set<string> {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(LEIDOS_KEY) ?? '[]'))
-  } catch {
-    return new Set()
-  }
-}
-
 // Campanita con los avisos (urgentes, próximas visitas, presupuestos, pagos, calificar).
 export default function Notificaciones() {
   const { sesion } = useAuth()
   const navigate = useNavigate()
   const [ancla, setAncla] = useState<HTMLElement | null>(null)
-  const [leidos, setLeidos] = useState(leerLeidos)
+  const [leidos, setLeidos] = useState(avisosLeidosStorage.get)
 
   const rol = sesion?.rol ?? 'cliente'
   const { datos, error } = useCarga(`avisos-${rol}`, traerAvisos, CADA_UN_MINUTO)
@@ -48,11 +40,7 @@ export default function Notificaciones() {
     // Al cerrar el menú se marcan como leídos (se guardan solo los que siguen existiendo)
     const nuevos = new Set(avisos.map(claveDe))
     setLeidos(nuevos)
-    try {
-      localStorage.setItem(LEIDOS_KEY, JSON.stringify([...nuevos]))
-    } catch {
-      // Sin almacenamiento (modo privado): no pasa nada, solo no se recuerda
-    }
+    avisosLeidosStorage.set(nuevos)
   }
 
   return (

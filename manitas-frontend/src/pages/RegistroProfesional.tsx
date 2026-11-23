@@ -95,7 +95,7 @@ export default function RegistroProfesional() {
     try {
       await api.post('/auth/register/profesional', datos)
       // Ya registrado: inicia sesión directamente
-      await login('profesional', { correo: datos.correo, contraseña: datos.contraseña })
+      await login({ correo: datos.correo, contraseña: datos.contraseña })
       navigate('/app')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo completar el registro')
@@ -180,7 +180,7 @@ export default function RegistroProfesional() {
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 3, textAlign: 'center' }}>
         ¿Ya tenés una cuenta?{' '}
-        <Link component={RouterLink} to="/login?rol=profesional">
+        <Link component={RouterLink} to="/login">
           Iniciá sesión
         </Link>
       </Typography>

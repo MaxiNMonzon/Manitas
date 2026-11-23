@@ -33,28 +33,17 @@ export class AuthController {
         return this.authService.registerProfesional(createProfesionalDto);
     }
 
-    @Post('login/cliente')
-    @ApiOperation({ summary: 'Iniciar sesion como cliente', description: 'Devuelve el token para usar en "Authorize".' })
+    @Post('login')
+    @ApiOperation({
+        summary: 'Iniciar sesion',
+        description: 'Uno solo para todos: con el correo, el back averigua si es el admin, un cliente o un profesional ' +
+            '(el correo es unico entre cliente y profesional). Devuelve el token (para usar en "Authorize") y el rol. ' +
+            'El token del admin dura 2 horas; el de los demas, 1 dia.',
+    })
     @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos (dice cuantos intentos quedan)' })
     @ApiTooManyRequestsResponse({ description: '3 intentos fallidos seguidos: la cuenta queda bloqueada 15 minutos' })
-    loginCliente(@Body() loginDto: LoginDto) {
-        return this.authService.loginCliente(loginDto);
-    }
-
-    @Post('login/profesional')
-    @ApiOperation({ summary: 'Iniciar sesion como profesional', description: 'Devuelve el token para usar en "Authorize".' })
-    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos (dice cuantos intentos quedan)' })
-    @ApiTooManyRequestsResponse({ description: '3 intentos fallidos seguidos: la cuenta queda bloqueada 15 minutos' })
-    loginProfesional(@Body() loginDto: LoginDto) {
-        return this.authService.loginProfesional(loginDto);
-    }
-
-    @Post('login/admin')
-    @ApiOperation({ summary: 'Iniciar sesion como admin', description: 'El admin maneja los catalogos (provincias, zonas, especialidades, metodos de pago, promociones). Sus datos estan en el .env. Su token dura 2 horas (el de los demas, 1 dia).' })
-    @ApiUnauthorizedResponse({ description: 'Correo o contraseña incorrectos (dice cuantos intentos quedan)' })
-    @ApiTooManyRequestsResponse({ description: '3 intentos fallidos seguidos: la cuenta queda bloqueada 15 minutos' })
-    loginAdmin(@Body() loginDto: LoginDto) {
-        return this.authService.loginAdmin(loginDto);
+    login(@Body() loginDto: LoginDto) {
+        return this.authService.login(loginDto);
     }
 
     @Get('perfil')
@@ -80,7 +69,7 @@ export class AuthController {
     @HttpCode(200)
     @ApiOperation({
         summary: 'Olvidé mi contraseña',
-        description: 'Cliente o profesional. Si la cuenta existe, le manda un mail con un link para crear una contraseña nueva (sirve una vez y vence en 30 minutos). ' +
+        description: 'Cliente o profesional (el back averigua cual con el correo). Si la cuenta existe, le manda un mail con un link para crear una contraseña nueva (sirve una vez y vence en 30 minutos). ' +
             'Responde siempre lo mismo, exista o no la cuenta. Como mucho un mail por minuto a cada cuenta.',
     })
     @ApiServiceUnavailableResponse({ description: 'No se pudo mandar el mail' })

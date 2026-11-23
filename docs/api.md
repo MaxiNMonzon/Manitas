@@ -10,13 +10,13 @@ los controladores y los DTOs.
 
 ## Autenticación y niveles de acceso
 
-- Login: `POST /auth/login/cliente`, `/auth/login/profesional` o `/auth/login/admin` con `{ correo, contraseña }` → `{ token }`.
+- Login: `POST /auth/login` con `{ correo, contraseña }` → `{ token, correo, rol }`. Es uno solo para todos: el back averigua con el correo si es el admin, un cliente o un profesional (el rol no lo elige el front).
 - Las rutas protegidas esperan el header `Authorization: Bearer <token>` (JWT firmado; vence a las 24 h, el del admin a las 2 h).
 - Login: 3 intentos fallidos seguidos bloquean esa cuenta 15 minutos (`429`); el front vuelve a la pantalla de inicio con el aviso.
 - Niveles: **cliente**, **profesional** y **admin**. Sin token → `401`; con un rol que no corresponde → `403`.
 - Errores: siempre `{ statusCode, message, error }`; los errores de validación devuelven `400` con la lista de problemas en `message`.
 
-## Endpoints (86)
+## Endpoints (84)
 
 La columna **Acceso** indica quién puede usar cada endpoint.
 
@@ -28,9 +28,7 @@ Registrarse, iniciar sesion y ver mis datos
 | --- | --- | --- | --- |
 | `POST` | `/auth/register/cliente` | público | Registrarse como cliente |
 | `POST` | `/auth/register/profesional` | público | Registrarse como profesional |
-| `POST` | `/auth/login/cliente` | público | Iniciar sesion como cliente |
-| `POST` | `/auth/login/profesional` | público | Iniciar sesion como profesional |
-| `POST` | `/auth/login/admin` | público | Iniciar sesion como admin |
+| `POST` | `/auth/login` | público | Iniciar sesion (el back averigua el rol con el correo) |
 | `GET` | `/auth/perfil` | con sesión | Ver mis datos |
 | `PATCH` | `/auth/contrasena` | con sesión | Cambiar mi contraseña |
 | `POST` | `/auth/olvide-contrasena` | público | Olvidé mi contraseña: manda un mail con un link (vence en 30 min, sirve una vez) |

@@ -9,6 +9,7 @@ al menos 1 test unitario de un componente y 1 test end-to-end en el front.
 | Back: test unitario 2 | [`auth/guard/roles.guard.spec.ts`](../manitas-backend/src/auth/guard/roles.guard.spec.ts) | Jest | 4 | ✅ |
 | Back: test unitario 3 | [`turno/turno.service.spec.ts`](../manitas-backend/src/turno/turno.service.spec.ts) | Jest + Nest Testing | 5 | ✅ |
 | Back: test unitario 4 | [`payments/payments.service.spec.ts`](../manitas-backend/src/payments/payments.service.spec.ts) | Jest + Nest Testing (Mercado Pago simulado) | 5 | ✅ |
+| Back: test unitario 5 | [`solicitud-de-servicio/resumen-cobros.spec.ts`](../manitas-backend/src/solicitud-de-servicio/resumen-cobros.spec.ts) | Jest (las cuentas de "Mis cobros" que hace el back: ingresos, variación, pendiente, promedio y porcentajes) | 4 | ✅ |
 | Back: test de integración | [`test/turnos.e2e-spec.ts`](../manitas-backend/test/turnos.e2e-spec.ts) | Jest + Supertest | 6 | ✅ |
 | Front: test unitario de componente | [`TarjetaSolicitudCliente.test.tsx`](../manitas-frontend/src/components/solicitudes/TarjetaSolicitudCliente.test.tsx) | Vitest + Testing Library | 4 | ✅ |
 | Front: test unitario de lógica | [`ordenSolicitudes.test.ts`](../manitas-frontend/src/components/solicitudes/profesional/ordenSolicitudes.test.ts) | Vitest (orden, carpetas y acciones de "Mis solicitudes" del profesional) | 6 | ✅ |
@@ -64,7 +65,7 @@ Ninguno necesita MySQL: en el back los repositorios y Mercado Pago se simulan, y
 
 ## Evidencia de la ejecución
 
-- [Back — unitarios](evidencia-tests/backend-unitarios.txt) — 4 suites, 19 tests OK
+- [Back — unitarios](evidencia-tests/backend-unitarios.txt) — 5 suites, 23 tests OK
 - [Back — integración](evidencia-tests/backend-integracion.txt) — 1 suite, 6 tests OK
 - [Front — unitarios](evidencia-tests/frontend-unitarios.txt) — 4 archivos, 22 tests OK (componente y lógica)
 - [Front — end-to-end](evidencia-tests/frontend-e2e.txt) — 8 ejecuciones OK (4 escenarios × escritorio y celular)

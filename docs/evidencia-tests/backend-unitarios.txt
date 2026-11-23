@@ -1,33 +1,9 @@
 Backend — tests unitarios (pnpm test, Jest)
-Ejecutado: 30/10/2026, 21:05:10
+Ejecutado: 22/11/2026 22:12
 
-PASS  src/payments/payments.service.spec.ts (13.5 s)
-  ✓ PaymentsService.confirmar (vuelta de Mercado Pago) › registra el pago si Mercado Pago lo aprobó por el monto correcto (2196 ms)
-  ✓ PaymentsService.confirmar (vuelta de Mercado Pago) › no registra un pago que Mercado Pago no aprobó (aunque la URL diga approved) (232 ms)
-  ✓ PaymentsService.confirmar (vuelta de Mercado Pago) › no registra un pago por un monto distinto al de la solicitud (58 ms)
-  ✓ PaymentsService.confirmar (vuelta de Mercado Pago) › si el pago ya estaba registrado no lo vuelve a registrar (recargar la página) (15 ms)
-  ✓ PaymentsService.confirmar (vuelta de Mercado Pago) › rechaza un número de pago que no existe en Mercado Pago (37 ms)
 
-PASS  src/turno/turno.service.spec.ts (4.6 s)
-  ✓ TurnoService.guardarHorario (horario de trabajo del profesional) › guarda el horario reemplazando el anterior (18 ms)
-  ✓ TurnoService.guardarHorario (horario de trabajo del profesional) › una lista vacía deja al profesional sin horario (no inserta nada) (8 ms)
-  ✓ TurnoService.guardarHorario (horario de trabajo del profesional) › rechaza un rango donde la hora de inicio no es anterior a la de fin (32 ms)
-  ✓ TurnoService.guardarHorario (horario de trabajo del profesional) › rechaza dos rangos del mismo día que se pisan (10 ms)
-  ✓ TurnoService.guardarHorario (horario de trabajo del profesional) › falla si el profesional no existe (8 ms)
-
-PASS  src/auth/guard/auth.guard.spec.ts (2.0 s)
-  ✓ AuthGuard (verifica el JWT) › deja pasar un token válido y guarda el usuario en la petición (18 ms)
-  ✓ AuthGuard (verifica el JWT) › rechaza la petición si no trae token (50 ms)
-  ✓ AuthGuard (verifica el JWT) › rechaza un token firmado con otra clave (alterado o falso) (3 ms)
-  ✓ AuthGuard (verifica el JWT) › rechaza un token vencido (7 ms)
-  ✓ AuthGuard (verifica el JWT) › ignora un header que no sea "Bearer" (3 ms)
-
-PASS  src/auth/guard/roles.guard.spec.ts (1.6 s)
-  ✓ RolesGuard (niveles de acceso) › deja pasar si el rol del usuario es el que pide el endpoint (6 ms)
-  ✓ RolesGuard (niveles de acceso) › no deja pasar a un cliente a un endpoint de profesional (1 ms)
-  ✓ RolesGuard (niveles de acceso) › no deja pasar a un cliente a un endpoint de administrador (0 ms)
-  ✓ RolesGuard (niveles de acceso) › deja pasar a cualquier usuario logueado si el endpoint no pide un rol (1 ms)
-
-Suites: 4 pasaron, 0 fallaron, 4 en total
-Tests:  19 pasaron, 0 fallaron, 19 en total
-Resultado: OK
+Test Suites: 5 passed, 5 total
+Tests:       23 passed, 23 total
+Snapshots:   0 total
+Time:        15.011 s
+Ran all test suites.

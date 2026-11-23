@@ -5,7 +5,7 @@ import Popover from '@mui/material/Popover'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { estadosCobro, ORDEN_ESTADOS } from './estadosCobro'
-import { cantidadDeFiltros, SIN_FILTROS, type Filtros } from './calculos'
+import { cantidadDeFiltros, SIN_FILTROS, type Filtros } from './filtros'
 
 interface Props {
   // El botón "Filtros" (el cartel se abre debajo); con null está cerrado

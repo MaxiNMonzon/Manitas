@@ -47,49 +47,37 @@ export class AuthService {
         return await this.profesionalService.create(createProfesionalDto);
     }
 
-    async loginCliente(loginDto: LoginDto) {
-        this.intentos.verificar(Rol.CLIENTE, loginDto.correo);
-        const cliente = await this.clienteService.findOneByEmail(loginDto.correo);
-        if (!cliente || !(await bcrypt.compare(loginDto.contraseña, cliente.contraseña))) {
-            this.intentos.fallo(Rol.CLIENTE, loginDto.correo);
-        }
-        this.intentos.exito(Rol.CLIENTE, loginDto.correo);
+    // Un solo login para todos: el que entra pone su correo y su contraseña, y el back averigua
+    // si es el admin, un cliente o un profesional (el correo es único entre cliente y profesional).
+    // El rol va adentro del token y también se devuelve, para que el front sepa qué pantallas mostrar
+    async login({ correo, contraseña }: LoginDto) {
+        this.intentos.verificar(correo);
 
-        const payload = { sub: cliente.idUsuario, correo: cliente.correo, rol: Rol.CLIENTE };
-        const token = await this.jwtService.signAsync(payload);
-
-        return { token, correo: cliente.correo };
-    }
-
-    async loginProfesional(loginDto: LoginDto) {
-        this.intentos.verificar(Rol.PROFESIONAL, loginDto.correo);
-        const profesional = await this.profesionalService.findOneByEmail(loginDto.correo);
-        if (!profesional || !(await bcrypt.compare(loginDto.contraseña, profesional.contraseña))) {
-            this.intentos.fallo(Rol.PROFESIONAL, loginDto.correo);
-        }
-        this.intentos.exito(Rol.PROFESIONAL, loginDto.correo);
-
-        const payload = { sub: profesional.idUsuario, correo: profesional.correo, rol: Rol.PROFESIONAL };
-        const token = await this.jwtService.signAsync(payload);
-
-        return { token, correo: profesional.correo };
-    }
-
-    async loginAdmin(loginDto: LoginDto) {
+        // El admin no está en la base: su correo y su contraseña están en el .env
         const correoAdmin = this.configService.get('ADMIN_CORREO');
         const contraseñaAdmin = this.configService.get('ADMIN_CONTRASENA');
-        this.intentos.verificar(Rol.ADMIN, loginDto.correo);
-
-        if (!correoAdmin || !contraseñaAdmin || loginDto.correo !== correoAdmin || loginDto.contraseña !== contraseñaAdmin) {
-            this.intentos.fallo(Rol.ADMIN, loginDto.correo);
+        if (correoAdmin && correo.trim().toLowerCase() === String(correoAdmin).toLowerCase()) {
+            if (!contraseñaAdmin || contraseña !== contraseñaAdmin) {
+                this.intentos.fallo(correo);
+            }
+            this.intentos.exito(correo);
+            // El del admin dura menos (2 h, los demás 1 día): puede cambiar todos los catálogos
+            const token = await this.jwtService.signAsync({ sub: 0, correo: correoAdmin, rol: Rol.ADMIN }, { expiresIn: '2h' });
+            return { token, correo: correoAdmin, rol: Rol.ADMIN };
         }
-        this.intentos.exito(Rol.ADMIN, loginDto.correo);
 
-        const payload = { sub: 0, correo: correoAdmin, rol: Rol.ADMIN };
-        // El del admin dura menos (2 h, los demás 1 día): puede cambiar todos los catálogos
-        const token = await this.jwtService.signAsync(payload, { expiresIn: '2h' });
+        const cliente = await this.clienteService.findOneByEmail(correo);
+        const profesional = cliente ? null : await this.profesionalService.findOneByEmail(correo);
+        const cuenta = cliente ?? profesional;
+        // Si el correo no existe o la contraseña está mal, el mensaje es el mismo (no se dice qué falló)
+        if (!cuenta || !(await bcrypt.compare(contraseña, cuenta.contraseña))) {
+            this.intentos.fallo(correo);
+        }
+        this.intentos.exito(correo);
 
-        return { token, correo: correoAdmin };
+        const rol = cliente ? Rol.CLIENTE : Rol.PROFESIONAL;
+        const token = await this.jwtService.signAsync({ sub: cuenta.idUsuario, correo: cuenta.correo, rol });
+        return { token, correo: cuenta.correo, rol };
     }
 
     async perfil({ sub, correo, rol }: UsuarioActivoInterface) {
@@ -126,14 +114,15 @@ export class AuthService {
 
     // "Olvidé mi contraseña": si la cuenta existe, le manda un mail con un link para crear una nueva.
     // Siempre responde lo mismo, exista o no, para no mostrar que correos estan registrados
-    async olvideContraseña({ correo, rol }: OlvideContrasenaDto) {
+    async olvideContraseña({ correo }: OlvideContrasenaDto) {
         const mensaje = 'Si el correo está registrado, te mandamos un mail con un link para crear una contraseña nueva. Revisá también el correo no deseado.';
-        const persona = rol === Rol.CLIENTE
-            ? await this.clienteService.findOneByEmail(correo.trim())
-            : await this.profesionalService.findOneByEmail(correo.trim());
+        // El rol lo averigua el back con el correo (es único entre cliente y profesional)
+        const cliente = await this.clienteService.findOneByEmail(correo.trim());
+        const persona = cliente ?? (await this.profesionalService.findOneByEmail(correo.trim()));
         if (!persona) {
             return { mensaje };
         }
+        const rol = cliente ? Rol.CLIENTE : Rol.PROFESIONAL;
 
         // Como mucho un mail por minuto a cada cuenta (para que nadie le llene la casilla a otro)
         const ultimo = await this.recuperacionRepository.findOne({ where: { correo: persona.correo, rol }, order: { fecha: 'DESC' } });
@@ -179,7 +168,7 @@ export class AuthService {
         pedido.usado = true;
         await this.recuperacionRepository.save(pedido);
         // Si estaba bloqueada por intentos fallidos, ya puede entrar
-        this.intentos.exito(pedido.rol, pedido.correo);
+        this.intentos.exito(pedido.correo);
 
         return { mensaje: 'Listo, ya podés entrar con tu contraseña nueva', rol: pedido.rol };
     }

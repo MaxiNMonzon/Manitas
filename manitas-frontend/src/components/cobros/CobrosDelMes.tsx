@@ -14,13 +14,15 @@ import dayjs, { type Dayjs } from 'dayjs'
 import TarjetaCobro from './TarjetaCobro'
 import FiltrosCobros from './FiltrosCobros'
 import { estadosCobro, formatoPesos, ORDEN_ESTADOS } from './estadosCobro'
-import { cantidadDeFiltros, capitalizar, cobrosDelMes, pagados, pasaFiltros, SIN_FILTROS, total, type Filtros } from './calculos'
-import type { Cobro } from '../../types'
+import { cantidadDeFiltros, capitalizar, cobrosDelMes, pasaFiltros, SIN_FILTROS, type Filtros } from './filtros'
+import type { Cobro, CobrosDelMes as CobrosDelMesBack } from '../../types'
 
 const POR_PAGINA = 5
 
 interface Props {
   todos: Cobro[]
+  // Las cuentas de cada mes, hechas por el back (resumen.meses)
+  meses: CobrosDelMesBack[]
   // El mes que se está viendo (primer día)
   mes: Dayjs
   hoy: Dayjs
@@ -30,9 +32,10 @@ interface Props {
   onVerComprobante: (c: Cobro) => void
 }
 
-// Barra apilada: cuánto del mes está cobrado y cuánto pendiente, con su referencia abajo
-function BarraEstados({ cobros }: { cobros: Cobro[] }) {
-  const partes = ORDEN_ESTADOS.map((estado) => ({ estado, monto: total(cobros.filter((c) => c.estado === estado)) }))
+// Barra apilada: cuánto del mes está cobrado y cuánto pendiente, con su referencia abajo.
+// Los montos vienen del back; acá solo se reparte el ancho de la barra
+function BarraEstados({ mes }: { mes: CobrosDelMesBack | undefined }) {
+  const partes = ORDEN_ESTADOS.map((estado) => ({ estado, monto: mes ? (estado === 'cobrado' ? mes.cobrado : mes.pendiente) : 0 }))
   const suma = partes.reduce((s, p) => s + p.monto, 0)
   return (
     <>
@@ -63,7 +66,7 @@ function BarraEstados({ cobros }: { cobros: Cobro[] }) {
 
 // Pestaña "Cobros": se elige el mes con las flechas, se ve el total acumulado y la lista (con filtros).
 // Los filtros quedan al cambiar de mes; lo que se mostró con "Ver más" vuelve a 5
-export default function CobrosDelMes({ todos, mes, hoy, onCambiarMes, cuentaDeposito, onVerComprobante }: Props) {
+export default function CobrosDelMes({ todos, meses, mes, hoy, onCambiarMes, cuentaDeposito, onVerComprobante }: Props) {
   // Cuántos se ven, recordando de qué mes era (al cambiar de mes vuelve a 5)
   const [pagina, setPagina] = useState({ mes: mes.format('YYYY-MM'), cantidad: POR_PAGINA })
   const [filtros, setFiltros] = useState<Filtros>(SIN_FILTROS)
@@ -72,8 +75,9 @@ export default function CobrosDelMes({ todos, mes, hoy, onCambiarMes, cuentaDepo
   const delMes = cobrosDelMes(todos, mes, hoy)
   const filtrados = delMes.filter((c) => pasaFiltros(c, filtros))
   const especialidades = [...new Set(todos.map((c) => c.especialidad).filter((e): e is string => !!e))].sort()
-  // No se puede ir más atrás que el primer cobro, ni más adelante que este mes
-  const primerMes = todos.length ? dayjs(todos.map((c) => c.fechaPago ?? hoy.toISOString()).sort()[0]).startOf('month') : hoy.startOf('month')
+  // Las cuentas del mes elegido (las hizo el back). No se puede ir más atrás que el primer mes que manda el back
+  const cuentasDelMes = meses.find((m) => m.mes === mes.format('YYYY-MM'))
+  const primerMes = meses.length ? dayjs(meses[0].mes + '-01') : hoy.startOf('month')
   const esMesActual = mes.format('YYYY-MM') === hoy.format('YYYY-MM')
   const cantidadVisible = pagina.mes === mes.format('YYYY-MM') ? pagina.cantidad : POR_PAGINA
 
@@ -100,13 +104,13 @@ export default function CobrosDelMes({ todos, mes, hoy, onCambiarMes, cuentaDepo
         </Stack>
 
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          {formatoPesos(total(pagados(delMes)))}{' '}
+          {formatoPesos(cuentasDelMes?.total ?? 0)}{' '}
           <Typography component="span" variant="h6" color="text.secondary">
             acumulado
           </Typography>
         </Typography>
 
-        <BarraEstados cobros={delMes} />
+        <BarraEstados mes={cuentasDelMes} />
       </Paper>
 
       {filtrados.length === 0 ? (

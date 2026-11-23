@@ -19,6 +19,7 @@ import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.inte
 import { AgendaQueryDto } from './dto/agenda-query.dto';
 import { Franja, TurnoService } from '../turno/turno.service';
 import { Turno } from '../turno/entities/turno.entity';
+import { resumirCobros } from './resumen-cobros';
 
 // Los turnos son de una hora
 const DURACION_TURNO_MIN = 60;
@@ -855,6 +856,8 @@ export class SolicitudDeServicioService {
     return {
       cuentaDeposito: profesional.cbu ? profesional.cbu.slice(-4) : null,
       cobros: cobros.sort((a, b) => orden(b) - orden(a)),
+      // Las cuentas (ingresos, pendiente, promedio, por mes y por especialidad) las hace el back
+      resumen: resumirCobros(cobros, ahora),
     };
   }
 
@@ -889,20 +892,22 @@ export class SolicitudDeServicioService {
 
     const esCliente = usuario.rol === Rol.CLIENTE;
     const mias = esCliente ? { cliente: { idUsuario: usuario.sub } } : { profesional: { idUsuario: usuario.sub } };
-    // Se traen las que tienen visita en el rango, o un trabajo que se cruza con el rango
+    // Se traen las que tienen visita en el rango, o un trabajo que se cruza con el rango.
+    // Los turnos vienen en la MISMA consulta (relations: turnos): asi el bucle de abajo no
+    // vuelve a la base por cada solicitud (eso era un N+1: 1 consulta + 1 por solicitud)
     const solicitudes = await this.solicitudDeServicioRepository.find({
       where: [
         { ...mias, fechaVisita: Between(desde, new Date(hasta.getTime() - 1)) },
         { ...mias, fechaInicio: Between(new Date(desde.getTime() - 120 * 24 * UNA_HORA), new Date(hasta.getTime() - 1)) },
       ],
-      relations: { cliente: { zonaResidencia: true }, profesional: true, especialidad: true },
+      relations: { cliente: { zonaResidencia: true }, profesional: true, especialidad: true, turnos: true },
     });
 
     const eventos: EventoAgenda[] = [];
     for (const solicitud of solicitudes) {
       const cliente = solicitud.cliente;
       const otro = esCliente ? solicitud.profesional : cliente;
-      for (const { tipo, inicio, fin } of await this.fechasEnAgenda(solicitud)) {
+      for (const { tipo, inicio, fin } of this.fechasEnAgenda(solicitud)) {
         if (inicio < desde || inicio >= hasta) {
           continue;
         }
@@ -928,8 +933,9 @@ export class SolicitudDeServicioService {
 
   // Que va al calendario: la visita (una hora) y el trabajo. Un trabajo de varios dias se muestra
   // como un bloque por cada tramo seguido de turnos (ej: lunes 15 a 18 y martes 9 a 12).
-  // En una reprogramacion se sigue mostrando el horario original (vale hasta que acepten el nuevo)
-  private async fechasEnAgenda(solicitud: SolicitudDeServicio): Promise<{ tipo: TipoEvento; inicio: Date; fin: Date }[]> {
+  // En una reprogramacion se sigue mostrando el horario original (vale hasta que acepten el nuevo).
+  // No consulta la base: usa los turnos que ya vinieron con la solicitud (relations: turnos)
+  private fechasEnAgenda(solicitud: SolicitudDeServicio): { tipo: TipoEvento; inicio: Date; fin: Date }[] {
     const estado = solicitud.estadoServicio;
     if (estado === EstadoSolicitud.CANCELADO || estado === EstadoSolicitud.EXPIRADO) {
       return [];
@@ -939,7 +945,10 @@ export class SolicitudDeServicioService {
       fechas.push({ tipo: 'visita', inicio: solicitud.fechaVisita, fin: new Date(solicitud.fechaVisita.getTime() + UNA_HORA) });
     }
     if (solicitud.fechaInicio) {
-      const turnosTrabajo = (await this.turnoService.turnosDe(solicitud.idSolicitud, 'reservado')).filter((t) => t.tipo === 'trabajo');
+      // Los mismos que devolvia turnosDe(id, 'reservado') filtrados por trabajo, y en el mismo orden
+      const turnosTrabajo = (solicitud.turnos ?? [])
+        .filter((t) => t.estado === 'reservado' && t.tipo === 'trabajo')
+        .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
       if (turnosTrabajo.length === 0) {
         // Trabajo hecho en el momento de la visita (no usa turnos)
         const fin = solicitud.fechaFinEstimada ?? new Date(solicitud.fechaInicio.getTime() + UNA_HORA);

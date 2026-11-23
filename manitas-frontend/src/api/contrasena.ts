@@ -4,8 +4,9 @@ import { api } from './client'
 type RolUsuario = 'cliente' | 'profesional'
 
 // POST /auth/olvide-contrasena. Responde lo mismo exista o no la cuenta
-export async function pedirLinkDeContraseña(rol: RolUsuario, correo: string) {
-  return api.post<{ mensaje: string }>('/auth/olvide-contrasena', { rol, correo: correo.trim() })
+export async function pedirLinkDeContraseña(correo: string) {
+  // El back averigua con el correo si es cliente o profesional
+  return api.post<{ mensaje: string }>('/auth/olvide-contrasena', { correo: correo.trim() })
 }
 
 // POST /auth/restablecer-contrasena con el código que vino en el link del mail

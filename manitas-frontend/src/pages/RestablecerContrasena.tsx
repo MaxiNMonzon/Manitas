@@ -62,7 +62,7 @@ export default function RestablecerContrasena() {
         {rolListo ? (
           <>
             <Alert severity="success">Listo, ya podés entrar con tu contraseña nueva.</Alert>
-            <Button component={RouterLink} to={`/login?rol=${rolListo}`} variant="contained" size="large" fullWidth>
+            <Button component={RouterLink} to="/login" variant="contained" size="large" fullWidth>
               Iniciar sesión
             </Button>
           </>
