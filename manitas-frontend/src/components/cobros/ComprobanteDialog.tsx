@@ -9,7 +9,8 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dayjs from 'dayjs'
 import Marca from '../Marca'
-import { estadosCobro, formatoPesos, numeroComprobante } from './estadosCobro'
+import { estadosCobro, numeroComprobante } from './estadosCobro'
+import { formatoPesos } from '../../dinero'
 import type { Cobro } from '../../types'
 
 function Fila({ label, valor }: { label: string; valor: string }) {

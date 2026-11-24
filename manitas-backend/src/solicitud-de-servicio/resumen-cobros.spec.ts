@@ -76,4 +76,18 @@ describe('resumirCobros (las cuentas de Mis cobros se hacen en el back)', () => 
       { nombre: 'Plomería', monto: 10000, porcentaje: 25 },
     ]);
   });
+
+  it('los montos con centavos se suman exactos y el promedio se redondea al centavo', () => {
+    const r = resumirCobros(
+      [
+        cobro({ monto: 0.1, fechaPago: new Date(2026, 10, 1) }),
+        cobro({ monto: 0.2, fechaPago: new Date(2026, 10, 2) }),
+        cobro({ monto: 10000.5, fechaPago: new Date(2026, 10, 3) }),
+      ],
+      ahora,
+    );
+    expect(r.ingresosMes).toBe(10000.8); // con decimales de JS daría 10000.800000000001
+    expect(r.promedioPorTrabajo.monto).toBe(3333.6); // 10000.8 / 3
+    expect(r.porEspecialidad).toEqual([{ nombre: 'Plomería', monto: 10000.8, porcentaje: 100 }]);
+  });
 });

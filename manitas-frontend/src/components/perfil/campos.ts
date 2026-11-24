@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react'
 import type { Errores } from './useEdicionPerfil'
+import { limpiarMonto } from '../../dinero'
 
 interface Extra {
   // Texto de ayuda (solo se ve al editar)
   ayuda?: string
   // Deja escribir solo números, hasta esa cantidad
   soloNumeros?: number
+  // Es plata: números y centavos después de una coma (ej: 15000,50)
+  dinero?: boolean
   // Máximo de letras
   max?: number
   // Algo adelante del valor (ej: el "$")
@@ -28,6 +31,7 @@ export function propsCampo<F>({ datos, errores, editando, cambiar }: Estado<F>, 
     onChange: (evento: { target: { value: string } }) => {
       let valor = evento.target.value
       if (extra.soloNumeros) valor = valor.replace(/\D/g, '').slice(0, extra.soloNumeros)
+      if (extra.dinero) valor = limpiarMonto(valor)
       if (extra.max) valor = valor.slice(0, extra.max)
       cambiar({ [nombre]: valor } as Partial<F>)
     },
@@ -36,7 +40,8 @@ export function propsCampo<F>({ datos, errores, editando, cambiar }: Estado<F>, 
     fullWidth: true,
     slotProps: {
       input: { readOnly: !editando, startAdornment: extra.adelante },
-      htmlInput: extra.soloNumeros ? { inputMode: 'numeric' as const } : undefined,
+      // En el celular abre el teclado numérico (con coma, si es plata)
+      htmlInput: extra.dinero ? { inputMode: 'decimal' as const } : extra.soloNumeros ? { inputMode: 'numeric' as const } : undefined,
     },
   }
 }

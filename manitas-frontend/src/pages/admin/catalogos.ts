@@ -2,6 +2,7 @@
 // en el listado, por qué se puede filtrar y qué campos tiene el formulario de alta/edición.
 // La pantalla (CatalogoAdmin) es una sola y se arma con esta configuración.
 import type { Fila } from '../../api/catalogos'
+import { formatoPesos } from '../../dinero'
 
 // Un catálogo que sirve como lista de opciones (ej: elegir la especialidad de un tipo de servicio)
 export interface Referencia {
@@ -251,7 +252,7 @@ export const catalogos: Catalogo[] = [
     detalle: (fila) => [
       ['Email', texto(fila.correo)],
       ['Teléfono', texto(fila.telefono)],
-      ['Costo de visita', fila.costoVisita ? `$ ${texto(fila.costoVisita)}` : 'Sin cargo'],
+      ['Costo de visita', fila.costoVisita ? formatoPesos(Number(fila.costoVisita)) : 'Sin cargo'],
       ['Sobre mí', texto(fila.descripcion)],
     ],
   },

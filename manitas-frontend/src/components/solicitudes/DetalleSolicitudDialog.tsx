@@ -16,7 +16,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import DirectionsIcon from '@mui/icons-material/Directions'
 import AvatarPersona from '../AvatarPersona'
-import { direccionDe, estados, formatoFecha, formatoPesos, proximoPaso } from './estados'
+import { direccionDe, estados, formatoFecha, proximoPaso } from './estados'
+import { formatoPesos } from '../../dinero'
 import type { SolicitudResumen } from '../../types'
 
 function Dato({ titulo, children }: { titulo: string; children: ReactNode }) {

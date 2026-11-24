@@ -14,7 +14,7 @@ export class CreateProfesionalDto extends CreateUsuarioDto {
   matriculas?: MatriculaDto[];
 
   // Dinero: admite centavos (hasta 2 decimales)
-  @ApiPropertyOptional({ example: 5000 })
+  @ApiPropertyOptional({ example: 4500.5 })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)

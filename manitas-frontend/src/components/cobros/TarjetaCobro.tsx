@@ -9,7 +9,8 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import dayjs from 'dayjs'
 import AvatarPersona from '../AvatarPersona'
-import { estadosCobro, formatoPesos } from './estadosCobro'
+import { estadosCobro } from './estadosCobro'
+import { formatoPesos } from '../../dinero'
 import type { Cobro } from '../../types'
 
 interface Props {

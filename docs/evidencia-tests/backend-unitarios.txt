@@ -1,9 +1,9 @@
 Backend — tests unitarios (pnpm test, Jest)
-Ejecutado: 22/11/2026 22:12
+Ejecutado: 24/11/2026 16:02
 
 
-Test Suites: 5 passed, 5 total
-Tests:       23 passed, 23 total
+Test Suites: 6 passed, 6 total
+Tests:       30 passed, 30 total
 Snapshots:   0 total
-Time:        15.011 s
+Time:        10.341 s, estimated 14 s
 Ran all test suites.

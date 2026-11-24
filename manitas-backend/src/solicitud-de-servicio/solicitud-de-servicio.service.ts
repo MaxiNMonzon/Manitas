@@ -19,6 +19,7 @@ import { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.inte
 import { AgendaQueryDto } from './dto/agenda-query.dto';
 import { Franja, TurnoService } from '../turno/turno.service';
 import { Turno } from '../turno/entities/turno.entity';
+import { formatoPesos } from '../common/dinero';
 import { resumirCobros } from './resumen-cobros';
 
 // Los turnos son de una hora
@@ -722,7 +723,7 @@ export class SolicitudDeServicioService {
       return this.avisoReprogramacion(solicitud, propuestos, 'cliente', profesional);
     }
     if (solicitud.estadoServicio === EstadoSolicitud.PRESUPUESTADO) {
-      return `${profesional} te mando un presupuesto de $${solicitud.costoFinal}`;
+      return `${profesional} te mando un presupuesto de ${formatoPesos(solicitud.costoFinal)}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.AGENDADO) {
       const llegada = this.llegadaUrgente(solicitud);
@@ -737,10 +738,10 @@ export class SolicitudDeServicioService {
       return `Tenes ${proxima.que} con ${profesional} el ${proxima.cuando}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.CONTRATADO && solicitud.fechaInicio <= new Date()) {
-      return `Cuando ${profesional} termine el trabajo, ya podes pagar $${solicitud.costoFinal}`;
+      return `Cuando ${profesional} termine el trabajo, ya podes pagar ${formatoPesos(solicitud.costoFinal)}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.RECHAZADO && solicitud.costoFinal && !solicitud.fechaInicio && !this.estaPagada(solicitud)) {
-      return `Tenes que pagar la visita de ${profesional}: $${solicitud.costoFinal}`;
+      return `Tenes que pagar la visita de ${profesional}: ${formatoPesos(solicitud.costoFinal)}`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.FINALIZADO && solicitud.calificacionServicio == null) {
       return `¿Como te fue con ${profesional}? Calificalo`;

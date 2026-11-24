@@ -149,7 +149,7 @@ const LUNES_A_VIERNES = (desde: number, hasta: number): [number, number, number]
 
 const PROFESIONALES: ProfesionalSeed[] = [
   { correo: 'raulbustos.plomeria@gmail.com', nombre: 'Raúl', apellido: 'Bustos', dni: 25111222, telefono: '3416662001', oficios: ['Plomería', 'Gas'], zonas: ['Centro', 'Norte', 'Oeste'], costoVisita: 5000, descripcion: 'Plomero y gasista con 20 años de experiencia. Pérdidas, destapaciones, termotanques y calefones.', cbu: '0110599520000001234569', matricula: { oficio: 'Gas', numero: 'MG-4521', descripcion: 'Gasista de 2da categoría - Litoral Gas' }, horario: [...LUNES_A_VIERNES(8, 17), [6, 9, 13]] },
-  { correo: 'sergioledesma.electricista@gmail.com', nombre: 'Sergio', apellido: 'Ledesma', dni: 26222333, telefono: '3416662002', oficios: ['Electricidad'], zonas: ['Centro', 'Sur', 'Oeste', 'Sudoeste'], costoVisita: 4500, descripcion: 'Electricista matriculado. Instalaciones nuevas, tableros, disyuntores y reparaciones.', cbu: '0170099220000067890123', matricula: { oficio: 'Electricidad', numero: 'ME-1187', descripcion: 'Colegio de Técnicos de Santa Fe' }, horario: LUNES_A_VIERNES(9, 18) },
+  { correo: 'sergioledesma.electricista@gmail.com', nombre: 'Sergio', apellido: 'Ledesma', dni: 26222333, telefono: '3416662002', oficios: ['Electricidad'], zonas: ['Centro', 'Sur', 'Oeste', 'Sudoeste'], costoVisita: 4500.5, descripcion: 'Electricista matriculado. Instalaciones nuevas, tableros, disyuntores y reparaciones.', cbu: '0170099220000067890123', matricula: { oficio: 'Electricidad', numero: 'ME-1187', descripcion: 'Colegio de Técnicos de Santa Fe' }, horario: LUNES_A_VIERNES(9, 18) },
   { correo: 'silviaortiz.pinturas@gmail.com', nombre: 'Silvia', apellido: 'Ortiz', dni: 27333444, telefono: '3416662003', oficios: ['Pintura', 'Albañilería'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Pintura de interiores y exteriores, reparación de paredes y humedad. Presupuesto sin cargo.', cbu: '0720000788000012345678', horario: [...LUNES_A_VIERNES(8, 13), ...LUNES_A_VIERNES(15, 19)] },
   { correo: 'damianaguirre.carpinteria@gmail.com', nombre: 'Damián', apellido: 'Aguirre', dni: 28444555, telefono: '3416662004', oficios: ['Carpintería'], zonas: ['Centro', 'Oeste', 'Noroeste'], costoVisita: 5000, descripcion: 'Muebles a medida, placares y arreglos de aberturas de madera.', cbu: '0140999801200012345671', horario: LUNES_A_VIERNES(9, 17) },
   { correo: 'marceloquiroga.gasista@gmail.com', nombre: 'Marcelo', apellido: 'Quiroga', dni: 29555666, telefono: '3416662005', oficios: ['Gas', 'Climatización'], zonas: ['Norte', 'Sur', 'Noroeste', 'Sudoeste'], costoVisita: 6000, descripcion: 'Gasista matriculado e instalador de aires acondicionados.', cbu: '0150501602000123456786', matricula: { oficio: 'Gas', numero: 'MG-7730', descripcion: 'Gasista de 1ra categoría - ENARGAS' }, horario: [...LUNES_A_VIERNES(8, 16), [6, 8, 12]] },
@@ -435,8 +435,8 @@ async function seedSolicitudes(
     fechaFinReal: dia(-4, 12),
     fechaPago: dia(-4, 12),
     costoVisita: 3500,
-    costoEstimado: 26000,
-    costoFinal: 26000,
+    costoEstimado: 26350.75,
+    costoFinal: 26350.75,
     horasTrabajo: 1,
   });
 

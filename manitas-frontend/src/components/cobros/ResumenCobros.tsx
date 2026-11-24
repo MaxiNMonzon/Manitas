@@ -11,7 +11,7 @@ import PaymentsIcon from '@mui/icons-material/Payments'
 import TrendingDownIcon from '@mui/icons-material/TrendingDown'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import dayjs, { type Dayjs } from 'dayjs'
-import { formatoPesos } from './estadosCobro'
+import { formatoPesos } from '../../dinero'
 import type { ResumenCobros as Resumen } from '../../types'
 
 // Una tarjeta del resumen: ícono, título, número grande y un detalle chico

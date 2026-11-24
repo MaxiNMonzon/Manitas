@@ -7,8 +7,8 @@ import StarIcon from '@mui/icons-material/Star'
 import TarjetaDato from '../profesional/TarjetaDato'
 import MedidorCalificacion from '../profesional/MedidorCalificacion'
 import type { SolicitudResumen } from '../../types'
+import { formatoPesos } from '../../dinero'
 
-const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 
 // Solicitudes activas: las que están en curso (agendadas, presupuestadas, contratadas o cambiando de horario)
 const activas = (solicitudes: SolicitudResumen[]) =>
@@ -57,7 +57,7 @@ export default function ResumenProfesional({ solicitudes, pendiente, calificacio
         <TarjetaDato
           icono={<RequestQuoteIcon />}
           titulo="Cobros pendientes"
-          valor={pesos.format(pendiente?.monto ?? 0)}
+          valor={formatoPesos(pendiente?.monto)}
           detalle={cantidadPendiente === 0 ? 'No tenés cobros pendientes' : `${cantidadPendiente} cobro${cantidadPendiente === 1 ? '' : 's'} sin pagar o sin depositar`}
           color="secondary"
           onClick={() => navigate('/app/cobros')}

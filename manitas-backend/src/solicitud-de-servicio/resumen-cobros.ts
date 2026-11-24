@@ -1,7 +1,9 @@
 import type { Cobro } from './solicitud-de-servicio.service';
+import { redondearCentavos, sumarMontos } from '../common/dinero';
 
 // Las cuentas de "Mis cobros" del profesional. Las hace el back (no el front): sumas, promedios,
 // cuánto cambió de un mes a otro y los porcentajes de los gráficos. Son funciones puras (se testean solas).
+// Los montos tienen centavos: se suman con sumarMontos para que no aparezcan errores de decimales.
 
 export const MESES_HISTORIAL = 6;
 
@@ -39,14 +41,14 @@ export interface ResumenCobros {
 // "2026-11"
 export const claveMes = (fecha: Date) => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
 
-const suma = (cobros: Cobro[]) => cobros.reduce((total, c) => total + c.monto, 0);
+const suma = (cobros: Cobro[]) => sumarMontos(cobros.map((c) => c.monto));
 const pagados = (cobros: Cobro[]) => cobros.filter((c) => c.fechaPago != null);
 const variacion = (actual: number, anterior: number) => (anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null);
 
 // Suma los montos por una clave (ej: especialidad), de mayor a menor, con el porcentaje de cada uno
 function porciones(cobros: Cobro[], clave: (c: Cobro) => string): Porcion[] {
   const sumas = new Map<string, number>();
-  for (const c of cobros) sumas.set(clave(c), (sumas.get(clave(c)) ?? 0) + c.monto);
+  for (const c of cobros) sumas.set(clave(c), sumarMontos([sumas.get(clave(c)) ?? 0, c.monto]));
   const total = suma(cobros);
   return [...sumas.entries()]
     .map(([nombre, monto]) => ({ nombre, monto, porcentaje: total > 0 ? Math.round((monto / total) * 100) : 0 }))
@@ -96,7 +98,7 @@ export function resumirCobros(cobros: Cobro[], ahora: Date): ResumenCobros {
     variacionMes: esteMes.variacion,
     pendiente: { monto: suma(pendientes), cantidad: pendientes.length, proximoDeposito },
     promedioPorTrabajo: {
-      monto: trabajosRecientes.length ? Math.round(suma(trabajosRecientes) / trabajosRecientes.length) : 0,
+      monto: trabajosRecientes.length ? redondearCentavos(suma(trabajosRecientes) / trabajosRecientes.length) : 0,
       trabajos: trabajosRecientes.length,
       meses: MESES_HISTORIAL,
     },

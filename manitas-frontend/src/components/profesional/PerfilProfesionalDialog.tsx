@@ -19,7 +19,7 @@ import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import dayjs from 'dayjs'
 import { traerCalificaciones } from '../../api/profesionales'
 import { useCarga } from '../../hooks/useCarga'
-import { formatoPesos } from '../solicitudes/estados'
+import { formatoPesos } from '../../dinero'
 import type { ProfesionalResumen } from '../../types'
 import AvatarProfesional from './AvatarProfesional'
 

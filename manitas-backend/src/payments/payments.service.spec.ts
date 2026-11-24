@@ -67,6 +67,22 @@ describe('PaymentsService.confirmar (vuelta de Mercado Pago)', () => {
     expect(solicitudService.registrarPagoMercadoPago).not.toHaveBeenCalled();
   });
 
+  it('con centavos: registra el pago si coincide hasta el centavo', async () => {
+    solicitudService.montoAPagar.mockResolvedValue({ solicitud, monto: 45000.5 });
+    pagoDeMercadoPago = { id: 999, status: 'approved', external_reference: '24', transaction_amount: 45000.5 };
+
+    await service.confirmar('999', cliente);
+    expect(solicitudService.registrarPagoMercadoPago).toHaveBeenCalledWith(solicitud, '999');
+  });
+
+  it('con centavos: un centavo de diferencia ya no coincide', async () => {
+    solicitudService.montoAPagar.mockResolvedValue({ solicitud, monto: 45000.5 });
+    pagoDeMercadoPago = { id: 999, status: 'approved', external_reference: '24', transaction_amount: 45000.49 };
+
+    await expect(service.confirmar('999', cliente)).rejects.toThrow('El monto pagado no coincide');
+    expect(solicitudService.registrarPagoMercadoPago).not.toHaveBeenCalled();
+  });
+
   it('si el pago ya estaba registrado no lo vuelve a registrar (recargar la página)', async () => {
     pagoDeMercadoPago = { id: 999, status: 'approved', external_reference: '24', transaction_amount: 45000 };
     solicitudService.findOne.mockResolvedValue({ ...solicitud, idPagoMercadoPago: '999' });
