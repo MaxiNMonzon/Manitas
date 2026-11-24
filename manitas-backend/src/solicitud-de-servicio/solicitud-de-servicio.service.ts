@@ -215,13 +215,8 @@ export class SolicitudDeServicioService {
     });
 
     // Se sacan las que ya vencieron (pasó la hora)
-    const disponibles: SolicitudDeServicio[] = [];
-    for (const solicitud of urgentes) {
-      await this.revisarVencimiento(solicitud);
-      if (solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
-        disponibles.push(solicitud);
-      }
-    }
+    await this.revisarVencimientos(urgentes);
+    const disponibles = urgentes.filter((solicitud) => solicitud.estadoServicio === EstadoSolicitud.SOLICITADO);
 
     // Del cliente solo el nombre y la zona: la direccion y el telefono los ve el que la acepta
     return disponibles.map((solicitud) => ({
@@ -249,9 +244,7 @@ export class SolicitudDeServicioService {
       });
     }
 
-    for (const solicitud of solicitudes) {
-      await this.revisarVencimiento(solicitud);
-    }
+    await this.revisarVencimientos(solicitudes);
     return solicitudes;
   }
 
@@ -270,7 +263,7 @@ export class SolicitudDeServicioService {
       throw new ForbiddenException('No participás de esta solicitud');
     }
 
-    await this.revisarVencimiento(solicitudDeServicio);
+    await this.revisarVencimientos([solicitudDeServicio]);
     return solicitudDeServicio;
   }
 
@@ -327,7 +320,7 @@ export class SolicitudDeServicioService {
   // Una urgente no usa turnos (es para ahora): al aceptarla, el profesional dice en cuanto llega
   // y queda agendada directo, con la visita a esa hora
   private async tomarUrgente(solicitud: SolicitudDeServicio, aceptarDto: AceptarDto, usuario: UsuarioActivoInterface) {
-    await this.revisarVencimiento(solicitud);
+    await this.revisarVencimientos([solicitud]);
     this.validarEstado(solicitud, [EstadoSolicitud.SOLICITADO]);
     if (!aceptarDto.minutosLlegada) {
       throw new BadRequestException('En una urgente tenes que indicar en cuantos minutos llegas (minutosLlegada)');
@@ -682,9 +675,11 @@ export class SolicitudDeServicioService {
       }
     }
 
+    // Los vencimientos y los turnos propuestos se resuelven para todas juntas: el bucle de abajo no consulta la base
+    const propuestos = await this.revisarVencimientos(solicitudes);
     for (const solicitud of solicitudes) {
-      await this.revisarVencimiento(solicitud);
-      const mensaje = esCliente ? await this.avisoParaCliente(solicitud) : await this.avisoParaProfesional(solicitud);
+      const propuestosDeEsta = propuestos.get(solicitud.idSolicitud) ?? [];
+      const mensaje = esCliente ? this.avisoParaCliente(solicitud, propuestosDeEsta) : this.avisoParaProfesional(solicitud, propuestosDeEsta);
       if (mensaje) {
         avisos.push({ idSolicitud: solicitud.idSolicitud, mensaje });
       }
@@ -692,7 +687,7 @@ export class SolicitudDeServicioService {
     return avisos;
   }
 
-  private async avisoParaProfesional(solicitud: SolicitudDeServicio) {
+  private avisoParaProfesional(solicitud: SolicitudDeServicio, propuestos: Turno[]) {
     const cliente = solicitud.cliente.nombre;
 
     if (solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
@@ -700,7 +695,7 @@ export class SolicitudDeServicioService {
       return `Tenes una solicitud nueva de ${cliente} para el ${this.texto(solicitud.fechaVisita)}. Te quedan ${horasQueQuedan} hs para responder`;
     }
     if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
-      return await this.avisoReprogramacion(solicitud, 'profesional', cliente);
+      return this.avisoReprogramacion(solicitud, propuestos, 'profesional', cliente);
     }
     const llegada = this.llegadaUrgente(solicitud);
     if (llegada) {
@@ -713,7 +708,7 @@ export class SolicitudDeServicioService {
     return null;
   }
 
-  private async avisoParaCliente(solicitud: SolicitudDeServicio) {
+  private avisoParaCliente(solicitud: SolicitudDeServicio, propuestos: Turno[]) {
     // Urgente que todavia nadie acepto
     if (!solicitud.profesional) {
       if (solicitud.urgente && solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
@@ -724,7 +719,7 @@ export class SolicitudDeServicioService {
     const profesional = solicitud.profesional.nombre;
 
     if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
-      return await this.avisoReprogramacion(solicitud, 'cliente', profesional);
+      return this.avisoReprogramacion(solicitud, propuestos, 'cliente', profesional);
     }
     if (solicitud.estadoServicio === EstadoSolicitud.PRESUPUESTADO) {
       return `${profesional} te mando un presupuesto de $${solicitud.costoFinal}`;
@@ -754,8 +749,8 @@ export class SolicitudDeServicioService {
   }
 
   // Al que le toca contestar: "X te propone cambiar al ...". Al que propuso: que espera la respuesta
-  private async avisoReprogramacion(solicitud: SolicitudDeServicio, yo: 'cliente' | 'profesional', otro: string) {
-    const propuestos = await this.turnoService.turnosDe(solicitud.idSolicitud, 'propuesto');
+  // (los turnos propuestos vienen de afuera, ya consultados para todas las solicitudes juntas)
+  private avisoReprogramacion(solicitud: SolicitudDeServicio, propuestos: Turno[], yo: 'cliente' | 'profesional', otro: string) {
     if (propuestos.length === 0) {
       return null;
     }
@@ -1050,32 +1045,72 @@ export class SolicitudDeServicioService {
   //   rechazada (sigue el horario de antes); si la hizo el profesional, se cancela (el no puede en el de antes)
   // - una solicitud nueva sin respuesta en 48 hs, o cuando ya llego el turno elegido, vence
   // - una urgente que nadie tomo en 1 hora, vence
-  private async revisarVencimiento(solicitud: SolicitudDeServicio) {
-    if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
-      const propuestos = await this.turnoService.turnosDe(solicitud.idSolicitud, 'propuesto');
-      const pasoElPlazo = Date.now() - solicitud.fechaCambioEstado.getTime() >= HORAS_PROPUESTA * UNA_HORA;
-      const yaLlego = propuestos.length === 0 || propuestos[0].inicio <= new Date();
-      if (pasoElPlazo || yaLlego) {
-        if (solicitud.propuestaDe === 'profesional') {
+  // Recibe todas las solicitudes juntas para no ir a la base una vez por cada una (N+1): los turnos
+  // propuestos se traen en una sola consulta, se decide en memoria que vencio y los cambios se
+  // guardan agrupados (una consulta por tipo de cambio, no por solicitud).
+  // Devuelve los turnos propuestos de cada solicitud que sigue en reprogramacion (los usan los avisos)
+  private async revisarVencimientos(solicitudes: SolicitudDeServicio[]) {
+    const enReprogramacion = solicitudes.filter((solicitud) => solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION);
+    const propuestos = await this.turnoService.turnosDeVarias(
+      enReprogramacion.map((solicitud) => solicitud.idSolicitud),
+      'propuesto',
+    );
+
+    const ahora = new Date();
+    const liberarTodos: SolicitudDeServicio[] = []; // se cancelan o vencen: se liberan todos sus turnos
+    const liberarPropuestos: SolicitudDeServicio[] = []; // vuelven al horario de antes: se liberan solo los propuestos
+    for (const solicitud of solicitudes) {
+      if (solicitud.estadoServicio === EstadoSolicitud.REPROGRAMACION) {
+        const propuestosDeEsta = propuestos.get(solicitud.idSolicitud) ?? [];
+        const pasoElPlazo = ahora.getTime() - solicitud.fechaCambioEstado.getTime() >= HORAS_PROPUESTA * UNA_HORA;
+        const yaLlego = propuestosDeEsta.length === 0 || propuestosDeEsta[0].inicio <= ahora;
+        if (pasoElPlazo || yaLlego) {
+          // Si propuso el profesional, se cancela (el no puede en el horario de antes); si propuso el cliente,
+          // se da por rechazada y sigue el horario de antes
+          solicitud.estadoServicio = solicitud.propuestaDe === 'profesional' ? EstadoSolicitud.CANCELADO : solicitud.estadoAnterior!;
+          (solicitud.estadoServicio === EstadoSolicitud.CANCELADO ? liberarTodos : liberarPropuestos).push(solicitud);
           solicitud.estadoAnterior = null;
           solicitud.propuestaDe = null;
-          await this.cambiarEstadoLiberando(solicitud, EstadoSolicitud.CANCELADO);
-        } else {
-          await this.volverAlHorarioOriginal(solicitud);
+          solicitud.fechaCambioEstado = ahora;
+          propuestos.delete(solicitud.idSolicitud);
+        }
+      }
+
+      if (solicitud.estadoServicio === EstadoSolicitud.SOLICITADO) {
+        const horasPasadas = (ahora.getTime() - solicitud.fechaCambioEstado.getTime()) / UNA_HORA;
+        const vencio = solicitud.urgente
+          ? horasPasadas >= HORAS_URGENTE
+          : horasPasadas >= HORAS_PARA_RESPONDER || (solicitud.fechaVisita != null && solicitud.fechaVisita <= ahora);
+        if (vencio) {
+          solicitud.estadoServicio = EstadoSolicitud.EXPIRADO;
+          solicitud.fechaCambioEstado = ahora;
+          liberarTodos.push(solicitud);
         }
       }
     }
 
-    if (solicitud.estadoServicio !== EstadoSolicitud.SOLICITADO) {
-      return;
+    const cambiadas = [...new Set([...liberarTodos, ...liberarPropuestos])];
+    if (cambiadas.length === 0) {
+      return propuestos;
     }
-    const horasPasadas = (Date.now() - solicitud.fechaCambioEstado.getTime()) / UNA_HORA;
-    const vencio = solicitud.urgente
-      ? horasPasadas >= HORAS_URGENTE
-      : horasPasadas >= HORAS_PARA_RESPONDER || (solicitud.fechaVisita != null && solicitud.fechaVisita <= new Date());
-    if (vencio) {
-      await this.cambiarEstadoLiberando(solicitud, EstadoSolicitud.EXPIRADO);
+
+    // Las que quedaron igual (mismo estado nuevo) se guardan juntas: como mucho, una consulta por estado
+    const porEstado = new Map<EstadoSolicitud, number[]>();
+    for (const solicitud of cambiadas) {
+      porEstado.set(solicitud.estadoServicio, [...(porEstado.get(solicitud.estadoServicio) ?? []), solicitud.idSolicitud]);
     }
+    await this.solicitudDeServicioRepository.manager.transaction(async (manager) => {
+      await this.turnoService.liberarVarias(manager, liberarTodos.map((solicitud) => solicitud.idSolicitud));
+      await this.turnoService.liberarVarias(manager, liberarPropuestos.map((solicitud) => solicitud.idSolicitud), { estado: 'propuesto' });
+      for (const [estado, ids] of porEstado) {
+        await manager.update(
+          SolicitudDeServicio,
+          { idSolicitud: In(ids) },
+          { estadoServicio: estado, estadoAnterior: null, propuestaDe: null, fechaCambioEstado: ahora },
+        );
+      }
+    });
+    return propuestos;
   }
 
   // Cuantos minutos le quedan a una urgente para que alguien la acepte

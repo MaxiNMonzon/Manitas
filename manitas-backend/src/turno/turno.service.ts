@@ -208,6 +208,32 @@ export class TurnoService {
     });
   }
 
+  // Lo mismo que turnosDe, pero de varias solicitudes en UNA consulta (para no consultar dentro de un bucle).
+  // Devuelve los turnos agrupados por id de solicitud
+  async turnosDeVarias(idsSolicitudes: number[], estado: 'reservado' | 'propuesto') {
+    const porSolicitud = new Map<number, Turno[]>();
+    if (idsSolicitudes.length === 0) {
+      return porSolicitud;
+    }
+    const turnos = await this.turnoRepository.find({
+      where: { solicitud: { idSolicitud: In(idsSolicitudes) }, estado },
+      relations: { solicitud: true },
+      order: { inicio: 'ASC' },
+    });
+    for (const turno of turnos) {
+      const idSolicitud = turno.solicitud.idSolicitud;
+      porSolicitud.set(idSolicitud, [...(porSolicitud.get(idSolicitud) ?? []), turno]);
+    }
+    return porSolicitud;
+  }
+
+  // Lo mismo que liberar, pero de varias solicitudes en una sola consulta
+  async liberarVarias(manager: EntityManager, idsSolicitudes: number[], filtro: { estado?: 'reservado' | 'propuesto' } = {}) {
+    if (idsSolicitudes.length > 0) {
+      await manager.delete(Turno, { solicitud: { idSolicitud: In(idsSolicitudes) }, ...filtro });
+    }
+  }
+
   // ---------- Ayudas ----------
 
   private async horariosDe(idProfesional: number) {
