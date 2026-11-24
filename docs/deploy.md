@@ -78,3 +78,8 @@ no deja mandar por SMTP.
    volver de Mercado Pago. Ya está resuelto en el repo: [`vercel.json`](../manitas-frontend/vercel.json) (Vercel) y
    [`public/_redirects`](../manitas-frontend/public/_redirects) (Netlify).
 6. Probar el login con las credenciales de arriba y completar la tabla de links.
+
+> **Si la base ya existía de antes de los montos con centavos:** correr una vez
+> [`sql/dinero-a-decimal.sql`](../manitas-backend/sql/dinero-a-decimal.sql) **antes** de publicar el back nuevo. Pasa las
+> columnas de plata de `INT` a `DECIMAL(12,2)` sin perder los montos; si no se corre, `synchronize` borra esas columnas
+> y las crea de nuevo (se pierden los costos guardados). En una base nueva no hace falta.
