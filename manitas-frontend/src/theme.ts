@@ -9,9 +9,11 @@ import { alpha, createTheme, type Theme } from '@mui/material/styles'
 declare module '@mui/material/styles' {
   interface Palette {
     vidrio: { fondo: string; borde: string; boton: string }
+    calificacion: { buena: string; muyBuena: string }
   }
   interface PaletteOptions {
     vidrio?: { fondo: string; borde: string; boton: string }
+    calificacion?: { buena: string; muyBuena: string }
   }
   interface TypographyVariants {
     etiqueta: CSSProperties
@@ -44,6 +46,11 @@ const base = createTheme({
       fondo: alpha(blanco, 0.12),
       borde: alpha(blanco, 0.2),
       boton: alpha(blanco, 0.9),
+    },
+    // Las franjas del medidor de calificación que no son de la paleta de MUI (entre "Regular" y "Excelente")
+    calificacion: {
+      buena: '#fbc02d',
+      muyBuena: '#7cb342',
     },
   },
   shape: { borderRadius: 10 },
