@@ -18,46 +18,46 @@ import { Consulta } from '../consulta/entities/consulta.entity';
 
 const DOMINIOS_DE_PRUEBA = ['@manitas.test', '@test.com', '@t.com'];
 
-const esDePrueba = (correo: string | null) => !!correo && DOMINIOS_DE_PRUEBA.some((d) => correo.toLowerCase().endsWith(d));
+const esDePrueba = (correo: string | null) => !!correo && DOMINIOS_DE_PRUEBA.some((dominio) => correo.toLowerCase().endsWith(dominio));
 
 async function main() {
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn'] });
   try {
-    const ds = app.get(DataSource);
+    const fuenteDeDatos = app.get(DataSource);
 
     // withDeleted: también las que estaban dadas de baja
-    const clientes = (await ds.getRepository(Cliente).find({ withDeleted: true })).filter((c) => esDePrueba(c.correo));
-    const profesionales = (await ds.getRepository(Profesional).find({ withDeleted: true })).filter((p) => esDePrueba(p.correo));
-    const idsClientes = clientes.map((c) => c.idUsuario);
-    const idsProfesionales = profesionales.map((p) => p.idUsuario);
+    const clientes = (await fuenteDeDatos.getRepository(Cliente).find({ withDeleted: true })).filter((cliente) => esDePrueba(cliente.correo));
+    const profesionales = (await fuenteDeDatos.getRepository(Profesional).find({ withDeleted: true })).filter((profesional) => esDePrueba(profesional.correo));
+    const idsClientes = clientes.map((cliente) => cliente.idUsuario);
+    const idsProfesionales = profesionales.map((profesional) => profesional.idUsuario);
     console.log(`Cuentas de prueba: ${clientes.length} clientes y ${profesionales.length} profesionales`);
 
     // Todo en una transacción: si algo falla, no queda nada a medio borrar
-    await ds.transaction(async (m) => {
+    await fuenteDeDatos.transaction(async (manager) => {
       // 1. Solicitudes donde participa alguno (sus turnos se borran solos: onDelete CASCADE)
-      const solicitudes = await m.find(SolicitudDeServicio, {
+      const solicitudes = await manager.find(SolicitudDeServicio, {
         where: [
           ...(idsClientes.length ? [{ cliente: { idUsuario: In(idsClientes) } }] : []),
           ...(idsProfesionales.length ? [{ profesional: { idUsuario: In(idsProfesionales) } }] : []),
         ],
         withDeleted: true,
       });
-      if (solicitudes.length) await m.delete(SolicitudDeServicio, { idSolicitud: In(solicitudes.map((s) => s.idSolicitud)) });
+      if (solicitudes.length) await manager.delete(SolicitudDeServicio, { idSolicitud: In(solicitudes.map((solicitud) => solicitud.idSolicitud)) });
       console.log(`  - ${solicitudes.length} solicitudes`);
 
       if (idsProfesionales.length) {
         // 2. Lo que cuelga del profesional (las tablas de zonas, oficios y habilidades se limpian solas)
         const deEllos = { where: { profesional: { idUsuario: In(idsProfesionales) } }, withDeleted: true };
-        await m.remove(await m.find(Turno, deEllos));
-        await m.remove(await m.find(HorarioLaboral, deEllos));
-        await m.remove(await m.find(Matricula, deEllos));
-        await m.delete(Profesional, { idUsuario: In(idsProfesionales) });
+        await manager.remove(await manager.find(Turno, deEllos));
+        await manager.remove(await manager.find(HorarioLaboral, deEllos));
+        await manager.remove(await manager.find(Matricula, deEllos));
+        await manager.delete(Profesional, { idUsuario: In(idsProfesionales) });
       }
-      if (idsClientes.length) await m.delete(Cliente, { idUsuario: In(idsClientes) });
+      if (idsClientes.length) await manager.delete(Cliente, { idUsuario: In(idsClientes) });
 
       // 3. Consultas de Ayuda mandadas desde esas cuentas o con esos correos
-      const consultas = (await m.find(Consulta)).filter((c) => esDePrueba(c.correo) || esDePrueba(c.correoCuenta));
-      if (consultas.length) await m.delete(Consulta, { idConsulta: In(consultas.map((c) => c.idConsulta)) });
+      const consultas = (await manager.find(Consulta)).filter((consulta) => esDePrueba(consulta.correo) || esDePrueba(consulta.correoCuenta));
+      if (consultas.length) await manager.delete(Consulta, { idConsulta: In(consultas.map((consulta) => consulta.idConsulta)) });
       console.log(`  - ${consultas.length} consultas de Ayuda`);
     });
 
@@ -67,7 +67,7 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

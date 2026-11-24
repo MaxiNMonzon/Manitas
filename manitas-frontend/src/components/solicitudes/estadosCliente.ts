@@ -2,7 +2,8 @@
 // Los nombres son distintos a los del profesional: el cliente habla de "Pendiente", "Confirmada"...
 import dayjs from 'dayjs'
 import type { EstadoSolicitud, SolicitudResumen } from '../../types'
-import { formatoFecha, formatoPesos, yaFueLaVisita, type ColorChip } from './estados'
+import { formatoFecha, yaFueLaVisita, type ColorChip } from './estados'
+import { formatoPesos } from '../../dinero'
 
 export const estadosCliente: Record<EstadoSolicitud, { label: string; color: ColorChip }> = {
   solicitado: { label: 'Pendiente', color: 'warning' },

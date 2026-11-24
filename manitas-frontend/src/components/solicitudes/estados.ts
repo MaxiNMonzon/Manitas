@@ -1,5 +1,6 @@
 // Cómo se muestra cada estado de una solicitud y qué le toca hacer al profesional
 import dayjs from 'dayjs'
+import { formatoPesos } from '../../dinero'
 import type { ClienteDeSolicitud, EstadoSolicitud, SolicitudResumen } from '../../types'
 
 export type ColorChip = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error'
@@ -33,8 +34,6 @@ export function grupoDe(estado: EstadoSolicitud): Grupo {
   return 'historial'
 }
 
-const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
-export const formatoPesos = (monto: number | null | undefined) => pesos.format(monto ?? 0)
 export const formatoFecha = (fecha: string) => dayjs(fecha).format('ddd DD/MM · HH:mm [h]')
 
 // Plazos del back: 48 h para responder (o hasta la hora del turno pedido, lo que llegue antes);

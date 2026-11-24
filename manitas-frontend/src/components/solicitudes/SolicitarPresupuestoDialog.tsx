@@ -15,7 +15,7 @@ import dayjs from 'dayjs'
 import { crearSolicitud } from '../../api/solicitudes'
 import AvatarProfesional from '../profesional/AvatarProfesional'
 import SelectorTurno from '../agenda/SelectorTurno'
-import { formatoPesos } from './estados'
+import { formatoPesos } from '../../dinero'
 import type { ProfesionalResumen } from '../../types'
 
 const MAX_DESCRIPCION = 1000

@@ -2,7 +2,7 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { PieChart } from '@mui/x-charts/PieChart'
-import { formatoPesos } from './estadosCobro'
+import { formatoPesos } from '../../dinero'
 import type { PorcionCobros } from '../../types'
 
 // Torta (dona) con su referencia al lado: nombre, monto y porcentaje (los calcula el back)

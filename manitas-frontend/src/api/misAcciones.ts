@@ -2,7 +2,7 @@
 // avisan solo lo que hizo la otra persona ("Jorge confirmó tu visita") y no lo que tocaste vos
 import { misAccionesStorage } from './almacenamiento'
 // El back pone la hora del cambio de estado; con este margen se cubre la demora del pedido
-const MARGEN_MS = 2 * 60 * 1000
+const MARGEN_MILISEGUNDOS = 2 * 60 * 1000
 
 export function registrarMiAccion(idSolicitud: number) {
   const acciones = misAccionesStorage.get()
@@ -13,5 +13,5 @@ export function registrarMiAccion(idSolicitud: number) {
 // El último cambio de estado de la solicitud lo hiciste vos
 export function laCambieYo(idSolicitud: number, fechaCambioEstado: string): boolean {
   const cuando = misAccionesStorage.get()[idSolicitud]
-  return cuando != null && new Date(fechaCambioEstado).getTime() <= cuando + MARGEN_MS
+  return cuando != null && new Date(fechaCambioEstado).getTime() <= cuando + MARGEN_MILISEGUNDOS
 }

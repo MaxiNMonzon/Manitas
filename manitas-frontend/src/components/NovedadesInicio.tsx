@@ -14,7 +14,8 @@ import { laCambieYo } from '../api/misAcciones'
 import { estadosVistosStorage } from '../api/almacenamiento'
 import { useAuth } from '../auth/useAuth'
 import { useCarga } from '../hooks/useCarga'
-import { formatoFecha, formatoPesos } from './solicitudes/estados'
+import { formatoFecha } from './solicitudes/estados'
+import { formatoPesos } from '../dinero'
 import type { Rol, SolicitudResumen } from '../types'
 
 // Lo que importa del estado para avisar: el estado y, en un cambio de horario, quién lo propuso

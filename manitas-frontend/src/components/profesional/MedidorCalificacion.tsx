@@ -38,8 +38,8 @@ export default function MedidorCalificacion({ promedio, cantidad }: { promedio: 
   const niveles = [
     { nombre: 'Mala', color: theme.palette.error.main },
     { nombre: 'Regular', color: theme.palette.secondary.main },
-    { nombre: 'Buena', color: '#fbc02d' },
-    { nombre: 'Muy buena', color: '#7cb342' },
+    { nombre: 'Buena', color: theme.palette.calificacion.buena },
+    { nombre: 'Muy buena', color: theme.palette.calificacion.muyBuena },
     { nombre: 'Excelente', color: theme.palette.success.main },
   ]
 

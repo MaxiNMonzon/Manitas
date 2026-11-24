@@ -10,11 +10,6 @@ export const estadosCobro: Record<EstadoCobro, { label: string; color: 'success'
 // Orden para mostrar (y para la barra del mes): lo ya cobrado primero
 export const ORDEN_ESTADOS: EstadoCobro[] = ['cobrado', 'pendiente_cobro']
 
-// "$ 130.000" y, para los ejes de los gráficos, "$130k"
-const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
-export const formatoPesos = (monto: number) => pesos.format(monto)
-export const pesosCorto = (monto: number) => (monto >= 1000 ? `$${Math.round(monto / 1000)}k` : `$${monto}`)
-
 // Mes en el que cuenta un cobro: el del pago. Los que esperan el pago cuentan en el mes actual
 export function mesDe(cobro: Cobro): string {
   return dayjs(cobro.fechaPago ?? undefined).format('YYYY-MM')

@@ -10,7 +10,7 @@ import { BarChart } from '@mui/x-charts/BarChart'
 import dayjs, { type Dayjs } from 'dayjs'
 import SeccionTarjeta from '../SeccionTarjeta'
 import Torta from './Torta'
-import { formatoPesos, pesosCorto } from './estadosCobro'
+import { formatoPesos, pesosCorto } from '../../dinero'
 import { capitalizar } from './filtros'
 import type { ResumenCobros } from '../../types'
 

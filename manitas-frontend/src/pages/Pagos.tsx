@@ -7,7 +7,7 @@ import PaymentIcon from '@mui/icons-material/Payment'
 import { traerSolicitudesCliente } from '../api/solicitudes'
 import { useCarga } from '../hooks/useCarga'
 import CheckoutButton from '../components/pagos/CheckoutButton'
-import { formatoPesos } from '../components/solicitudes/estados'
+import { formatoPesos } from '../dinero'
 import { debePagar } from '../components/solicitudes/estadosCliente'
 
 // Pestaña "Pagos" del cliente: lo que tiene para pagar (el trabajo contratado que ya empezó,

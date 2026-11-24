@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { presupuestar } from '../../api/solicitudes'
+import { AYUDA_MONTO, esMontoValido, limpiarMonto, textoAMonto } from '../../dinero'
 import type { SolicitudResumen } from '../../types'
 
 // Las horas se eligen de una lista: la agenda trabaja con turnos de 1 hora, así que van enteras.
@@ -40,7 +41,9 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
 
   const cambioDePrecio = solicitud?.estadoServicio === 'contratado'
   const horasValidas = horas !== ''
-  const listo = Number(monto) > 0 && (cambioDePrecio || horasValidas)
+  // El precio puede tener centavos (ej: 15000,50)
+  const montoValido = esMontoValido(monto) && textoAMonto(monto) > 0
+  const listo = montoValido && (cambioDePrecio || horasValidas)
 
   const cerrar = () => {
     setMonto('')
@@ -54,7 +57,7 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
     setEnviando(true)
     setError(null)
     try {
-      await presupuestar(solicitud.idSolicitud, Number(monto), cambioDePrecio ? undefined : Number(horas))
+      await presupuestar(solicitud.idSolicitud, textoAMonto(monto), cambioDePrecio ? undefined : Number(horas))
       cerrar()
       onEnviado()
     } catch (fallo) {
@@ -82,9 +85,12 @@ export default function PresupuestarDialog({ solicitud, onClose, onEnviado }: Pr
             fullWidth
             label={cambioDePrecio ? 'Precio nuevo del trabajo' : 'Precio del trabajo'}
             value={monto}
-            onChange={(evento) => setMonto(evento.target.value.replace(/\D/g, ''))}
+            onChange={(evento) => setMonto(limpiarMonto(evento.target.value))}
+            // Se avisa solo si ya escribió algo que no es un monto (ej: "15.000" con punto de miles)
+            error={monto !== '' && !esMontoValido(monto)}
+            helperText={monto !== '' && !esMontoValido(monto) ? AYUDA_MONTO : 'Si tiene centavos, van después de una coma'}
             slotProps={{
-              htmlInput: { inputMode: 'numeric' },
+              htmlInput: { inputMode: 'decimal' },
               input: { startAdornment: <InputAdornment position="start">$</InputAdornment> },
             }}
           />

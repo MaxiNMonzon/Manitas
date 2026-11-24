@@ -36,9 +36,9 @@ export default function SeccionMiTrabajo({ datos, errores, editando, intentoGuar
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             {...propsCampo(estado, 'costoVisita', 'Costo de la visita', {
-              soloNumeros: 9,
+              dinero: true,
               adelante: <InputAdornment position="start">$</InputAdornment>,
-              ayuda: 'Solo se cobra si el cliente rechaza el presupuesto. Vacío = no cobrás la visita',
+              ayuda: 'Solo se cobra si el cliente rechaza el presupuesto. Vacío = no cobrás la visita. Los centavos van después de una coma',
             })}
             placeholder={editando ? '0' : 'No cobra la visita'}
           />

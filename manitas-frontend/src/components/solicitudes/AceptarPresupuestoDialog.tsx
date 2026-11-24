@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography'
 import dayjs from 'dayjs'
 import { aceptarPresupuesto } from '../../api/solicitudes'
 import SelectorTurno from '../agenda/SelectorTurno'
-import { formatoPesos } from './estados'
+import { formatoPesos } from '../../dinero'
 import type { SolicitudResumen } from '../../types'
 
 interface Props {

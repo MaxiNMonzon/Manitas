@@ -83,10 +83,10 @@ export class ProfesionalService {
   // así el front recibe solo los que coinciden y en un solo pedido (sin una consulta por profesional)
   async buscar(filtros: { idEspecialidad?: number; idZona?: number; texto?: string }) {
     const profesionales = await this.findAll(filtros.idEspecialidad, filtros.idZona, filtros.texto);
-    const calificaciones = await this.resumenCalificaciones(profesionales.map((p) => p.idUsuario));
-    return profesionales.map((p) => ({
-      ...this.vistaPublica(p),
-      calificacion: calificaciones.get(p.idUsuario) ?? { promedio: null, cantidad: 0 },
+    const calificaciones = await this.resumenCalificaciones(profesionales.map((profesional) => profesional.idUsuario));
+    return profesionales.map((profesional) => ({
+      ...this.vistaPublica(profesional),
+      calificacion: calificaciones.get(profesional.idUsuario) ?? { promedio: null, cantidad: 0 },
     }));
   }
 
@@ -122,14 +122,14 @@ export class ProfesionalService {
         .leftJoin('profesional.especialidades', 'especialidadTexto')
         .leftJoin('profesional.tiposDeServicio', 'habilidadTexto')
         .andWhere(
-          new Brackets((o) => {
+          new Brackets((condiciones) => {
             // Su nombre y apellido, su descripción, sus oficios o sus habilidades
-            o.where("CONCAT(profesional.nombre, ' ', profesional.apellido) LIKE :patron", { patron })
+            condiciones.where("CONCAT(profesional.nombre, ' ', profesional.apellido) LIKE :patron", { patron })
               .orWhere('profesional.descripcion LIKE :patron')
               .orWhere('especialidadTexto.nombreEspecialidad LIKE :patron')
               .orWhere('habilidadTexto.nombreServicio LIKE :patron');
             // O hace un oficio que tiene esa palabra clave (ej: "caño" → Plomería)
-            if (oficios.length) o.orWhere('especialidadTexto.idEspecialidad IN (:...oficios)', { oficios });
+            if (oficios.length) condiciones.orWhere('especialidadTexto.idEspecialidad IN (:...oficios)', { oficios });
           }),
         );
     }
@@ -142,17 +142,17 @@ export class ProfesionalService {
   private async oficiosPorPalabraClave(texto: string): Promise<number[]> {
     const buscado = normalizar(texto);
     // Las palabras muy cortas no cuentan, para que "a" o "el" no encuentren todo
-    const palabras = buscado.split(/\s+/).filter((p) => p.length >= 3);
+    const palabras = buscado.split(/\s+/).filter((palabra) => palabra.length >= 3);
     const oficios = await this.especialidadRepository.find({ select: { idEspecialidad: true, palabrasClave: true } });
     return oficios
-      .filter((e) =>
-        (e.palabrasClave ?? '')
+      .filter((especialidad) =>
+        (especialidad.palabrasClave ?? '')
           .split(',')
           .map((clave) => normalizar(clave.trim()))
           .filter(Boolean)
-          .some((clave) => buscado.includes(clave) || palabras.some((p) => clave.includes(p))),
+          .some((clave) => buscado.includes(clave) || palabras.some((palabra) => clave.includes(palabra))),
       )
-      .map((e) => e.idEspecialidad);
+      .map((especialidad) => especialidad.idEspecialidad);
   }
 
   // Promedio y cantidad de calificaciones de varios profesionales, en una sola consulta (GROUP BY)
@@ -170,7 +170,7 @@ export class ProfesionalService {
       .getRawMany<{ id: number; promedio: string; cantidad: string }>();
     // Redondeado a un decimal, igual que GET /profesional/:id/calificaciones
     return new Map(
-      filas.map((f) => [Number(f.id), { promedio: Math.round(Number(f.promedio) * 10) / 10, cantidad: Number(f.cantidad) }]),
+      filas.map((fila) => [Number(fila.id), { promedio: Math.round(Number(fila.promedio) * 10) / 10, cantidad: Number(fila.cantidad) }]),
     );
   }
 
@@ -271,7 +271,7 @@ export class ProfesionalService {
     if (idsTiposDeServicio !== undefined) {
       profesional.tiposDeServicio = await this.buscarTiposDeServicio(
         idsTiposDeServicio,
-        profesional.especialidades.map((e) => e.idEspecialidad),
+        profesional.especialidades.map((especialidad) => especialidad.idEspecialidad),
       );
     }
 
@@ -279,8 +279,8 @@ export class ProfesionalService {
       profesional.matriculas = this.armarMatriculas(matriculas, profesional.especialidades);
     } else if (idsEspecialidades !== undefined) {
       // Si dejo una especialidad, sus matriculas tambien se van
-      const ids = new Set(profesional.especialidades.map((e) => e.idEspecialidad));
-      profesional.matriculas = profesional.matriculas.filter((m) => ids.has(m.especialidad.idEspecialidad));
+      const ids = new Set(profesional.especialidades.map((especialidad) => especialidad.idEspecialidad));
+      profesional.matriculas = profesional.matriculas.filter((matricula) => ids.has(matricula.especialidad.idEspecialidad));
     }
 
     if (resto.contraseña !== undefined) {
@@ -308,7 +308,7 @@ export class ProfesionalService {
   private armarMatriculas(dtos: MatriculaDto[], especialidades: Especialidad[]): Matricula[] {
     const vistas = new Set<string>();
     return dtos.map((dto) => {
-      const especialidad = especialidades.find((e) => e.idEspecialidad === dto.idEspecialidad);
+      const especialidad = especialidades.find((unaEspecialidad) => unaEspecialidad.idEspecialidad === dto.idEspecialidad);
       if (!especialidad) {
         throw new BadRequestException(`La matricula ${dto.numero} es de una especialidad que no tenes`);
       }
@@ -336,7 +336,7 @@ export class ProfesionalService {
     if (tiposDeServicio.length !== idsTiposDeServicio.length) {
       throw new BadRequestException('Alguna de las habilidades indicadas no existe');
     }
-    const fueraDeEspecialidad = tiposDeServicio.find((t) => !idsEspecialidades.includes(t.especialidad.idEspecialidad));
+    const fueraDeEspecialidad = tiposDeServicio.find((tipoDeServicio) => !idsEspecialidades.includes(tipoDeServicio.especialidad.idEspecialidad));
     if (fueraDeEspecialidad) {
       throw new BadRequestException(`La habilidad "${fueraDeEspecialidad.nombreServicio}" no es de ninguna de tus especialidades`);
     }

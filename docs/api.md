@@ -4,7 +4,7 @@ La API es REST (JSON) y está documentada con **OpenAPI 3 / Swagger**, generado 
 los controladores y los DTOs.
 
 - **Documentación interactiva:** con el back corriendo, abrir **http://localhost:3000/api** (se pueden probar los endpoints).
-  Para las rutas protegidas: hacer login (`POST /auth/login/...`), copiar el `token` y pegarlo en el botón **Authorize**.
+  Para las rutas protegidas: hacer login (`POST /auth/login`), copiar el `token` y pegarlo en el botón **Authorize**.
 - **Especificación completa:** [`api/openapi.json`](api/openapi.json) (se regenera con `GET http://localhost:3000/api-json`).
   Se puede abrir en [editor.swagger.io](https://editor.swagger.io) o importar en Postman / Insomnia.
 

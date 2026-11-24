@@ -13,7 +13,7 @@ describe('TurnoService.guardarHorario (horario de trabajo del profesional)', () 
   const manager = { delete: jest.fn(), insert: jest.fn() };
   const horarioRepository = {
     find: jest.fn().mockResolvedValue([]),
-    manager: { transaction: jest.fn((trabajo: (m: typeof manager) => Promise<void>) => trabajo(manager)) },
+    manager: { transaction: jest.fn((trabajo: (managerDeLaTransaccion: typeof manager) => Promise<void>) => trabajo(manager)) },
   };
   const profesionalRepository = { findOneBy: jest.fn() };
 
@@ -43,7 +43,7 @@ describe('TurnoService.guardarHorario (horario de trabajo del profesional)', () 
     expect(manager.delete).toHaveBeenCalledWith(HorarioLaboral, { profesional: { idUsuario: 7 } });
     expect(manager.insert).toHaveBeenCalledWith(
       HorarioLaboral,
-      horarios.map((h) => ({ ...h, profesional: { idUsuario: 7 } })),
+      horarios.map((horario) => ({ ...horario, profesional: { idUsuario: 7 } })),
     );
   });
 

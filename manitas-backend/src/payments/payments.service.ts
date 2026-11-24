@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
 import { SolicitudDeServicioService } from '../solicitud-de-servicio/solicitud-de-servicio.service';
 import type { UsuarioActivoInterface } from '../common/interfaces/usuario-activo.interface';
+import { mismoMonto } from '../common/dinero';
 
 // Pago con Mercado Pago (Checkout Pro, en modo prueba / sandbox). Lo arranco Mica.
 // Es la forma de pagar de la app: el cliente paga en Mercado Pago con la tarjeta que quiera
@@ -104,7 +105,8 @@ export class PaymentsService {
     }
 
     const { solicitud, monto } = await this.solicitudService.montoAPagar(idSolicitud, usuario);
-    if (Number(pago.transaction_amount) !== monto) {
+    // Se compara hasta el centavo (los montos pueden tener decimales)
+    if (!mismoMonto(Number(pago.transaction_amount), monto)) {
       throw new BadRequestException('El monto pagado no coincide con el de la solicitud');
     }
 
