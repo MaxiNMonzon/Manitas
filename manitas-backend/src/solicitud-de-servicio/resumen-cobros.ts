@@ -41,18 +41,18 @@ export interface ResumenCobros {
 // "2026-11"
 export const claveMes = (fecha: Date) => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
 
-const suma = (cobros: Cobro[]) => sumarMontos(cobros.map((c) => c.monto));
-const pagados = (cobros: Cobro[]) => cobros.filter((c) => c.fechaPago != null);
+const suma = (cobros: Cobro[]) => sumarMontos(cobros.map((cobro) => cobro.monto));
+const pagados = (cobros: Cobro[]) => cobros.filter((cobro) => cobro.fechaPago != null);
 const variacion = (actual: number, anterior: number) => (anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null);
 
 // Suma los montos por una clave (ej: especialidad), de mayor a menor, con el porcentaje de cada uno
-function porciones(cobros: Cobro[], clave: (c: Cobro) => string): Porcion[] {
+function porciones(cobros: Cobro[], clave: (cobro: Cobro) => string): Porcion[] {
   const sumas = new Map<string, number>();
-  for (const c of cobros) sumas.set(clave(c), sumarMontos([sumas.get(clave(c)) ?? 0, c.monto]));
+  for (const cobro of cobros) sumas.set(clave(cobro), sumarMontos([sumas.get(clave(cobro)) ?? 0, cobro.monto]));
   const total = suma(cobros);
   return [...sumas.entries()]
     .map(([nombre, monto]) => ({ nombre, monto, porcentaje: total > 0 ? Math.round((monto / total) * 100) : 0 }))
-    .sort((a, b) => b.monto - a.monto);
+    .sort((uno, otro) => otro.monto - uno.monto);
 }
 
 export function resumirCobros(cobros: Cobro[], ahora: Date): ResumenCobros {
@@ -62,34 +62,34 @@ export function resumirCobros(cobros: Cobro[], ahora: Date): ResumenCobros {
   // Desde el primer mes con un pago (o desde hace 6 meses, si es más cerca) hasta el actual
   const inicioActual = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
   const desde = new Date(ahora.getFullYear(), ahora.getMonth() - (MESES_HISTORIAL - 1), 1);
-  const primerPago = conPago.reduce<Date>((min, c) => (c.fechaPago! < min ? c.fechaPago! : min), desde);
+  const primerPago = conPago.reduce<Date>((masViejo, cobro) => (cobro.fechaPago! < masViejo ? cobro.fechaPago! : masViejo), desde);
   const meses: CobrosDelMes[] = [];
-  for (let m = new Date(primerPago.getFullYear(), primerPago.getMonth(), 1); m <= inicioActual; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
-    const clave = claveMes(m);
-    const delMes = conPago.filter((c) => claveMes(c.fechaPago!) === clave);
+  for (let mes = new Date(primerPago.getFullYear(), primerPago.getMonth(), 1); mes <= inicioActual; mes = new Date(mes.getFullYear(), mes.getMonth() + 1, 1)) {
+    const clave = claveMes(mes);
+    const delMes = conPago.filter((cobro) => claveMes(cobro.fechaPago!) === clave);
     // Para la barra del mes: los que esperan el pago se muestran en el mes actual
-    const todosDelMes = cobros.filter((c) => (c.fechaPago == null ? clave === mesActual : claveMes(c.fechaPago) === clave));
+    const todosDelMes = cobros.filter((cobro) => (cobro.fechaPago == null ? clave === mesActual : claveMes(cobro.fechaPago) === clave));
     const total = suma(delMes);
     meses.push({
       mes: clave,
-      trabajos: suma(delMes.filter((c) => c.concepto === 'trabajo')),
-      visitas: suma(delMes.filter((c) => c.concepto === 'visita')),
+      trabajos: suma(delMes.filter((cobro) => cobro.concepto === 'trabajo')),
+      visitas: suma(delMes.filter((cobro) => cobro.concepto === 'visita')),
       cantidad: delMes.length,
       total,
       variacion: meses.length ? variacion(total, meses[meses.length - 1].total) : null,
-      cobrado: suma(todosDelMes.filter((c) => c.estado === 'cobrado')),
-      pendiente: suma(todosDelMes.filter((c) => c.estado === 'pendiente_cobro')),
+      cobrado: suma(todosDelMes.filter((cobro) => cobro.estado === 'cobrado')),
+      pendiente: suma(todosDelMes.filter((cobro) => cobro.estado === 'pendiente_cobro')),
     });
   }
 
   // Pendiente de cobro: lo que el cliente todavía no pagó y lo que pagó pero falta depositar
-  const pendientes = cobros.filter((c) => c.estado === 'pendiente_cobro');
-  const depositos = pendientes.filter((c) => c.depositoEstimado).map((c) => c.depositoEstimado!);
-  const proximoDeposito = depositos.length ? new Date(Math.min(...depositos.map((d) => d.getTime()))) : null;
+  const pendientes = cobros.filter((cobro) => cobro.estado === 'pendiente_cobro');
+  const depositos = pendientes.filter((cobro) => cobro.depositoEstimado).map((cobro) => cobro.depositoEstimado!);
+  const proximoDeposito = depositos.length ? new Date(Math.min(...depositos.map((deposito) => deposito.getTime()))) : null;
 
   // Los últimos 6 meses (promedio y tortas)
-  const recientes = conPago.filter((c) => c.fechaPago! >= desde);
-  const trabajosRecientes = recientes.filter((c) => c.concepto === 'trabajo');
+  const recientes = conPago.filter((cobro) => cobro.fechaPago! >= desde);
+  const trabajosRecientes = recientes.filter((cobro) => cobro.concepto === 'trabajo');
 
   const esteMes = meses[meses.length - 1];
   return {
@@ -103,7 +103,7 @@ export function resumirCobros(cobros: Cobro[], ahora: Date): ResumenCobros {
       meses: MESES_HISTORIAL,
     },
     meses,
-    porEspecialidad: porciones(recientes, (c) => c.especialidad ?? 'Otras'),
-    porMedioDePago: porciones(recientes, (c) => c.medioDePago ?? 'Mercado Pago'),
+    porEspecialidad: porciones(recientes, (cobro) => cobro.especialidad ?? 'Otras'),
+    porMedioDePago: porciones(recientes, (cobro) => cobro.medioDePago ?? 'Mercado Pago'),
   };
 }

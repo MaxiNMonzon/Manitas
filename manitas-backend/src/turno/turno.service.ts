@@ -43,18 +43,18 @@ export class TurnoService {
       throw new NotFoundException('Profesional no encontrado');
     }
 
-    for (const h of dto.horarios) {
-      if (h.horaDesde >= h.horaHasta) {
-        throw new BadRequestException(`El ${DIAS[h.diaSemana]} la hora de inicio tiene que ser antes que la de fin`);
+    for (const horario of dto.horarios) {
+      if (horario.horaDesde >= horario.horaHasta) {
+        throw new BadRequestException(`El ${DIAS[horario.diaSemana]} la hora de inicio tiene que ser antes que la de fin`);
       }
     }
     // Dos rangos del mismo dia no se pueden pisar (ej: 9 a 13 y 12 a 18)
-    for (let i = 0; i < dto.horarios.length; i++) {
-      for (let j = i + 1; j < dto.horarios.length; j++) {
-        const a = dto.horarios[i];
-        const b = dto.horarios[j];
-        if (a.diaSemana === b.diaSemana && a.horaDesde < b.horaHasta && b.horaDesde < a.horaHasta) {
-          throw new BadRequestException(`El ${DIAS[a.diaSemana]} hay dos rangos que se pisan`);
+    for (let primero = 0; primero < dto.horarios.length; primero++) {
+      for (let segundo = primero + 1; segundo < dto.horarios.length; segundo++) {
+        const uno = dto.horarios[primero];
+        const otro = dto.horarios[segundo];
+        if (uno.diaSemana === otro.diaSemana && uno.horaDesde < otro.horaHasta && otro.horaDesde < uno.horaHasta) {
+          throw new BadRequestException(`El ${DIAS[uno.diaSemana]} hay dos rangos que se pisan`);
         }
       }
     }
@@ -64,7 +64,7 @@ export class TurnoService {
       if (dto.horarios.length > 0) {
         await manager.insert(
           HorarioLaboral,
-          dto.horarios.map((h) => ({ ...h, profesional: { idUsuario: idProfesional } })),
+          dto.horarios.map((horario) => ({ ...horario, profesional: { idUsuario: idProfesional } })),
         );
       }
     });
@@ -76,7 +76,7 @@ export class TurnoService {
       where: { profesional: { idUsuario: idProfesional } },
       order: { diaSemana: 'ASC', horaDesde: 'ASC' },
     });
-    return horarios.map((h) => ({ ...h, dia: DIAS[h.diaSemana] }));
+    return horarios.map((horario) => ({ ...horario, dia: DIAS[horario.diaSemana] }));
   }
 
   // ---------- Turnos libres ----------
@@ -104,8 +104,8 @@ export class TurnoService {
 
     const libres: Franja[] = [];
     for (const dia = new Date(desde); dia < hasta; dia.setDate(dia.getDate() + 1)) {
-      for (const h of horarios.filter((x) => x.diaSemana === dia.getDay())) {
-        for (let hora = h.horaDesde; hora < h.horaHasta; hora++) {
+      for (const horario of horarios.filter((delDia) => delDia.diaSemana === dia.getDay())) {
+        for (let hora = horario.horaDesde; hora < horario.horaHasta; hora++) {
           const inicio = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate(), hora);
           if (inicio > ahora && !estaTomado(inicio)) {
             libres.push({ inicio, fin: new Date(inicio.getTime() + UNA_HORA) });
@@ -113,7 +113,7 @@ export class TurnoService {
         }
       }
     }
-    return libres.sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+    return libres.sort((uno, otro) => uno.inicio.getTime() - otro.inicio.getTime());
   }
 
   // ---------- Lo que usa la solicitud ----------
@@ -174,9 +174,9 @@ export class TurnoService {
     try {
       await manager.insert(
         Turno,
-        franjas.map((f) => ({
-          inicio: f.inicio,
-          fin: f.fin,
+        franjas.map((franja) => ({
+          inicio: franja.inicio,
+          fin: franja.fin,
           tipo,
           estado,
           profesional: { idUsuario: idProfesional },
@@ -242,7 +242,7 @@ export class TurnoService {
 
   private esHoraDeTrabajo(horarios: HorarioLaboral[], inicio: Date) {
     const hora = inicio.getHours();
-    return horarios.some((h) => h.diaSemana === inicio.getDay() && h.horaDesde <= hora && hora < h.horaHasta);
+    return horarios.some((horario) => horario.diaSemana === inicio.getDay() && horario.horaDesde <= hora && hora < horario.horaHasta);
   }
 
   // Devuelve una funcion que dice si un horario de una hora esta ocupado: por un turno tomado
@@ -251,7 +251,7 @@ export class TurnoService {
     const tomados = await this.turnoRepository.find({
       where: { profesional: { idUsuario: idProfesional }, inicio: MoreThanOrEqual(new Date(desde.getTime() - UNA_HORA)) },
     });
-    const inicios = new Set(tomados.map((t) => t.inicio.getTime()));
+    const inicios = new Set(tomados.map((turno) => turno.inicio.getTime()));
 
     const urgentes = await this.solicitudRepository.find({
       where: {
@@ -267,7 +267,7 @@ export class TurnoService {
         return true;
       }
       const fin = inicio.getTime() + UNA_HORA;
-      return urgentes.some((u) => u.fechaVisita.getTime() < fin && inicio.getTime() < u.fechaVisita.getTime() + UNA_HORA);
+      return urgentes.some((urgente) => urgente.fechaVisita.getTime() < fin && inicio.getTime() < urgente.fechaVisita.getTime() + UNA_HORA);
     };
   }
 

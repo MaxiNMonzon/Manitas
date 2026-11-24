@@ -89,9 +89,9 @@ const PALABRAS_CLAVE: Record<string, string> = {
 
 // Junta dos listas separadas por coma, sin repetir (sin importar mayúsculas ni tildes)
 function juntarPalabras(actuales: string | null, nuevas: string): string {
-  const lista = [...(actuales ?? '').split(','), ...nuevas.split(',')].map((p) => p.trim()).filter(Boolean);
+  const lista = [...(actuales ?? '').split(','), ...nuevas.split(',')].map((parte) => parte.trim()).filter(Boolean);
   const vistas = new Set<string>();
-  return lista.filter((p) => !vistas.has(normalizar(p)) && vistas.add(normalizar(p))).join(', ');
+  return lista.filter((parte) => !vistas.has(normalizar(parte)) && vistas.add(normalizar(parte))).join(', ');
 }
 
 // Los 6 distritos oficiales de la Municipalidad de Rosario
@@ -116,7 +116,7 @@ interface ClienteSeed {
   zona: string;
 }
 
-// La cuenta de Maxi: su contraseña NO va en el código (el repo es público), sale del .env
+// La cuenta de Maxi: su contraseña NO va en el código (el repositorio es público), sale del .env
 const MAXI = 'maxi.rp002@gmail.com';
 
 const CLIENTES: ClienteSeed[] = [
@@ -145,7 +145,7 @@ interface ProfesionalSeed {
 }
 
 const LUNES_A_VIERNES = (desde: number, hasta: number): [number, number, number][] =>
-  [1, 2, 3, 4, 5].map((d) => [d, desde, hasta]);
+  [1, 2, 3, 4, 5].map((diaSemana) => [diaSemana, desde, hasta]);
 
 const PROFESIONALES: ProfesionalSeed[] = [
   { correo: 'raulbustos.plomeria@gmail.com', nombre: 'Raúl', apellido: 'Bustos', dni: 25111222, telefono: '3416662001', oficios: ['Plomería', 'Gas'], zonas: ['Centro', 'Norte', 'Oeste'], costoVisita: 5000, descripcion: 'Plomero y gasista con 20 años de experiencia. Pérdidas, destapaciones, termotanques y calefones.', cbu: '0110599520000001234569', matricula: { oficio: 'Gas', numero: 'MG-4521', descripcion: 'Gasista de 2da categoría - Litoral Gas' }, horario: [...LUNES_A_VIERNES(8, 17), [6, 9, 13]] },
@@ -153,7 +153,7 @@ const PROFESIONALES: ProfesionalSeed[] = [
   { correo: 'silviaortiz.pinturas@gmail.com', nombre: 'Silvia', apellido: 'Ortiz', dni: 27333444, telefono: '3416662003', oficios: ['Pintura', 'Albañilería'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Pintura de interiores y exteriores, reparación de paredes y humedad. Presupuesto sin cargo.', cbu: '0720000788000012345678', horario: [...LUNES_A_VIERNES(8, 13), ...LUNES_A_VIERNES(15, 19)] },
   { correo: 'damianaguirre.carpinteria@gmail.com', nombre: 'Damián', apellido: 'Aguirre', dni: 28444555, telefono: '3416662004', oficios: ['Carpintería'], zonas: ['Centro', 'Oeste', 'Noroeste'], costoVisita: 5000, descripcion: 'Muebles a medida, placares y arreglos de aberturas de madera.', cbu: '0140999801200012345671', horario: LUNES_A_VIERNES(9, 17) },
   { correo: 'marceloquiroga.gasista@gmail.com', nombre: 'Marcelo', apellido: 'Quiroga', dni: 29555666, telefono: '3416662005', oficios: ['Gas', 'Climatización'], zonas: ['Norte', 'Sur', 'Noroeste', 'Sudoeste'], costoVisita: 6000, descripcion: 'Gasista matriculado e instalador de aires acondicionados.', cbu: '0150501602000123456786', matricula: { oficio: 'Gas', numero: 'MG-7730', descripcion: 'Gasista de 1ra categoría - ENARGAS' }, horario: [...LUNES_A_VIERNES(8, 16), [6, 8, 12]] },
-  { correo: 'cerrajeriavillalba@gmail.com', nombre: 'Héctor', apellido: 'Villalba', dni: 24666777, telefono: '3416662006', oficios: ['Cerrajería'], zonas: ['Centro', 'Norte', 'Noroeste', 'Oeste', 'Sudoeste', 'Sur'], costoVisita: 3500, descripcion: 'Cerrajería las 24 horas. Aperturas, cambio de cerraduras y combinaciones.', cbu: '0340040108400012345674', horario: [0, 1, 2, 3, 4, 5, 6].map((d) => [d, 8, 22] as [number, number, number]) },
+  { correo: 'cerrajeriavillalba@gmail.com', nombre: 'Héctor', apellido: 'Villalba', dni: 24666777, telefono: '3416662006', oficios: ['Cerrajería'], zonas: ['Centro', 'Norte', 'Noroeste', 'Oeste', 'Sudoeste', 'Sur'], costoVisita: 3500, descripcion: 'Cerrajería las 24 horas. Aperturas, cambio de cerraduras y combinaciones.', cbu: '0340040108400012345674', horario: [0, 1, 2, 3, 4, 5, 6].map((diaSemana) => [diaSemana, 8, 22] as [number, number, number]) },
   { correo: 'graciela.romero.limpieza@gmail.com', nombre: 'Graciela', apellido: 'Romero', dni: 30777888, telefono: '3416662007', oficios: ['Limpieza'], zonas: ['Centro', 'Norte', 'Noroeste'], costoVisita: null, descripcion: 'Limpieza de casas, departamentos y final de obra.', cbu: '0070999030004012345673', horario: [...LUNES_A_VIERNES(8, 14), [6, 8, 12]] },
   { correo: 'ezequieltoledo.jardines@gmail.com', nombre: 'Ezequiel', apellido: 'Toledo', dni: 31888999, telefono: '3416662008', oficios: ['Jardinería'], zonas: ['Noroeste', 'Oeste', 'Norte'], costoVisita: 3000, descripcion: 'Corte de césped, poda y mantenimiento de jardines.', cbu: '2850590940090412345677', horario: [[2, 8, 16], [4, 8, 16], [6, 8, 14]] },
   { correo: 'leandrocabrera.clima@gmail.com', nombre: 'Leandro', apellido: 'Cabrera', dni: 32999000, telefono: '3416662009', oficios: ['Climatización', 'Electricidad'], zonas: ['Centro', 'Sur', 'Sudoeste'], costoVisita: 5500, descripcion: 'Instalación y service de aires acondicionados split. También electricidad domiciliaria.', cbu: '0720168020000001234569', horario: LUNES_A_VIERNES(10, 19) },
@@ -169,10 +169,10 @@ function normalizar(texto: string): string {
 
 // Un día desde hoy, a una hora en punto
 function dia(desdeHoy: number, hora: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() + desdeHoy);
-  d.setHours(hora, 0, 0, 0);
-  return d;
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() + desdeHoy);
+  fecha.setHours(hora, 0, 0, 0);
+  return fecha;
 }
 
 const masHoras = (fecha: Date, horas: number) => new Date(fecha.getTime() + horas * UNA_HORA);
@@ -180,35 +180,35 @@ const hace = (horas: number) => new Date(Date.now() - horas * UNA_HORA);
 
 // Fecha local sin zona ("2026-10-20T10:00:00"), como la espera la API
 function local(fecha: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${fecha.getFullYear()}-${p(fecha.getMonth() + 1)}-${p(fecha.getDate())}T${p(fecha.getHours())}:00:00`;
+  const dosCifras = (numero: number) => String(numero).padStart(2, '0');
+  return `${fecha.getFullYear()}-${dosCifras(fecha.getMonth() + 1)}-${dosCifras(fecha.getDate())}T${dosCifras(fecha.getHours())}:00:00`;
 }
 
-async function buscarPorNombre<T extends object>(repo: Repository<T>, campo: keyof T, nombre: string, extra: Partial<Record<keyof T, unknown>> = {}) {
-  const todos = await repo.find({ where: extra as never, withDeleted: false });
-  return todos.find((x) => normalizar(String(x[campo])) === normalizar(nombre)) ?? null;
+async function buscarPorNombre<T extends object>(repositorio: Repository<T>, campo: keyof T, nombre: string, extra: Partial<Record<keyof T, unknown>> = {}) {
+  const todos = await repositorio.find({ where: extra as never, withDeleted: false });
+  return todos.find((registro) => normalizar(String(registro[campo])) === normalizar(nombre)) ?? null;
 }
 
 // ---------- Pasos ----------
 
-async function seedCatalogo(ds: DataSource) {
-  const provincias = ds.getRepository(Provincia);
-  const localidades = ds.getRepository(Localidad);
-  const zonas = ds.getRepository(Zona);
-  const especialidades = ds.getRepository(Especialidad);
-  const servicios = ds.getRepository(TiposDeServicio);
+async function seedCatalogo(fuenteDeDatos: DataSource) {
+  const provincias = fuenteDeDatos.getRepository(Provincia);
+  const localidades = fuenteDeDatos.getRepository(Localidad);
+  const zonas = fuenteDeDatos.getRepository(Zona);
+  const especialidades = fuenteDeDatos.getRepository(Especialidad);
+  const servicios = fuenteDeDatos.getRepository(TiposDeServicio);
 
   let santaFe = await buscarPorNombre(provincias, 'nombreProvincia', 'Santa Fe');
   if (!santaFe) santaFe = await provincias.save(provincias.create({ nombreProvincia: 'Santa Fe' }));
 
   const enSantaFe = await localidades.find({ where: { provincia: { idProvincia: santaFe.idProvincia } } });
-  let rosario = enSantaFe.find((l) => normalizar(l.nombreLocalidad) === 'rosario') ?? null;
+  let rosario = enSantaFe.find((localidad) => normalizar(localidad.nombreLocalidad) === 'rosario') ?? null;
   if (!rosario) rosario = await localidades.save(localidades.create({ nombreLocalidad: 'Rosario', codigoPostal: '2000', provincia: santaFe }));
 
   const zonasRosario = await zonas.find({ where: { localidad: { idLocalidad: rosario.idLocalidad } } });
   const mapaZonas = new Map<string, Zona>();
   for (const nombre of ZONAS_ROSARIO) {
-    let zona = zonasRosario.find((z) => normalizar(z.nombreZona) === normalizar(nombre));
+    let zona = zonasRosario.find((existente) => normalizar(existente.nombreZona) === normalizar(nombre));
     if (!zona) {
       zona = await zonas.save(zonas.create({ nombreZona: nombre, localidad: rosario }));
       console.log(`  + zona ${nombre}`);
@@ -218,31 +218,31 @@ async function seedCatalogo(ds: DataSource) {
 
   // Las zonas viejas que no son distritos: los clientes y profesionales pasan al distrito y la zona se da de baja
   for (const [vieja, distrito] of Object.entries(ZONAS_VIEJAS)) {
-    const zonaVieja = zonasRosario.find((z) => normalizar(z.nombreZona) === normalizar(vieja));
+    const zonaVieja = zonasRosario.find((zona) => normalizar(zona.nombreZona) === normalizar(vieja));
     if (!zonaVieja) continue;
     const nueva = mapaZonas.get(distrito)!;
 
-    const clientesRepo = ds.getRepository(Cliente);
-    const queViven = await clientesRepo.find({ where: { zonaResidencia: { idZona: zonaVieja.idZona } }, withDeleted: true });
+    const repositorioClientes = fuenteDeDatos.getRepository(Cliente);
+    const queViven = await repositorioClientes.find({ where: { zonaResidencia: { idZona: zonaVieja.idZona } }, withDeleted: true });
     for (const cliente of queViven) {
       cliente.zonaResidencia = nueva;
-      await clientesRepo.save(cliente);
+      await repositorioClientes.save(cliente);
     }
 
-    const profesionalesRepo = ds.getRepository(Profesional);
-    const queLaCubren = await profesionalesRepo.find({
+    const repositorioProfesionales = fuenteDeDatos.getRepository(Profesional);
+    const queLaCubren = await repositorioProfesionales.find({
       where: { zonasDeCobertura: { idZona: zonaVieja.idZona } },
       relations: { zonasDeCobertura: true },
       withDeleted: true,
     });
     for (const profesional of queLaCubren) {
       // Se recarga con todas sus zonas (el where de arriba trae solo la que coincide)
-      const completo = await profesionalesRepo.findOne({ where: { idUsuario: profesional.idUsuario }, relations: { zonasDeCobertura: true }, withDeleted: true });
+      const completo = await repositorioProfesionales.findOne({ where: { idUsuario: profesional.idUsuario }, relations: { zonasDeCobertura: true }, withDeleted: true });
       if (!completo) continue;
-      const sinLaVieja = completo.zonasDeCobertura.filter((z) => z.idZona !== zonaVieja.idZona);
-      if (!sinLaVieja.some((z) => z.idZona === nueva.idZona)) sinLaVieja.push(nueva);
+      const sinLaVieja = completo.zonasDeCobertura.filter((zona) => zona.idZona !== zonaVieja.idZona);
+      if (!sinLaVieja.some((zona) => zona.idZona === nueva.idZona)) sinLaVieja.push(nueva);
       completo.zonasDeCobertura = sinLaVieja;
-      await profesionalesRepo.save(completo);
+      await repositorioProfesionales.save(completo);
     }
 
     await zonas.softDelete({ idZona: zonaVieja.idZona });
@@ -268,7 +268,7 @@ async function seedCatalogo(ds: DataSource) {
     const existentes = await servicios.find({ where: { especialidad: { idEspecialidad: especialidad.idEspecialidad } } });
     const habilidades: TiposDeServicio[] = [];
     for (const nombre of oficio.habilidades) {
-      let servicio = existentes.find((s) => normalizar(s.nombreServicio) === normalizar(nombre));
+      let servicio = existentes.find((existente) => normalizar(existente.nombreServicio) === normalizar(nombre));
       if (!servicio) servicio = await servicios.save(servicios.create({ nombreServicio: nombre, descripcionServicio: nombre, especialidad }));
       habilidades.push(servicio);
     }
@@ -278,73 +278,73 @@ async function seedCatalogo(ds: DataSource) {
   return { mapaZonas, mapaOficios, mapaHabilidades };
 }
 
-async function seedUsuarios(ds: DataSource, turnos: TurnoService, catalogo: Awaited<ReturnType<typeof seedCatalogo>>) {
-  const clientesRepo = ds.getRepository(Cliente);
-  const profesionalesRepo = ds.getRepository(Profesional);
+async function seedUsuarios(fuenteDeDatos: DataSource, turnos: TurnoService, catalogo: Awaited<ReturnType<typeof seedCatalogo>>) {
+  const repositorioClientes = fuenteDeDatos.getRepository(Cliente);
+  const repositorioProfesionales = fuenteDeDatos.getRepository(Profesional);
   const hash = await bcrypt.hash(CONTRASEÑA, 10);
 
   const clientes = new Map<string, Cliente>();
-  for (const c of CLIENTES) {
-    let cliente = await clientesRepo.findOne({ where: { correo: c.correo }, relations: { zonaResidencia: true }, withDeleted: true });
+  for (const datosCliente of CLIENTES) {
+    let cliente = await repositorioClientes.findOne({ where: { correo: datosCliente.correo }, relations: { zonaResidencia: true }, withDeleted: true });
     if (!cliente) {
-      const { zona, contraseña, ...datos } = c;
-      cliente = await clientesRepo.save(
-        clientesRepo.create({
+      const { zona, contraseña, ...datos } = datosCliente;
+      cliente = await repositorioClientes.save(
+        repositorioClientes.create({
           ...datos,
           fechaNacimiento: new Date('1990-05-10'),
           contraseña: contraseña ? await bcrypt.hash(contraseña, 10) : hash,
           zonaResidencia: catalogo.mapaZonas.get(zona),
         }),
       );
-      console.log(`  + cliente ${c.correo}`);
-    } else if (cliente.zonaResidencia?.idZona !== catalogo.mapaZonas.get(c.zona)!.idZona) {
+      console.log(`  + cliente ${datosCliente.correo}`);
+    } else if (cliente.zonaResidencia?.idZona !== catalogo.mapaZonas.get(datosCliente.zona)!.idZona) {
       // Las cuentas de prueba siguen la lista de arriba (ej: si cambiaron las zonas de Rosario)
-      cliente.zonaResidencia = catalogo.mapaZonas.get(c.zona)!;
-      cliente = await clientesRepo.save(cliente);
+      cliente.zonaResidencia = catalogo.mapaZonas.get(datosCliente.zona)!;
+      cliente = await repositorioClientes.save(cliente);
     }
-    clientes.set(c.correo, cliente);
+    clientes.set(datosCliente.correo, cliente);
   }
 
   const profesionales = new Map<string, Profesional>();
-  for (const p of PROFESIONALES) {
-    let profesional = await profesionalesRepo.findOne({ where: { correo: p.correo }, withDeleted: true });
+  for (const datosProfesional of PROFESIONALES) {
+    let profesional = await repositorioProfesionales.findOne({ where: { correo: datosProfesional.correo }, withDeleted: true });
     if (!profesional) {
-      profesional = await profesionalesRepo.save(
-        profesionalesRepo.create({
-          correo: p.correo,
-          nombre: p.nombre,
-          apellido: p.apellido,
-          dni: p.dni,
-          telefono: p.telefono,
+      profesional = await repositorioProfesionales.save(
+        repositorioProfesionales.create({
+          correo: datosProfesional.correo,
+          nombre: datosProfesional.nombre,
+          apellido: datosProfesional.apellido,
+          dni: datosProfesional.dni,
+          telefono: datosProfesional.telefono,
           fechaNacimiento: new Date('1982-03-15'),
           contraseña: hash,
-          costoVisita: p.costoVisita as number,
-          descripcion: p.descripcion,
-          cbu: p.cbu,
-          especialidades: p.oficios.map((o) => catalogo.mapaOficios.get(o)!),
-          tiposDeServicio: p.oficios.flatMap((o) => catalogo.mapaHabilidades.get(o) ?? []),
-          zonasDeCobertura: p.zonas.map((z) => catalogo.mapaZonas.get(z)!),
-          matriculas: p.matricula
-            ? [{ numero: p.matricula.numero, descripcion: p.matricula.descripcion, especialidad: catalogo.mapaOficios.get(p.matricula.oficio)! }]
+          costoVisita: datosProfesional.costoVisita as number,
+          descripcion: datosProfesional.descripcion,
+          cbu: datosProfesional.cbu,
+          especialidades: datosProfesional.oficios.map((oficio) => catalogo.mapaOficios.get(oficio)!),
+          tiposDeServicio: datosProfesional.oficios.flatMap((oficio) => catalogo.mapaHabilidades.get(oficio) ?? []),
+          zonasDeCobertura: datosProfesional.zonas.map((zona) => catalogo.mapaZonas.get(zona)!),
+          matriculas: datosProfesional.matricula
+            ? [{ numero: datosProfesional.matricula.numero, descripcion: datosProfesional.matricula.descripcion, especialidad: catalogo.mapaOficios.get(datosProfesional.matricula.oficio)! }]
             : [],
         } as Partial<Profesional>),
       );
       // Sin horario no tiene turnos libres y nadie le puede pedir una visita
       await turnos.guardarHorario(profesional.idUsuario, {
-        horarios: p.horario.map(([diaSemana, horaDesde, horaHasta]) => ({ diaSemana, horaDesde, horaHasta })),
+        horarios: datosProfesional.horario.map(([diaSemana, horaDesde, horaHasta]) => ({ diaSemana, horaDesde, horaHasta })),
       });
-      console.log(`  + profesional ${p.correo}`);
+      console.log(`  + profesional ${datosProfesional.correo}`);
     } else {
       // Las cuentas de prueba siguen la lista de arriba: se les ponen exactamente esas zonas
-      const conZonas = await profesionalesRepo.findOne({ where: { idUsuario: profesional.idUsuario }, relations: { zonasDeCobertura: true }, withDeleted: true });
-      const queTiene = (conZonas?.zonasDeCobertura ?? []).map((z) => z.idZona).sort().join(',');
-      const zonasDeLaLista = p.zonas.map((z) => catalogo.mapaZonas.get(z)!);
-      if (conZonas && queTiene !== zonasDeLaLista.map((z) => z.idZona).sort().join(',')) {
+      const conZonas = await repositorioProfesionales.findOne({ where: { idUsuario: profesional.idUsuario }, relations: { zonasDeCobertura: true }, withDeleted: true });
+      const queTiene = (conZonas?.zonasDeCobertura ?? []).map((zona) => zona.idZona).sort().join(',');
+      const zonasDeLaLista = datosProfesional.zonas.map((zona) => catalogo.mapaZonas.get(zona)!);
+      if (conZonas && queTiene !== zonasDeLaLista.map((zona) => zona.idZona).sort().join(',')) {
         conZonas.zonasDeCobertura = zonasDeLaLista;
-        profesional = await profesionalesRepo.save(conZonas);
+        profesional = await repositorioProfesionales.save(conZonas);
       }
     }
-    profesionales.set(p.correo, profesional);
+    profesionales.set(datosProfesional.correo, profesional);
   }
   return { clientes, profesionales };
 }
@@ -360,15 +360,15 @@ async function turnoLibre(turnos: TurnoService, idProfesional: number, desdeDias
 }
 
 async function seedSolicitudes(
-  ds: DataSource,
+  fuenteDeDatos: DataSource,
   servicio: SolicitudDeServicioService,
   turnos: TurnoService,
   usuarios: Awaited<ReturnType<typeof seedUsuarios>>,
   catalogo: Awaited<ReturnType<typeof seedCatalogo>>,
 ) {
-  const repo = ds.getRepository(SolicitudDeServicio);
+  const repositorio = fuenteDeDatos.getRepository(SolicitudDeServicio);
   const maxi = usuarios.clientes.get(MAXI)!;
-  const yaTiene = await repo.count({ where: { cliente: { idUsuario: maxi.idUsuario } } });
+  const yaTiene = await repositorio.count({ where: { cliente: { idUsuario: maxi.idUsuario } } });
   if (yaTiene > 0) {
     console.log('  (las solicitudes de ejemplo ya estaban creadas)');
     return;
@@ -376,14 +376,14 @@ async function seedSolicitudes(
 
   // Se busca por el principio del correo (ej: 'raulbustos' → raulbustos.plomeria@gmail.com)
   const buscar = <T>(mapa: Map<string, T>, inicio: string) => [...mapa.entries()].find(([correo]) => correo.startsWith(inicio))![1];
-  const cli = (inicio: string) => buscar(usuarios.clientes, inicio);
-  const pro = (inicio: string) => buscar(usuarios.profesionales, inicio);
+  const buscarCliente = (inicio: string) => buscar(usuarios.clientes, inicio);
+  const buscarProfesional = (inicio: string) => buscar(usuarios.profesionales, inicio);
   const oficio = (nombre: string) => catalogo.mapaOficios.get(nombre)!;
-  const comoProfesional = (p: Profesional) => ({ sub: p.idUsuario, correo: p.correo, rol: Rol.PROFESIONAL });
+  const comoProfesional = (profesional: Profesional) => ({ sub: profesional.idUsuario, correo: profesional.correo, rol: Rol.PROFESIONAL });
 
   // --- Con fechas pasadas: se guardan directo (los servicios no dejan crear cosas en el pasado) ---
   const pasada = (datos: Partial<SolicitudDeServicio>) =>
-    repo.save(repo.create({ urgente: false, fechaCambioEstado: hace(2), ...datos } as SolicitudDeServicio));
+    repositorio.save(repositorio.create({ urgente: false, fechaCambioEstado: hace(2), ...datos } as SolicitudDeServicio));
 
   // Finalizadas y calificadas (dan las estrellas y reseñas de los profesionales)
   const finalizadas: [string, string, string, string, number, number, string | null][] = [
@@ -399,22 +399,22 @@ async function seedSolicitudes(
     ['nati.herrera', 'ezequieltoledo', 'Jardinería', 'Corte de césped y poda del frente.', 20000, 5, null],
     ['valeriagodoy', 'leandrocabrera', 'Climatización', 'Service del aire acondicionado.', 28000, 4, 'Bien, recomendable.'],
   ];
-  for (const [i, [c, p, o, desc, costo, estrellas, reseña]] of finalizadas.entries()) {
-    const visita = dia(-(20 + i), 10);
-    const fin = masHoras(dia(-(18 + i), 9), 2);
+  for (const [indice, [cliente, profesional, oficioDelTrabajo, descripcion, costo, estrellas, reseña]] of finalizadas.entries()) {
+    const visita = dia(-(20 + indice), 10);
+    const fin = masHoras(dia(-(18 + indice), 9), 2);
     await pasada({
       estadoServicio: EstadoSolicitud.FINALIZADO,
-      descripcionProblema: desc,
-      cliente: cli(c),
-      profesional: pro(p),
-      especialidad: oficio(o),
+      descripcionProblema: descripcion,
+      cliente: buscarCliente(cliente),
+      profesional: buscarProfesional(profesional),
+      especialidad: oficio(oficioDelTrabajo),
       fechaVisita: visita,
-      fechaInicio: dia(-(18 + i), 9),
+      fechaInicio: dia(-(18 + indice), 9),
       fechaFinEstimada: fin,
       fechaFinReal: fin,
       fechaPago: fin,
       fechaCambioEstado: fin,
-      costoVisita: pro(p).costoVisita,
+      costoVisita: buscarProfesional(profesional).costoVisita,
       costoEstimado: costo,
       costoFinal: costo,
       horasTrabajo: 2,
@@ -428,7 +428,7 @@ async function seedSolicitudes(
     estadoServicio: EstadoSolicitud.FINALIZADO,
     descripcionProblema: 'Cambio de cerradura de la puerta de entrada.',
     cliente: maxi,
-    profesional: pro('cerrajeriavillalba'),
+    profesional: buscarProfesional('cerrajeriavillalba'),
     especialidad: oficio('Cerrajería'),
     fechaVisita: dia(-4, 11),
     fechaInicio: dia(-4, 11),
@@ -445,7 +445,7 @@ async function seedSolicitudes(
     estadoServicio: EstadoSolicitud.PRESUPUESTADO,
     descripcionProblema: 'Instalar un calefón nuevo en la cocina.',
     cliente: maxi,
-    profesional: pro('marceloquiroga'),
+    profesional: buscarProfesional('marceloquiroga'),
     especialidad: oficio('Gas'),
     fechaVisita: dia(-1, 10),
     fechaFinEstimada: dia(-1, 11),
@@ -461,7 +461,7 @@ async function seedSolicitudes(
     estadoServicio: EstadoSolicitud.CONTRATADO,
     descripcionProblema: 'Cambiar los tomas de la cocina.',
     cliente: maxi,
-    profesional: pro('sergioledesma'),
+    profesional: buscarProfesional('sergioledesma'),
     especialidad: oficio('Electricidad'),
     fechaVisita: dia(-4, 9),
     fechaInicio: dia(-2, 9),
@@ -479,7 +479,7 @@ async function seedSolicitudes(
     estadoServicio: EstadoSolicitud.RECHAZADO,
     descripcionProblema: 'Hacer un mueble para el living.',
     cliente: maxi,
-    profesional: pro('damianaguirre'),
+    profesional: buscarProfesional('damianaguirre'),
     especialidad: oficio('Carpintería'),
     fechaVisita: dia(-6, 15),
     costoVisita: 5000,
@@ -491,8 +491,8 @@ async function seedSolicitudes(
   await pasada({
     estadoServicio: EstadoSolicitud.AGENDADO,
     descripcionProblema: 'Pierde agua el inodoro.',
-    cliente: cli('valeriagodoy'),
-    profesional: pro('raulbustos'),
+    cliente: buscarCliente('valeriagodoy'),
+    profesional: buscarProfesional('raulbustos'),
     especialidad: oficio('Plomería'),
     fechaVisita: dia(-1, 11),
     fechaFinEstimada: dia(-1, 12),
@@ -504,8 +504,8 @@ async function seedSolicitudes(
   await pasada({
     estadoServicio: EstadoSolicitud.PRESUPUESTADO,
     descripcionProblema: 'Hacer un placard a medida en el dormitorio.',
-    cliente: cli('valeriagodoy'),
-    profesional: pro('damianaguirre'),
+    cliente: buscarCliente('valeriagodoy'),
+    profesional: buscarProfesional('damianaguirre'),
     especialidad: oficio('Carpintería'),
     fechaVisita: dia(-2, 10),
     fechaFinEstimada: dia(-2, 11),
@@ -518,8 +518,8 @@ async function seedSolicitudes(
   await pasada({
     estadoServicio: EstadoSolicitud.CONTRATADO,
     descripcionProblema: 'Agregar dos tomas en el living.',
-    cliente: cli('valeriagodoy'),
-    profesional: pro('sergioledesma'),
+    cliente: buscarCliente('valeriagodoy'),
+    profesional: buscarProfesional('sergioledesma'),
     especialidad: oficio('Electricidad'),
     fechaVisita: dia(-5, 14),
     fechaInicio: dia(-1, 14),
@@ -536,19 +536,19 @@ async function seedSolicitudes(
 
   // Maxi → Raúl: nueva, esperando que la acepte
   await servicio.create(
-    { idProfesional: pro('raulbustos').idUsuario, idEspecialidad: oficio('Plomería').idEspecialidad, descripcionProblema: 'Reparación de cañería del baño, hay humedad en la pared.', inicioTurno: local(await turnoLibre(turnos, pro('raulbustos').idUsuario, 2)) },
+    { idProfesional: buscarProfesional('raulbustos').idUsuario, idEspecialidad: oficio('Plomería').idEspecialidad, descripcionProblema: 'Reparación de cañería del baño, hay humedad en la pared.', inicioTurno: local(await turnoLibre(turnos, buscarProfesional('raulbustos').idUsuario, 2)) },
     maxi.idUsuario,
   );
 
   // Maxi → Silvia: visita confirmada (aceptada)
   const confirmada = await servicio.create(
-    { idProfesional: pro('silviaortiz').idUsuario, idEspecialidad: oficio('Pintura').idEspecialidad, descripcionProblema: 'Pintar el living y el pasillo.', inicioTurno: local(await turnoLibre(turnos, pro('silviaortiz').idUsuario, 2)) },
+    { idProfesional: buscarProfesional('silviaortiz').idUsuario, idEspecialidad: oficio('Pintura').idEspecialidad, descripcionProblema: 'Pintar el living y el pasillo.', inicioTurno: local(await turnoLibre(turnos, buscarProfesional('silviaortiz').idUsuario, 2)) },
     maxi.idUsuario,
   );
-  await servicio.aceptar(confirmada!.idSolicitud, {}, comoProfesional(pro('silviaortiz')));
+  await servicio.aceptar(confirmada!.idSolicitud, {}, comoProfesional(buscarProfesional('silviaortiz')));
 
   // Maxi → Leandro: aceptada y el profesional propuso otro horario (Maxi tiene que contestar)
-  const leandro = pro('leandrocabrera');
+  const leandro = buscarProfesional('leandrocabrera');
   const aMover = await servicio.create(
     { idProfesional: leandro.idUsuario, idEspecialidad: oficio('Climatización').idEspecialidad, descripcionProblema: 'Instalar un aire split en el dormitorio.', inicioTurno: local(await turnoLibre(turnos, leandro.idUsuario, 3)) },
     maxi.idUsuario,
@@ -558,12 +558,12 @@ async function seedSolicitudes(
 
   // Federico → Raúl y Gustavo → Sergio: nuevas, para que los profesionales las respondan
   await servicio.create(
-    { idProfesional: pro('raulbustos').idUsuario, idEspecialidad: oficio('Gas').idEspecialidad, descripcionProblema: 'Olor a gas cerca de la cocina.', inicioTurno: local(await turnoLibre(turnos, pro('raulbustos').idUsuario, 1)) },
-    cli('fede.ibarra').idUsuario,
+    { idProfesional: buscarProfesional('raulbustos').idUsuario, idEspecialidad: oficio('Gas').idEspecialidad, descripcionProblema: 'Olor a gas cerca de la cocina.', inicioTurno: local(await turnoLibre(turnos, buscarProfesional('raulbustos').idUsuario, 1)) },
+    buscarCliente('fede.ibarra').idUsuario,
   );
   await servicio.create(
-    { idProfesional: pro('sergioledesma').idUsuario, idEspecialidad: oficio('Electricidad').idEspecialidad, descripcionProblema: 'Se corta la luz cuando prendo el horno.', inicioTurno: local(await turnoLibre(turnos, pro('sergioledesma').idUsuario, 2)) },
-    cli('gusmolina').idUsuario,
+    { idProfesional: buscarProfesional('sergioledesma').idUsuario, idEspecialidad: oficio('Electricidad').idEspecialidad, descripcionProblema: 'Se corta la luz cuando prendo el horno.', inicioTurno: local(await turnoLibre(turnos, buscarProfesional('sergioledesma').idUsuario, 2)) },
+    buscarCliente('gusmolina').idUsuario,
   );
 
   console.log('  + solicitudes de ejemplo en todos los estados');
@@ -579,9 +579,9 @@ const METODOS = [
   ...BANCOS.flatMap((banco) => TARJETAS_DE_BANCO.map((tarjeta) => `${tarjeta} - ${banco}`)),
 ];
 const tarjetasDe = (banco: string) => TARJETAS_DE_BANCO.map((tarjeta) => `${tarjeta} - ${banco}`);
-async function seedPromociones(ds: DataSource) {
-  const metodos = ds.getRepository(MetodoDePago);
-  const promociones = ds.getRepository(Promocion);
+async function seedPromociones(fuenteDeDatos: DataSource) {
+  const metodos = fuenteDeDatos.getRepository(MetodoDePago);
+  const promociones = fuenteDeDatos.getRepository(Promocion);
 
   const porTipo = new Map<string, MetodoDePago>();
   for (const tipo of METODOS) {
@@ -604,51 +604,51 @@ async function seedPromociones(ds: DataSource) {
     { codigo: 'MACRO15', porcentaje: 15, descripcion: 'Tope $30.000 mensual · Crédito y débito Visa y Mastercard', metodos: tarjetasDe('Banco Macro') },
     { codigo: 'GALICIA30', porcentaje: 30, descripcion: 'Tope $20.000 mensual · Crédito y débito Visa y Mastercard', metodos: tarjetasDe('Banco Galicia') },
   ];
-  for (const p of promos) {
-    const existente = await promociones.findOne({ where: { codigo: p.codigo } });
+  for (const promo of promos) {
+    const existente = await promociones.findOne({ where: { codigo: promo.codigo } });
     if (existente) {
       // Se renueva la vigencia al mes actual y el texto
       existente.fechaInicioVigencia = inicio;
       existente.fechaFinVigencia = fin;
-      existente.descripcion = p.descripcion;
+      existente.descripcion = promo.descripcion;
       await promociones.save(existente);
       continue;
     }
     const nueva = await promociones.save(
-      promociones.create({ codigo: p.codigo, porcentajeDescuento: p.porcentaje, descripcion: p.descripcion, fechaInicioVigencia: inicio, fechaFinVigencia: fin }),
+      promociones.create({ codigo: promo.codigo, porcentajeDescuento: promo.porcentaje, descripcion: promo.descripcion, fechaInicioVigencia: inicio, fechaFinVigencia: fin }),
     );
     // La relación la guarda el método de pago (es el dueño de la tabla intermedia)
-    for (const tipo of p.metodos) {
+    for (const tipo of promo.metodos) {
       const metodo = porTipo.get(tipo)!;
       metodo.promociones = [...(metodo.promociones ?? []), nueva];
       await metodos.save(metodo);
     }
-    console.log(`  + promoción ${p.codigo}`);
+    console.log(`  + promoción ${promo.codigo}`);
   }
 }
 
 async function main() {
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn'] });
   try {
-    const ds = app.get(DataSource);
+    const fuenteDeDatos = app.get(DataSource);
     console.log('Catálogo (oficios, habilidades y zonas de Rosario)...');
-    const catalogo = await seedCatalogo(ds);
+    const catalogo = await seedCatalogo(fuenteDeDatos);
     console.log('Clientes y profesionales...');
-    const usuarios = await seedUsuarios(ds, app.get(TurnoService), catalogo);
+    const usuarios = await seedUsuarios(fuenteDeDatos, app.get(TurnoService), catalogo);
     console.log('Solicitudes de ejemplo...');
-    await seedSolicitudes(ds, app.get(SolicitudDeServicioService), app.get(TurnoService), usuarios, catalogo);
+    await seedSolicitudes(fuenteDeDatos, app.get(SolicitudDeServicioService), app.get(TurnoService), usuarios, catalogo);
     console.log('Métodos de pago y promociones del mes...');
-    await seedPromociones(ds);
+    await seedPromociones(fuenteDeDatos);
 
     console.log(`\nListo. Contraseña de las cuentas (menos la de Maxi): ${CONTRASEÑA}`);
-    console.log('Clientes:      ' + CLIENTES.map((c) => c.correo).join(', '));
-    console.log('Profesionales: ' + PROFESIONALES.map((p) => p.correo).join(', '));
+    console.log('Clientes:      ' + CLIENTES.map((cliente) => cliente.correo).join(', '));
+    console.log('Profesionales: ' + PROFESIONALES.map((profesional) => profesional.correo).join(', '));
   } finally {
     await app.close();
   }
 }
 
-main().catch((e) => {
-  console.error(e);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

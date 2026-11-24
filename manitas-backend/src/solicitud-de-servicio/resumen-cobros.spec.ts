@@ -23,7 +23,7 @@ describe('resumirCobros (las cuentas de Mis cobros se hacen en el back)', () => 
   const ahora = new Date(2026, 10, 20, 12, 0); // 20/11/2026
 
   it('suma los ingresos del mes y calcula cuánto cambió respecto del anterior', () => {
-    const r = resumirCobros(
+    const resumen = resumirCobros(
       [
         cobro({ monto: 20000, fechaPago: new Date(2026, 9, 10) }), // octubre
         cobro({ monto: 30000, fechaPago: new Date(2026, 10, 5) }), // noviembre
@@ -31,22 +31,22 @@ describe('resumirCobros (las cuentas de Mis cobros se hacen en el back)', () => 
       ],
       ahora,
     );
-    expect(r.mesActual).toBe('2026-11');
-    expect(r.ingresosMes).toBe(40000);
-    expect(r.variacionMes).toBe(100); // de 20.000 a 40.000
-    const noviembre = r.meses.find((m) => m.mes === '2026-11')!;
+    expect(resumen.mesActual).toBe('2026-11');
+    expect(resumen.ingresosMes).toBe(40000);
+    expect(resumen.variacionMes).toBe(100); // de 20.000 a 40.000
+    const noviembre = resumen.meses.find((mes) => mes.mes === '2026-11')!;
     expect(noviembre).toMatchObject({ trabajos: 30000, visitas: 10000, cantidad: 2, total: 40000 });
   });
 
   it('sin cobros el mes anterior, la variación es null (no se divide por cero)', () => {
-    const r = resumirCobros([cobro({ monto: 5000, fechaPago: new Date(2026, 10, 2) })], ahora);
-    expect(r.variacionMes).toBeNull();
+    const resumen = resumirCobros([cobro({ monto: 5000, fechaPago: new Date(2026, 10, 2) })], ahora);
+    expect(resumen.variacionMes).toBeNull();
     // Siempre están al menos los últimos 6 meses (para el historial), aunque estén vacíos
-    expect(r.meses.map((m) => m.mes)).toEqual(['2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11']);
+    expect(resumen.meses.map((mes) => mes.mes)).toEqual(['2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11']);
   });
 
   it('el pendiente suma lo no pagado y lo pagado sin depositar, y da el próximo depósito', () => {
-    const r = resumirCobros(
+    const resumen = resumirCobros(
       [
         cobro({ monto: 45000, estado: 'pendiente_cobro' }), // el cliente todavía no pagó
         cobro({ monto: 8000, estado: 'pendiente_cobro', fechaPago: new Date(2026, 10, 19), depositoEstimado: new Date(2026, 10, 24) }),
@@ -54,15 +54,15 @@ describe('resumirCobros (las cuentas de Mis cobros se hacen en el back)', () => 
       ],
       ahora,
     );
-    expect(r.pendiente.monto).toBe(62000);
-    expect(r.pendiente.cantidad).toBe(3);
-    expect(r.pendiente.proximoDeposito).toEqual(new Date(2026, 10, 23));
+    expect(resumen.pendiente.monto).toBe(62000);
+    expect(resumen.pendiente.cantidad).toBe(3);
+    expect(resumen.pendiente.proximoDeposito).toEqual(new Date(2026, 10, 23));
     // En la barra del mes, lo que no se pagó cuenta en el mes actual
-    expect(r.meses[r.meses.length - 1].pendiente).toBe(62000);
+    expect(resumen.meses[resumen.meses.length - 1].pendiente).toBe(62000);
   });
 
   it('el promedio por trabajo y las tortas son de los últimos 6 meses', () => {
-    const r = resumirCobros(
+    const resumen = resumirCobros(
       [
         cobro({ monto: 30000, fechaPago: new Date(2026, 9, 1), especialidad: 'Gas' }),
         cobro({ monto: 10000, fechaPago: new Date(2026, 10, 1) }),
@@ -70,15 +70,15 @@ describe('resumirCobros (las cuentas de Mis cobros se hacen en el back)', () => 
       ],
       ahora,
     );
-    expect(r.promedioPorTrabajo).toEqual({ monto: 20000, trabajos: 2, meses: 6 });
-    expect(r.porEspecialidad).toEqual([
+    expect(resumen.promedioPorTrabajo).toEqual({ monto: 20000, trabajos: 2, meses: 6 });
+    expect(resumen.porEspecialidad).toEqual([
       { nombre: 'Gas', monto: 30000, porcentaje: 75 },
       { nombre: 'Plomería', monto: 10000, porcentaje: 25 },
     ]);
   });
 
   it('los montos con centavos se suman exactos y el promedio se redondea al centavo', () => {
-    const r = resumirCobros(
+    const resumen = resumirCobros(
       [
         cobro({ monto: 0.1, fechaPago: new Date(2026, 10, 1) }),
         cobro({ monto: 0.2, fechaPago: new Date(2026, 10, 2) }),
@@ -86,8 +86,8 @@ describe('resumirCobros (las cuentas de Mis cobros se hacen en el back)', () => 
       ],
       ahora,
     );
-    expect(r.ingresosMes).toBe(10000.8); // con decimales de JS daría 10000.800000000001
-    expect(r.promedioPorTrabajo.monto).toBe(3333.6); // 10000.8 / 3
-    expect(r.porEspecialidad).toEqual([{ nombre: 'Plomería', monto: 10000.8, porcentaje: 100 }]);
+    expect(resumen.ingresosMes).toBe(10000.8); // con decimales de JS daría 10000.800000000001
+    expect(resumen.promedioPorTrabajo.monto).toBe(3333.6); // 10000.8 / 3
+    expect(resumen.porEspecialidad).toEqual([{ nombre: 'Plomería', monto: 10000.8, porcentaje: 100 }]);
   });
 });

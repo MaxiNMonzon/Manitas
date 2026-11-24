@@ -122,13 +122,13 @@ export class SolicitudDeServicioService {
     }
 
     // Regla: no se le puede pedir a un profesional algo que no hace
-    const laHace = profesional.especialidades.some((e) => e.idEspecialidad === especialidad.idEspecialidad);
+    const laHace = profesional.especialidades.some((unaEspecialidad) => unaEspecialidad.idEspecialidad === especialidad.idEspecialidad);
     if (!laHace) {
       throw new BadRequestException('Ese profesional no hace esa especialidad');
     }
 
     // Regla: la visita es en la casa del cliente, asi que el profesional tiene que trabajar en su zona
-    const vaASuZona = profesional.zonasDeCobertura.some((z) => z.idZona === cliente.zonaResidencia?.idZona);
+    const vaASuZona = profesional.zonasDeCobertura.some((unaZona) => unaZona.idZona === cliente.zonaResidencia?.idZona);
     if (!vaASuZona) {
       throw new BadRequestException('Ese profesional no trabaja en tu zona');
     }
@@ -197,8 +197,8 @@ export class SolicitudDeServicioService {
       throw new NotFoundException('Profesional no encontrado');
     }
 
-    const idsEspecialidades = profesional.especialidades.map((e) => e.idEspecialidad);
-    const idsZonas = profesional.zonasDeCobertura.map((z) => z.idZona);
+    const idsEspecialidades = profesional.especialidades.map((especialidad) => especialidad.idEspecialidad);
+    const idsZonas = profesional.zonasDeCobertura.map((zona) => zona.idZona);
     if (idsEspecialidades.length === 0 || idsZonas.length === 0) {
       return [];
     }
@@ -334,8 +334,8 @@ export class SolicitudDeServicioService {
     if (!profesional) {
       throw new NotFoundException('Profesional no encontrado');
     }
-    const haceLaEspecialidad = profesional.especialidades.some((e) => e.idEspecialidad === solicitud.especialidad.idEspecialidad);
-    const cubreLaZona = profesional.zonasDeCobertura.some((z) => z.idZona === solicitud.cliente.zonaResidencia.idZona);
+    const haceLaEspecialidad = profesional.especialidades.some((unaEspecialidad) => unaEspecialidad.idEspecialidad === solicitud.especialidad.idEspecialidad);
+    const cubreLaZona = profesional.zonasDeCobertura.some((unaZona) => unaZona.idZona === solicitud.cliente.zonaResidencia.idZona);
     if (!haceLaEspecialidad || !cubreLaZona) {
       throw new ForbiddenException('Esta urgente no es de tu especialidad o de tu zona');
     }
@@ -848,10 +848,10 @@ export class SolicitudDeServicioService {
       });
     }
 
-    const orden = (c: Cobro) => (c.fechaPago ?? c.fechaServicio ?? ahora).getTime();
+    const orden = (cobro: Cobro) => (cobro.fechaPago ?? cobro.fechaServicio ?? ahora).getTime();
     return {
       cuentaDeposito: profesional.cbu ? profesional.cbu.slice(-4) : null,
-      cobros: cobros.sort((a, b) => orden(b) - orden(a)),
+      cobros: cobros.sort((uno, otro) => orden(otro) - orden(uno)),
       // Las cuentas (ingresos, pendiente, promedio, por mes y por especialidad) las hace el back
       resumen: resumirCobros(cobros, ahora),
     };
@@ -924,7 +924,7 @@ export class SolicitudDeServicioService {
         });
       }
     }
-    return eventos.sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+    return eventos.sort((uno, otro) => uno.inicio.getTime() - otro.inicio.getTime());
   }
 
   // Que va al calendario: la visita (una hora) y el trabajo. Un trabajo de varios dias se muestra
@@ -943,8 +943,8 @@ export class SolicitudDeServicioService {
     if (solicitud.fechaInicio) {
       // Los mismos que devolvia turnosDe(id, 'reservado') filtrados por trabajo, y en el mismo orden
       const turnosTrabajo = (solicitud.turnos ?? [])
-        .filter((t) => t.estado === 'reservado' && t.tipo === 'trabajo')
-        .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+        .filter((turno) => turno.estado === 'reservado' && turno.tipo === 'trabajo')
+        .sort((uno, otro) => uno.inicio.getTime() - otro.inicio.getTime());
       if (turnosTrabajo.length === 0) {
         // Trabajo hecho en el momento de la visita (no usa turnos)
         const fin = solicitud.fechaFinEstimada ?? new Date(solicitud.fechaInicio.getTime() + UNA_HORA);

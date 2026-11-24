@@ -13,7 +13,7 @@ export const MAX_NUMERO_MATRICULA = 30
 export const MAX_DESCRIPCION_MATRICULA = 200
 
 export function nuevaMatricula(lista: MatriculaForm[], idEspecialidad: number | undefined): MatriculaForm {
-  const clave = lista.reduce((max, matricula) => Math.max(max, matricula.clave), 0) + 1
+  const clave = lista.reduce((mayor, matricula) => Math.max(mayor, matricula.clave), 0) + 1
   return { clave, numero: '', descripcion: '', idEspecialidad: idEspecialidad ? String(idEspecialidad) : '' }
 }
 

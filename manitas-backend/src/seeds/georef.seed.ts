@@ -28,11 +28,11 @@ interface GeorefLocalidad {
 }
 
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Georef respondio ${res.status} para ${url}`);
+  const respuesta = await fetch(url);
+  if (!respuesta.ok) {
+    throw new Error(`Georef respondio ${respuesta.status} para ${url}`);
   }
-  return (await res.json()) as T;
+  return (await respuesta.json()) as T;
 }
 
 // Para comparar nombres sin importar mayusculas ni tildes ("Neuquén" = "neuquen")
@@ -48,60 +48,60 @@ function normalizar(texto: string): string {
 // Buenos Aires). A esas se les agrega el departamento para poder distinguirlas en la lista.
 function nombresVisibles(localidades: GeorefLocalidad[]): Map<string, string> {
   const repeticiones = new Map<string, number>();
-  for (const l of localidades) {
-    const clave = normalizar(l.nombre);
+  for (const localidad of localidades) {
+    const clave = normalizar(localidad.nombre);
     repeticiones.set(clave, (repeticiones.get(clave) ?? 0) + 1);
   }
   const nombres = new Map<string, string>();
-  for (const l of localidades) {
-    const repetido = (repeticiones.get(normalizar(l.nombre)) ?? 0) > 1;
-    nombres.set(l.id, repetido && l.departamento.nombre ? `${l.nombre} (${l.departamento.nombre})` : l.nombre);
+  for (const localidad of localidades) {
+    const repetido = (repeticiones.get(normalizar(localidad.nombre)) ?? 0) > 1;
+    nombres.set(localidad.id, repetido && localidad.departamento.nombre ? `${localidad.nombre} (${localidad.departamento.nombre})` : localidad.nombre);
   }
   return nombres;
 }
 
-async function seedProvincia(manager: EntityManager, gp: GeorefProvincia) {
-  const provinciaRepo = manager.getRepository(Provincia);
-  const localidadRepo = manager.getRepository(Localidad);
+async function seedProvincia(manager: EntityManager, provinciaGeoref: GeorefProvincia) {
+  const repositorioProvincias = manager.getRepository(Provincia);
+  const repositorioLocalidades = manager.getRepository(Localidad);
 
   // 1. La provincia: por idGeoref, o por nombre si se habia cargado a mano
   let provincia =
-    (await provinciaRepo.findOne({ where: { idGeoref: gp.id }, withDeleted: true })) ??
-    (await provinciaRepo
+    (await repositorioProvincias.findOne({ where: { idGeoref: provinciaGeoref.id }, withDeleted: true })) ??
+    (await repositorioProvincias
       .find({ where: { idGeoref: IsNull() }, withDeleted: true })
-      .then((ps) => ps.find((p) => normalizar(p.nombreProvincia) === normalizar(gp.nombre)) ?? null));
+      .then((provincias) => provincias.find((provincia) => normalizar(provincia.nombreProvincia) === normalizar(provinciaGeoref.nombre)) ?? null));
 
   if (provincia?.deleteAt) {
-    console.log(`- ${gp.nombre}: dada de baja en la base, se saltea`);
+    console.log(`- ${provinciaGeoref.nombre}: dada de baja en la base, se saltea`);
     return;
   }
   if (!provincia) {
-    provincia = provinciaRepo.create({ nombreProvincia: gp.nombre });
+    provincia = repositorioProvincias.create({ nombreProvincia: provinciaGeoref.nombre });
   }
-  provincia.idGeoref = gp.id;
-  provincia = await provinciaRepo.save(provincia);
+  provincia.idGeoref = provinciaGeoref.id;
+  provincia = await repositorioProvincias.save(provincia);
 
   // 2. Sus localidades
   const { localidades } = await getJson<{ localidades: GeorefLocalidad[] }>(
-    `${GEOREF_URL}/localidades?provincia=${gp.id}&campos=id,nombre,departamento.nombre&max=5000`,
+    `${GEOREF_URL}/localidades?provincia=${provinciaGeoref.id}&campos=id,nombre,departamento.nombre&max=5000`,
   );
   const nombres = nombresVisibles(localidades);
 
-  const existentes = await localidadRepo.find({
+  const existentes = await repositorioLocalidades.find({
     where: { provincia: { idProvincia: provincia.idProvincia } },
     withDeleted: true,
   });
-  const porIdGeoref = new Map(existentes.filter((l) => l.idGeoref).map((l) => [l.idGeoref, l]));
+  const porIdGeoref = new Map(existentes.filter((localidad) => localidad.idGeoref).map((localidad) => [localidad.idGeoref, localidad]));
   const porNombre = new Map(
-    existentes.filter((l) => !l.idGeoref).map((l) => [normalizar(l.nombreLocalidad), l]),
+    existentes.filter((localidad) => !localidad.idGeoref).map((localidad) => [normalizar(localidad.nombreLocalidad), localidad]),
   );
 
   const aGuardar: Localidad[] = [];
   let nuevas = 0;
   let salteadas = 0;
-  for (const gl of localidades) {
-    const nombre = nombres.get(gl.id)!;
-    const existente = porIdGeoref.get(gl.id) ?? porNombre.get(normalizar(nombre)) ?? porNombre.get(normalizar(gl.nombre));
+  for (const localidadGeoref of localidades) {
+    const nombre = nombres.get(localidadGeoref.id)!;
+    const existente = porIdGeoref.get(localidadGeoref.id) ?? porNombre.get(normalizar(nombre)) ?? porNombre.get(normalizar(localidadGeoref.nombre));
 
     if (existente?.deletedAt) {
       salteadas++;
@@ -110,19 +110,19 @@ async function seedProvincia(manager: EntityManager, gp: GeorefProvincia) {
     if (existente) {
       // Ya estaba: se le completa el idGeoref (y se evita volver a matchearla por nombre)
       porNombre.delete(normalizar(existente.nombreLocalidad));
-      existente.idGeoref = gl.id;
+      existente.idGeoref = localidadGeoref.id;
       aGuardar.push(existente);
     } else {
       nuevas++;
       aGuardar.push(
-        localidadRepo.create({ nombreLocalidad: nombre, codigoPostal: null, idGeoref: gl.id, provincia }),
+        repositorioLocalidades.create({ nombreLocalidad: nombre, codigoPostal: null, idGeoref: localidadGeoref.id, provincia }),
       );
     }
   }
-  await localidadRepo.save(aGuardar, { chunk: 500 });
+  await repositorioLocalidades.save(aGuardar, { chunk: 500 });
 
   console.log(
-    `- ${gp.nombre}: ${localidades.length} localidades (${nuevas} nuevas` +
+    `- ${provinciaGeoref.nombre}: ${localidades.length} localidades (${nuevas} nuevas` +
       (salteadas ? `, ${salteadas} dadas de baja salteadas` : '') +
       ')',
   );
@@ -138,9 +138,9 @@ async function main() {
     );
     console.log(`Georef: ${provincias.length} provincias. Cargando...`);
 
-    for (const gp of provincias) {
+    for (const provinciaGeoref of provincias) {
       // De a una provincia por vez, en una transaccion: si algo falla no queda a medias
-      await dataSource.transaction((manager) => seedProvincia(manager, gp));
+      await dataSource.transaction((manager) => seedProvincia(manager, provinciaGeoref));
     }
     console.log('Listo.');
   } finally {

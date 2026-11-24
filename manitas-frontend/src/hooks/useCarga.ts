@@ -8,8 +8,8 @@ interface Estado<T> {
 
 // Carga datos con una función async. Vuelve a cargar cuando cambia `clave` (ej: el mes del
 // calendario) o cuando se llama a `recargar()` (ej: después de agendar).
-// Con `cadaMs` además se repite cada tantos milisegundos (ej: los avisos, cada 1 minuto).
-export function useCarga<T>(clave: string, cargar: () => Promise<T>, cadaMs?: number) {
+// Con `cadaMilisegundos` además se repite cada tantos milisegundos (ej: los avisos, cada 1 minuto).
+export function useCarga<T>(clave: string, cargar: () => Promise<T>, cadaMilisegundos?: number) {
   const [estado, setEstado] = useState<Estado<T> | null>(null)
   const [version, setVersion] = useState(0)
   const recargar = useCallback(() => setVersion((anterior) => anterior + 1), [])
@@ -27,12 +27,12 @@ export function useCarga<T>(clave: string, cargar: () => Promise<T>, cadaMs?: nu
         .then((datos) => vigente && setEstado({ clave, datos, error: null }))
         .catch((error: Error) => vigente && setEstado((anterior) => ({ clave, datos: anterior?.clave === clave ? anterior.datos : null, error: error.message })))
     traer()
-    const intervalo = cadaMs ? setInterval(traer, cadaMs) : undefined
+    const intervalo = cadaMilisegundos ? setInterval(traer, cadaMilisegundos) : undefined
     return () => {
       vigente = false
       clearInterval(intervalo)
     }
-  }, [clave, version, cadaMs])
+  }, [clave, version, cadaMilisegundos])
 
   const actual = estado?.clave === clave ? estado : null
   return { datos: actual?.datos ?? null, error: actual?.error ?? null, cargando: actual === null, recargar }
